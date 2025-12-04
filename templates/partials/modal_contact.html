@@ -2,20 +2,16 @@
     <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
     <div class="flex min-h-screen items-center justify-center p-4">
         <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6 fade-in">
-            <h3 id="modal-title" class="text-lg font-semibold mb-4 flex items-center">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
                 <i data-lucide="user-plus" class="w-5 h-5 mr-2 text-primary-600"></i> <span id="modal-title-text">Новый контакт</span>
             </h3>
             <form id="contact-form">
-                <!-- Скрытое поле для ID -->
                 <input type="hidden" name="id" value="">
                 
                 <div class="space-y-4">
-                    <!-- Тип контакта -->
                     <div>
                         <label class="block text-xs font-medium text-slate-500 mb-1">Тип контакта</label>
-                        <select name="type_id" class="w-full border border-slate-300 p-2 rounded text-sm bg-slate-50 focus:border-primary-600 focus:outline-none">
-                            <!-- Будет заполнено через JS -->
-                        </select>
+                        <select name="type_id" class="w-full border border-slate-300 p-2 rounded text-sm bg-slate-50 focus:outline-none"></select>
                     </div>
 
                     <div class="grid grid-cols-3 gap-4">
@@ -28,14 +24,18 @@
                         <input name="department" placeholder="Департамент" class="w-full border border-slate-300 p-2 rounded text-sm">
                         <input name="role" placeholder="Должность" class="w-full border border-slate-300 p-2 rounded text-sm">
                     </div>
-                    
                     <div class="grid grid-cols-2 gap-4">
                         <input name="email" type="email" placeholder="Email" class="w-full border border-slate-300 p-2 rounded text-sm">
                         <input name="phone" placeholder="Телефон" class="w-full border border-slate-300 p-2 rounded text-sm">
                     </div>
+                    <input name="link" placeholder="Ссылка" class="w-full border border-slate-300 p-2 rounded text-sm">
                     
-                    <input name="link" placeholder="Ссылка (Пульс/TG)" class="w-full border border-slate-300 p-2 rounded text-sm">
-                    
+                    <!-- TAGS INPUT CONTAINER -->
+                    <div id="contact-tags-container" class="border border-slate-300 p-2 rounded text-sm bg-slate-50">
+                        <div class="tags-render-area flex flex-wrap mb-1"></div>
+                        <input type="text" placeholder="+ Тег (Enter)" class="w-full bg-transparent focus:outline-none text-slate-700 placeholder-slate-400">
+                    </div>
+
                     <textarea name="notes" placeholder="Заметки" class="w-full border border-slate-300 p-2 rounded text-sm" rows="3"></textarea>
                 </div>
                 <div class="mt-6 flex justify-end gap-3">
