@@ -9,8 +9,15 @@ import ThemeManager from './components/ThemeManager.js';
 let contactsData = [];
 let tasksData = [];
 
+// Карта маршрутов: viewName -> URL path
+const viewPaths = {
+    'dashboard': '/',
+    'contacts': '/contacts',
+    'tasks': '/tasks',
+    'kb': '/kb'
+};
+
 document.addEventListener('DOMContentLoaded', async () => {
-    // Инициализация API
     const api = API; 
     window.api = api; 
 
@@ -18,36 +25,50 @@ document.addEventListener('DOMContentLoaded', async () => {
         lucide.createIcons();
     }
     
-    // Инициализация темы
     new ThemeManager('theme-toggle');
-
     initModals();
 
-    // Инициализация менеджеров тегов
     window.contactTagManager = new TagManager('contact-tags-container');
     window.taskTagManager = new TagManager('task-tags-container');
 
-    // --- ЛОГИКА ПОИСКА КОНТАКТОВ (НОВОЕ) ---
+    // --- ПОИСК ---
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             const searchValue = e.target.value.toLowerCase();
-            // Вызываем рендер, передавая текущие данные и строку поиска
             renderContacts(contactsData, searchValue);
         });
     }
-    // ---------------------------------------
 
-    // Настройка навигации
+    // --- НАВИГАЦИЯ (КЛИКИ) ---
     document.querySelectorAll('[data-view]').forEach(button => {
         button.addEventListener('click', (e) => {
             e.preventDefault();
             const target = e.target.closest('[data-view]'); 
             if (target) {
-                switchView(target.dataset.view);
+                const viewName = target.dataset.view;
+                // Получаем нужный URL для этого view
+                const path = viewPaths[viewName] || '/';
+                // Переключаем и пишем в историю
+                switchView(viewName, true, path);
             }
         });
     });
+
+    // --- ИСПРАВЛЕНИЕ КНОПКИ "НАЗАД" (POPSTATE) ---
+    window.addEventListener('popstate', (event) => {
+        // Определяем, какой view показать, исходя из текущего URL
+        const path = window.location.pathname;
+        let view = 'dashboard';
+        
+        if (path === '/contacts') view = 'contacts';
+        else if (path === '/tasks') view = 'tasks';
+        
+        // Переключаем view, но НЕ добавляем в историю (false), 
+        // т.к. мы уже переместились по истории браузером
+        switchView(view, false);
+    });
+    // ----------------------------------------------
     
     const contactForm = document.getElementById('contact-form');
     if (contactForm) contactForm.addEventListener('submit', handleContactFormSubmit);
@@ -57,6 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadInitialData();
 
+    // Начальная загрузка при F5 (аналог логики popstate)
     const path = window.location.pathname;
     let initialView = 'dashboard';
     if (path === '/contacts') initialView = 'contacts';
@@ -64,7 +86,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     switchView(initialView, false);
 });
 
-// ... (остальной код loadInitialData и т.д. без изменений) ...
+// ... (Остальной код ниже без изменений) ...
+
 async function loadInitialData() {
     await Promise.all([
         loadContactTypes(),
@@ -136,7 +159,7 @@ async function handleTaskFormSubmit(e) {
     else { alert('Ошибка'); }
 }
 
-// --- ГЛОБАЛЬНЫЕ ФУНКЦИИ ---
+// Глобальные функции
 window.closeModal = function() { closeModal('contact-modal'); };
 window.closeTaskModal = function() { closeModal('task-modal'); };
 
