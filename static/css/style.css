@@ -1,0 +1,13 @@
+/* Кастомные стили, если Tailwind мало */
+.hidden { display: none !important; }
+.fade-in { animation: fadeIn 0.3s ease-in; }
+
+@keyframes fadeIn { 
+    from { opacity: 0; transform: translateY(5px); } 
+    to { opacity: 1; transform: translateY(0); } 
+}
+
+/* Скроллбар для таблицы */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
