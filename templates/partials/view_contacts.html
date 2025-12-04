@@ -1,28 +1,36 @@
-<div id="contact-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeModal()"></div>
-    <div class="flex min-h-screen items-center justify-center p-4">
-        <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6 fade-in">
-            <h3 class="text-lg font-semibold mb-4 flex items-center">
-                <i data-lucide="user-plus" class="w-5 h-5 mr-2 text-primary-600"></i> Новый контакт
-            </h3>
-            <form id="contact-form">
-                <div class="space-y-4">
-                    <input name="name" required placeholder="ФИО" class="w-full border border-slate-300 p-2 rounded text-sm focus:border-primary-600 focus:outline-none">
-                    <div class="grid grid-cols-2 gap-4">
-                        <input name="department" placeholder="Департамент" class="w-full border border-slate-300 p-2 rounded text-sm">
-                        <input name="role" placeholder="Должность" class="w-full border border-slate-300 p-2 rounded text-sm">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <input name="email" type="email" placeholder="Email" class="w-full border border-slate-300 p-2 rounded text-sm">
-                        <input name="phone" placeholder="Телефон" class="w-full border border-slate-300 p-2 rounded text-sm">
-                    </div>
-                    <textarea name="notes" placeholder="Заметки" class="w-full border border-slate-300 p-2 rounded text-sm" rows="3"></textarea>
-                </div>
-                <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" onclick="closeModal()" class="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded text-sm font-medium">Отмена</button>
-                    <button type="submit" class="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded text-sm font-medium">Сохранить</button>
-                </div>
-            </form>
+<div id="view-contacts" class="view-section hidden">
+
+    <!-- Заголовок и управление -->
+    <div class="flex justify-between items-center mb-4">
+        <div>
+            <h2 class="text-2xl font-semibold">Контакты</h2>
+            <p class="text-slate-500 text-sm">Список ваших деловых контактов</p>
         </div>
+        <div class="flex items-center gap-3">
+            <div class="relative">
+                <i data-lucide="search" class="absolute left-2.5 top-2.5 w-4 h-4 text-slate-400"></i>
+                <input type="text" id="searchInput" onkeyup="renderContactList()" placeholder="Поиск..." class="pl-8 pr-3 py-2 w-48 border border-slate-300 rounded-md text-sm focus:outline-none focus:border-primary-500 transition-all">
+            </div>
+            <button onclick="openModal()" class="bg-primary-600 hover:bg-primary-700 text-white font-medium text-sm px-4 py-2 rounded-md flex items-center gap-2">
+                <i data-lucide="plus" class="w-4 h-4"></i> Добавить
+            </button>
+        </div>
+    </div>
+
+    <!-- Таблица -->
+    <div class="bg-white rounded-lg shadow-sm border border-slate-200/80">
+        <table class="w-full text-left">
+            <thead class="bg-slate-50 border-b border-slate-200 text-sm text-slate-600">
+                <tr>
+                    <th class="px-6 py-3 font-medium">ФИО</th>
+                    <th class="px-6 py-3 font-medium">Департамент/Должность</th>
+                    <th class="px-6 py-3 font-medium">Контакты</th>
+                    <th class="px-6 py-3 font-medium">Заметки</th>
+                </tr>
+            </thead>
+            <tbody id="contacts-table-body">
+                <!-- Данные будут вставлены JavaScript -->
+            </tbody>
+        </table>
     </div>
 </div>

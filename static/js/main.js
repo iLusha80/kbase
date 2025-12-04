@@ -47,7 +47,10 @@ function renderContactList() {
     const searchInput = document.getElementById('searchInput');
     const search = searchInput ? searchInput.value.toLowerCase() : '';
     
-    if (!tbody) return;
+    if (!tbody) {
+        console.warn('Таблица контактов не найдена!'); 
+        return; 
+    }
 
     const filtered = contactsData.filter(c => 
         (c.name && c.name.toLowerCase().includes(search)) ||
