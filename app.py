@@ -17,25 +17,31 @@ with app.app_context():
 def index():
     return render_template('index.html')
 
+@app.route('/contacts')
+def contacts_page():
+    return render_template('index.html')
+
 # --- API ---
 @app.route('/api/contacts', methods=['GET'])
 def get_contacts():
-    contacts = Contact.query.order_by(Contact.name).all()
+    contacts = Contact.query.order_by(Contact.last_name, Contact.first_name).all()
     return jsonify([c.to_dict() for c in contacts])
 
 @app.route('/api/contacts', methods=['POST'])
 def add_contact():
     data = request.json
-    if not data or not data.get('name'):
-        return jsonify({'error': 'Name is required'}), 400
+    if not data or not data.get('last_name'):
+        return jsonify({'error': 'Last name is required'}), 400
 
     new_contact = Contact(
-        name=data.get('name'),
+        last_name=data.get('last_name'),
+        first_name=data.get('first_name'),
+        middle_name=data.get('middle_name'),
         department=data.get('department'),
         role=data.get('role'),
         email=data.get('email'),
         phone=data.get('phone'),
-        link=data.get('link'),  # Новое поле
+        link=data.get('link'),
         notes=data.get('notes')
     )
 
@@ -56,12 +62,14 @@ def update_contact(id):
         return jsonify({'error': 'Contact not found'}), 404
 
     try:
-        contact.name = data.get('name', contact.name)
+        contact.last_name = data.get('last_name', contact.last_name)
+        contact.first_name = data.get('first_name', contact.first_name)
+        contact.middle_name = data.get('middle_name', contact.middle_name)
         contact.department = data.get('department', contact.department)
         contact.role = data.get('role', contact.role)
         contact.email = data.get('email', contact.email)
         contact.phone = data.get('phone', contact.phone)
-        contact.link = data.get('link', contact.link) # Новое поле
+        contact.link = data.get('link', contact.link)
         contact.notes = data.get('notes', contact.notes)
         
         db.session.commit()

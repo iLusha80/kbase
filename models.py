@@ -2,7 +2,9 @@ from database import db
 
 class Contact(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(100), nullable=False)
+    last_name = db.Column(db.String(100), nullable=False)
+    first_name = db.Column(db.String(100), nullable=True)
+    middle_name = db.Column(db.String(100), nullable=True)
     department = db.Column(db.String(100))
     role = db.Column(db.String(100))
     email = db.Column(db.String(100))
@@ -13,7 +15,9 @@ class Contact(db.Model):
     def to_dict(self):
         return {
             'id': self.id,
-            'name': self.name,
+            'last_name': self.last_name,
+            'first_name': self.first_name,
+            'middle_name': self.middle_name,
             'department': self.department,
             'role': self.role,
             'email': self.email,

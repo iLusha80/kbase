@@ -7,21 +7,30 @@ document.addEventListener('DOMContentLoaded', async () => {
     const form = document.getElementById('contact-form');
     if (form) form.addEventListener('submit', handleFormSubmit);
 
-    window.addEventListener('popstate', handlePopState);
+    // New logic for handling navigation links
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const viewName = e.currentTarget.id.replace('nav-', '');
-            switchView(viewName, true); 
+            const path = new URL(e.currentTarget.href).pathname;
+            if (path === '/contacts') {
+                e.preventDefault();
+                switchView('contacts', true, '/contacts');
+            } else if (path === '/') {
+                e.preventDefault();
+                switchView('dashboard', true, '/');
+            }
         });
     });
 
-    const initialView = location.hash.replace('#', '') || 'dashboard';
+    const path = window.location.pathname;
+    let initialView = 'dashboard';
+    if (path === '/contacts') {
+        initialView = 'contacts';
+    }
     switchView(initialView, false);
 });
 
 // --- UI LOGIC ---
-function switchView(viewName, addToHistory = true) {
+function switchView(viewName, addToHistory = true, path) {
     document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
     const target = document.getElementById(`view-${viewName}`);
     if (target) target.classList.remove('hidden');
@@ -37,15 +46,21 @@ function switchView(viewName, addToHistory = true) {
         activeBtn.classList.remove('text-slate-600');
     }
 
-    if (addToHistory) {
-        history.pushState({ view: viewName }, '', `#${viewName}`);
+    if (addToHistory && path && window.location.pathname !== path) {
+        history.pushState({ view: viewName }, '', path);
     }
 }
 
-function handlePopState(event) {
-    const view = (event.state && event.state.view) || 'dashboard';
+
+window.onpopstate = function(event) {
+    const path = window.location.pathname;
+    let view = 'dashboard';
+    if (path === '/contacts') {
+        view = 'contacts';
+    }
     switchView(view, false);
-}
+};
+
 
 // --- DATA LOGIC ---
 async function loadContacts() {
@@ -60,36 +75,38 @@ function renderContactList() {
     
     if (!tbody) return;
 
-    const filtered = contactsData.filter(c => 
-        (c.name && c.name.toLowerCase().includes(search)) ||
-        (c.department && c.department.toLowerCase().includes(search))
-    );
+    const filtered = contactsData.filter(c => {
+        const fullName = `${c.last_name || ''} ${c.first_name || ''} ${c.middle_name || ''}`.toLowerCase();
+        return fullName.includes(search) || (c.department && c.department.toLowerCase().includes(search));
+    });
 
     if (filtered.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-slate-400">Ничего не найдено</td></tr>';
         return;
     }
 
-    // Вставляем иконку ссылки, если она есть
     const getLinkHtml = (link) => link ? 
         `<a href="${link}" target="_blank" class="text-primary-600 hover:underline ml-2" title="Открыть ссылку"><i data-lucide="external-link" class="w-3 h-3 inline"></i></a>` : '';
 
-    tbody.innerHTML = filtered.map(c => `
+    tbody.innerHTML = filtered.map(c => {
+        const fullName = [c.last_name, c.first_name, c.middle_name].filter(Boolean).join(' ');
+        const initial = c.last_name ? c.last_name.charAt(0).toUpperCase() : '?';
+
+        return `
         <tr class="hover:bg-slate-50 transition-colors group">
             <td class="px-6 py-4">
                 <div class="flex items-center">
                     <div class="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold mr-3 text-slate-600">
-                        ${c.name.charAt(0)}
+                        ${initial}
                     </div>
                     <div class="text-sm font-medium text-slate-900">
-                        ${c.name}
+                        ${fullName}
                         ${getLinkHtml(c.link)}
                     </div>
                 </div>
             </td>
             <td class="px-6 py-4">
-                <div class="text-sm text-slate-900">${c.department || '-'}</div>
-                <div class="text-xs text-slate-500">${c.role || ''}</div>
+                <div class="text-sm text-slate-900">${c.department || '-'}
             </td>
             <td class="px-6 py-4 text-sm text-slate-500">
                 <div>${c.email || ''}</div>
@@ -109,15 +126,13 @@ function renderContactList() {
                 </div>
             </td>
         </tr>
-    `).join('');
+    `}).join('');
     
-    // Переинициализация иконок после рендера
     if (window.lucide) lucide.createIcons();
 }
 
 // --- MODAL & ACTIONS LOGIC ---
 
-// Функция открытия модалки. Теперь принимает ID контакта (если редактирование)
 function openModal(contactId = null) {
     const modal = document.getElementById('contact-modal');
     const form = document.getElementById('contact-form');
@@ -126,14 +141,14 @@ function openModal(contactId = null) {
     modal.classList.remove('hidden');
 
     if (contactId) {
-        // РЕЖИМ РЕДАКТИРОВАНИЯ
         const contact = contactsData.find(c => c.id === contactId);
         if (!contact) return;
 
         titleText.textContent = "Редактировать контакт";
-        // Заполняем поля
         form.querySelector('[name="id"]').value = contact.id;
-        form.querySelector('[name="name"]').value = contact.name;
+        form.querySelector('[name="last_name"]').value = contact.last_name || '';
+        form.querySelector('[name="first_name"]').value = contact.first_name || '';
+        form.querySelector('[name="middle_name"]').value = contact.middle_name || '';
         form.querySelector('[name="department"]').value = contact.department || '';
         form.querySelector('[name="role"]').value = contact.role || '';
         form.querySelector('[name="email"]').value = contact.email || '';
@@ -141,14 +156,12 @@ function openModal(contactId = null) {
         form.querySelector('[name="link"]').value = contact.link || '';
         form.querySelector('[name="notes"]').value = contact.notes || '';
     } else {
-        // РЕЖИМ СОЗДАНИЯ
         titleText.textContent = "Новый контакт";
         form.reset();
-        form.querySelector('[name="id"]').value = ""; // Очищаем ID
+        form.querySelector('[name="id"]').value = "";
     }
 }
 
-// Глобальные функции для вызова из HTML (onclick)
 window.editContact = function(id) {
     openModal(id);
 };
@@ -173,14 +186,13 @@ async function handleFormSubmit(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
     
-    // Проверяем, есть ли ID (редактирование или создание)
     const id = data.id;
     let success = false;
 
     if (id) {
         success = await API.updateContact(id, data);
     } else {
-        delete data.id; // Удаляем пустой ID перед отправкой
+        delete data.id;
         success = await API.createContact(data);
     }
 
