@@ -1,35 +1,38 @@
 <div id="view-dashboard" class="view-section fade-in">
     <!-- Welcome Banner -->
-    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 relative overflow-hidden mb-8">
+    <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-8 relative overflow-hidden mb-8 dark:bg-slate-800 dark:border-slate-700">
         <div class="relative z-10">
-            <h1 class="text-3xl font-bold text-slate-900 mb-3">Добро пожаловать в KBase</h1>
-            <p class="text-lg text-slate-500 max-w-2xl">Ваш центр управления ТРИТЫЩИ!!!!.</p>
+            <h1 class="text-3xl font-bold text-slate-900 mb-3 dark:text-white">Добро пожаловать в KBase</h1>
+            <p class="text-lg text-slate-500 max-w-2xl dark:text-slate-400">Ваш центр управления эффективностью.</p>
         </div>
-        <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-slate-50 to-transparent opacity-50"></div>
+        <!-- Градиент затемняем для темной темы -->
+        <div class="absolute right-0 top-0 h-full w-1/3 bg-gradient-to-l from-slate-50 to-transparent opacity-50 dark:from-slate-900/50"></div>
     </section>
 
     <!-- Cards Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Contacts Card -->
-        <button onclick="switchView('contacts')" data-view="contacts" class="group flex flex-col text-left bg-white p-6 rounded-xl shadow-sm border hover:border-primary-600 transition-all">
-            <div class="bg-blue-600 p-3 rounded-lg w-fit mb-4"><i data-lucide="users" class="text-white"></i></div>
-            <h3 class="text-xl font-bold mb-2">Контакты</h3>
-            <p class="text-slate-500 text-sm mb-4">База сотрудников и партнеров.</p>
-            <div class="mt-auto text-primary-600 text-sm font-medium flex items-center">Перейти <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i></div>
+        <button onclick="switchView('contacts')" data-view="contacts" class="group flex flex-col text-left bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-primary-600 transition-all dark:bg-slate-800 dark:border-slate-700 dark:hover:border-primary-500">
+            <div class="bg-blue-600 p-3 rounded-lg w-fit mb-4 shadow-lg shadow-blue-900/20"><i data-lucide="users" class="text-white"></i></div>
+            <h3 class="text-xl font-bold mb-2 text-slate-900 dark:text-white">Контакты</h3>
+            <p class="text-slate-500 text-sm mb-4 dark:text-slate-400">База сотрудников и партнеров.</p>
+            <div class="mt-auto text-primary-600 text-sm font-medium flex items-center dark:text-primary-400">Перейти <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i></div>
         </button>
+
         <!-- Tasks Card -->
-        <button onclick="switchView('tasks')" data-view="tasks" class="group flex flex-col text-left bg-white p-6 rounded-xl shadow-sm border hover:border-emerald-600 transition-all">
-            <div class="bg-emerald-600 p-3 rounded-lg w-fit mb-4"><i data-lucide="check-square" class="text-white"></i></div>
-            <h3 class="text-xl font-bold mb-2">Задачи</h3>
-            <p class="text-slate-500 text-sm mb-4">В разработке.</p>
-            <div class="mt-auto text-emerald-600 text-sm font-medium flex items-center">Перейти <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i></div>
+        <button onclick="switchView('tasks')" data-view="tasks" class="group flex flex-col text-left bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-emerald-600 transition-all dark:bg-slate-800 dark:border-slate-700 dark:hover:border-emerald-500">
+            <div class="bg-emerald-600 p-3 rounded-lg w-fit mb-4 shadow-lg shadow-emerald-900/20"><i data-lucide="check-square" class="text-white"></i></div>
+            <h3 class="text-xl font-bold mb-2 text-slate-900 dark:text-white">Задачи</h3>
+            <p class="text-slate-500 text-sm mb-4 dark:text-slate-400">Управление проектами.</p>
+            <div class="mt-auto text-emerald-600 text-sm font-medium flex items-center dark:text-emerald-400">Перейти <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i></div>
         </button>
+
         <!-- KB Card -->
-        <button onclick="switchView('kb')" data-view="kb" class="group flex flex-col text-left bg-white p-6 rounded-xl shadow-sm border hover:border-purple-600 transition-all">
-            <div class="bg-purple-600 p-3 rounded-lg w-fit mb-4"><i data-lucide="book-open" class="text-white"></i></div>
-            <h3 class="text-xl font-bold mb-2">База Знаний</h3>
-            <p class="text-slate-500 text-sm mb-4">В разработке.</p>
-            <div class="mt-auto text-purple-600 text-sm font-medium flex items-center">Перейти <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i></div>
+        <button onclick="switchView('kb')" data-view="kb" class="group flex flex-col text-left bg-white p-6 rounded-xl shadow-sm border border-slate-200 hover:border-purple-600 transition-all dark:bg-slate-800 dark:border-slate-700 dark:hover:border-purple-500">
+            <div class="bg-purple-600 p-3 rounded-lg w-fit mb-4 shadow-lg shadow-purple-900/20"><i data-lucide="book-open" class="text-white"></i></div>
+            <h3 class="text-xl font-bold mb-2 text-slate-900 dark:text-white">База Знаний</h3>
+            <p class="text-slate-500 text-sm mb-4 dark:text-slate-400">В разработке.</p>
+            <div class="mt-auto text-purple-600 text-sm font-medium flex items-center dark:text-purple-400">Перейти <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i></div>
         </button>
     </div>
 </div>

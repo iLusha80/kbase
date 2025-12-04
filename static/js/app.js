@@ -4,6 +4,7 @@ import { initModals, openModal, closeModal } from './components/Modal.js'; // Д
 import { renderTasks } from './components/TaskList.js';
 import { renderContacts } from './components/ContactList.js';
 import TagManager from './components/TagManager.js';
+import ThemeManager from './components/ThemeManager.js';
 
 let contactsData = [];
 let tasksData = [];
@@ -16,6 +17,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (window.lucide) {
         lucide.createIcons();
     }
+
+    new ThemeManager('theme-toggle');
 
     initModals();
 

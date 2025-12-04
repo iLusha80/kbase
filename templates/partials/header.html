@@ -1,23 +1,37 @@
-<header class="sticky top-0 z-40 w-full bg-white border-b border-slate-200 shadow-sm">
+<header class="sticky top-0 z-40 w-full bg-white border-b border-slate-200 shadow-sm transition-colors duration-200 dark:bg-slate-800 dark:border-slate-700">
     <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <!-- Добавляем data-view="dashboard" к логотипу -->
+        <!-- Логотип -->
         <a href="/" class="flex items-center cursor-pointer group" id="nav-dashboard-logo" data-view="dashboard">
-            <div class="bg-slate-900 p-1.5 rounded-lg mr-3 group-hover:bg-primary-600 transition-colors">
+            <div class="bg-slate-900 p-1.5 rounded-lg mr-3 group-hover:bg-primary-600 transition-colors dark:bg-primary-600">
                 <i data-lucide="database" class="w-5 h-5 text-white"></i>
             </div>
-            <span class="text-xl font-bold text-slate-900">KBase</span>
+            <span class="text-xl font-bold text-slate-900 dark:text-white">KBase</span>
         </a>
-        <nav class="md:flex space-x-1">
-            <!-- Добавляем data-view -->
-            <a href="/" id="nav-dashboard" data-view="dashboard" class="nav-btn flex items-center px-4 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50">
-                <i data-lucide="layout" class="w-4 h-4 mr-2"></i> Главная
-            </a>
-            <a href="/contacts" id="nav-contacts" data-view="contacts" class="nav-btn flex items-center px-4 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50">
-                <i data-lucide="users" class="w-4 h-4 mr-2"></i> Контакты
-            </a>
-            <a href="/tasks" id="nav-tasks" data-view="tasks" class="nav-btn flex items-center px-4 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50">
-                <i data-lucide="check-square" class="w-4 h-4 mr-2"></i> Задачи
-            </a>
-        </nav>
+        
+        <!-- Навигация и Кнопка -->
+        <div class="flex items-center gap-2">
+            <nav class="flex items-center space-x-1">
+                <a href="/" id="nav-dashboard" data-view="dashboard" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50">
+                    <i data-lucide="layout" class="w-4 h-4 mr-2"></i> <span class="hidden md:inline">Главная</span>
+                </a>
+                <a href="/contacts" id="nav-contacts" data-view="contacts" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50">
+                    <i data-lucide="users" class="w-4 h-4 mr-2"></i> <span class="hidden md:inline">Контакты</span>
+                </a>
+                <a href="/tasks" id="nav-tasks" data-view="tasks" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50">
+                    <i data-lucide="check-square" class="w-4 h-4 mr-2"></i> <span class="hidden md:inline">Задачи</span>
+                </a>
+            </nav>
+
+            <!-- Разделитель -->
+            <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
+
+            <!-- ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ -->
+            <button id="theme-toggle" class="p-2 text-slate-500 rounded-md hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 focus:outline-none transition-colors">
+                <!-- Иконка солнца (для темной темы) -->
+                <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
+                <!-- Иконка луны (для светлой темы) -->
+                <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
+            </button>
+        </div>
     </div>
 </header>

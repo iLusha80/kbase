@@ -9,6 +9,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
+        darkMode: 'class', // ВАЖНО: Включаем режим по классу
         theme: {
           extend: {
             colors: {
@@ -20,13 +21,23 @@
       }
     </script>
     
+    <!-- Script to prevent flash of unstyled content -->
+    <script>
+        if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark')
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+    </script>
+    
     <!-- Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+<!-- Добавили dark:bg-slate-900 dark:text-slate-100 -->
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col transition-colors duration-200 dark:bg-slate-900 dark:text-slate-100">
 
     <!-- Подключаем Header -->
     {% include 'partials/header.html' %}
@@ -41,7 +52,6 @@
     </footer>
 
     <!-- Scripts -->
-    <!-- <script src="{{ url_for('static', filename='js/api.js') }}"></script> -->
     <script type="module" src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 </html>
