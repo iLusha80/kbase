@@ -1,6 +1,6 @@
 import API from './api.js';
 import { switchView } from './utils/router.js';
-import { initModals, openModal, closeModal } from './components/Modal.js'; // Добавил openModal, closeModal в импорт
+import { initModals, openModal, closeModal } from './components/Modal.js';
 import { renderTasks } from './components/TaskList.js';
 import { renderContacts } from './components/ContactList.js';
 import TagManager from './components/TagManager.js';
@@ -10,14 +10,15 @@ let contactsData = [];
 let tasksData = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // ИСПРАВЛЕНИЕ 1: Убрали new, так как API это объект, а не класс
+    // Инициализация API
     const api = API; 
     window.api = api; 
 
     if (window.lucide) {
         lucide.createIcons();
     }
-
+    
+    // Инициализация темы
     new ThemeManager('theme-toggle');
 
     initModals();
@@ -26,19 +27,27 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.contactTagManager = new TagManager('contact-tags-container');
     window.taskTagManager = new TagManager('task-tags-container');
 
+    // --- ЛОГИКА ПОИСКА КОНТАКТОВ (НОВОЕ) ---
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const searchValue = e.target.value.toLowerCase();
+            // Вызываем рендер, передавая текущие данные и строку поиска
+            renderContacts(contactsData, searchValue);
+        });
+    }
+    // ---------------------------------------
+
     // Настройка навигации
     document.querySelectorAll('[data-view]').forEach(button => {
         button.addEventListener('click', (e) => {
             e.preventDefault();
-            // Ищем data-view либо на самом элементе, либо на его родителе (если кликнули по иконке внутри кнопки)
             const target = e.target.closest('[data-view]'); 
             if (target) {
                 switchView(target.dataset.view);
             }
         });
     });
-    
-    // ... остальной код (handleContactFormSubmit и т.д.) без изменений ...
     
     const contactForm = document.getElementById('contact-form');
     if (contactForm) contactForm.addEventListener('submit', handleContactFormSubmit);
@@ -55,7 +64,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     switchView(initialView, false);
 });
 
-// ... функции loadInitialData, loadContacts и т.д. оставляем как есть ...
+// ... (остальной код loadInitialData и т.д. без изменений) ...
 async function loadInitialData() {
     await Promise.all([
         loadContactTypes(),
@@ -67,7 +76,7 @@ async function loadInitialData() {
 }
 
 async function loadContacts() {
-    contactsData = await window.api.getContacts(); // используем window.api или просто API
+    contactsData = await window.api.getContacts();
     renderContacts(contactsData);
     updateTaskContactSelects();
 }
@@ -76,9 +85,7 @@ async function loadTasks() {
     tasksData = await window.api.getTasks();
     renderTasks(tasksData);
 }
-// ... (остальные load функции) ...
 
-// ... (функции updateTaskContactSelects, handleContactFormSubmit, handleTaskFormSubmit) ...
 async function loadContactTypes() {
     const contactTypes = await window.api.getContactTypes();
     const select = document.querySelector('select[name="type_id"]');
@@ -129,43 +136,24 @@ async function handleTaskFormSubmit(e) {
     else { alert('Ошибка'); }
 }
 
+// --- ГЛОБАЛЬНЫЕ ФУНКЦИИ ---
+window.closeModal = function() { closeModal('contact-modal'); };
+window.closeTaskModal = function() { closeModal('task-modal'); };
 
-// --- ВАЖНОЕ ИСПРАВЛЕНИЕ: ГЛОБАЛЬНЫЕ ФУНКЦИИ ---
-// Так как вы используете onclick="..." в HTML, функции должны быть в window
-
-window.closeModal = function() {
-    // Для совместимости со старым кодом modal_contact.html
-    closeModal('contact-modal'); 
-};
-
-window.closeTaskModal = function() {
-    // Для совместимости со старым кодом modal_task.html
-    closeModal('task-modal');
-};
-
-// Функция открытия модалки контакта (универсальная)
 window.openModal = function() {
-    // Сброс формы и открытие
     const form = document.getElementById('contact-form');
-    if(form) {
-        form.reset();
-        form.querySelector('[name="id"]').value = "";
-    }
+    if(form) { form.reset(); form.querySelector('[name="id"]').value = ""; }
     window.contactTagManager.clear();
     openModal('contact-modal');
 };
 
 window.openTaskModal = function() {
     const form = document.getElementById('task-form');
-    if(form) {
-        form.reset();
-        form.querySelector('[name="id"]').value = "";
-    }
+    if(form) { form.reset(); form.querySelector('[name="id"]').value = ""; }
     window.taskTagManager.clear();
     openModal('task-modal');
 };
 
-// ... остальные window.removeTag, window.editContact и т.д. оставляем как были ...
 window.removeTag = function(containerId, index) {
     if (containerId === 'contact-tags-container') window.contactTagManager.removeTag(index);
     if (containerId === 'task-tags-container') window.taskTagManager.removeTag(index);

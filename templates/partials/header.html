@@ -11,14 +11,14 @@
         <!-- Навигация и Кнопка -->
         <div class="flex items-center gap-2">
             <nav class="flex items-center space-x-1">
-                <a href="/" id="nav-dashboard" data-view="dashboard" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50">
-                    <i data-lucide="layout" class="w-4 h-4 mr-2"></i> <span class="hidden md:inline">Главная</span>
+                <a href="/" id="nav-dashboard" data-view="dashboard" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    <i data-lucide="layout" class="w-4 h-4 mr-2"></i> <span>Главная</span>
                 </a>
-                <a href="/contacts" id="nav-contacts" data-view="contacts" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50">
-                    <i data-lucide="users" class="w-4 h-4 mr-2"></i> <span class="hidden md:inline">Контакты</span>
+                <a href="/contacts" id="nav-contacts" data-view="contacts" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    <i data-lucide="users" class="w-4 h-4 mr-2"></i> <span>Контакты</span>
                 </a>
-                <a href="/tasks" id="nav-tasks" data-view="tasks" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium text-slate-600 hover:bg-slate-50 dark:text-slate-300 dark:hover:bg-slate-700/50">
-                    <i data-lucide="check-square" class="w-4 h-4 mr-2"></i> <span class="hidden md:inline">Задачи</span>
+                <a href="/tasks" id="nav-tasks" data-view="tasks" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    <i data-lucide="check-square" class="w-4 h-4 mr-2"></i> <span>Задачи</span>
                 </a>
             </nav>
 
@@ -26,7 +26,16 @@
             <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
 
             <!-- ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ -->
-            <button id="theme-toggle" class="p-2 text-slate-500 rounded-md hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700 focus:outline-none transition-colors">
+            <!-- 
+               Изменения для заметности:
+               1. dark:bg-slate-700 - явный фон, светлее шапки
+               2. dark:border dark:border-slate-600 - рамка для четкости
+               3. dark:text-yellow-300 - кислотно-желтый цвет иконки
+            -->
+            <button id="theme-toggle" class="p-2 rounded-md transition-all focus:outline-none 
+                text-slate-500 hover:bg-slate-100 
+                dark:text-yellow-300 dark:bg-slate-700 dark:border dark:border-slate-600 dark:hover:bg-slate-600 dark:hover:text-yellow-200">
+                
                 <!-- Иконка солнца (для темной темы) -->
                 <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
                 <!-- Иконка луны (для светлой темы) -->
