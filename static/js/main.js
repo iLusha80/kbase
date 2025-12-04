@@ -10,10 +10,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Навешиваем обработчик на форму
     const form = document.getElementById('contact-form');
     if (form) form.addEventListener('submit', handleFormSubmit);
+
+    // Управление навигацией
+    window.addEventListener('popstate', handlePopState);
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const viewName = e.currentTarget.id.replace('nav-', '');
+            switchView(viewName, true); 
+        });
+    });
+
+    // Первоначальная загрузка вида
+    const initialView = location.hash.replace('#', '') || 'dashboard';
+    switchView(initialView, false);
 });
 
 // --- UI LOGIC ---
-function switchView(viewName) {
+function switchView(viewName, addToHistory = true) {
     // Скрываем все секции
     document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
     
@@ -34,7 +48,18 @@ function switchView(viewName) {
         activeBtn.classList.add('text-primary-600', 'bg-primary-50');
         activeBtn.classList.remove('text-slate-600');
     }
+
+    // Управление историей браузера
+    if (addToHistory) {
+        history.pushState({ view: viewName }, '', `#${viewName}`);
+    }
 }
+
+function handlePopState(event) {
+    const view = (event.state && event.state.view) || 'dashboard';
+    switchView(view, false);
+}
+
 
 // --- DATA LOGIC ---
 async function loadContacts() {
