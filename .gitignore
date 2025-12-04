@@ -1,0 +1,10 @@
+.idea
+.venv
+
+# PyCashe
+__pycache__
+
+# My local
+all_project_code.txt
+collect_code.py
+/instance
