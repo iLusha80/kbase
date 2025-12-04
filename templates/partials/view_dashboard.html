@@ -11,21 +11,21 @@
     <!-- Cards Grid -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- Contacts Card -->
-        <button onclick="switchView('contacts')" class="group flex flex-col text-left bg-white p-6 rounded-xl shadow-sm border hover:border-primary-600 transition-all">
+        <button onclick="switchView('contacts')" data-view="contacts" class="group flex flex-col text-left bg-white p-6 rounded-xl shadow-sm border hover:border-primary-600 transition-all">
             <div class="bg-blue-600 p-3 rounded-lg w-fit mb-4"><i data-lucide="users" class="text-white"></i></div>
             <h3 class="text-xl font-bold mb-2">Контакты</h3>
             <p class="text-slate-500 text-sm mb-4">База сотрудников и партнеров.</p>
             <div class="mt-auto text-primary-600 text-sm font-medium flex items-center">Перейти <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i></div>
         </button>
         <!-- Tasks Card -->
-        <button onclick="switchView('tasks')" class="group flex flex-col text-left bg-white p-6 rounded-xl shadow-sm border hover:border-emerald-600 transition-all">
+        <button onclick="switchView('tasks')" data-view="tasks" class="group flex flex-col text-left bg-white p-6 rounded-xl shadow-sm border hover:border-emerald-600 transition-all">
             <div class="bg-emerald-600 p-3 rounded-lg w-fit mb-4"><i data-lucide="check-square" class="text-white"></i></div>
             <h3 class="text-xl font-bold mb-2">Задачи</h3>
             <p class="text-slate-500 text-sm mb-4">В разработке.</p>
             <div class="mt-auto text-emerald-600 text-sm font-medium flex items-center">Перейти <i data-lucide="arrow-right" class="w-4 h-4 ml-1"></i></div>
         </button>
         <!-- KB Card -->
-        <button onclick="switchView('kb')" class="group flex flex-col text-left bg-white p-6 rounded-xl shadow-sm border hover:border-purple-600 transition-all">
+        <button onclick="switchView('kb')" data-view="kb" class="group flex flex-col text-left bg-white p-6 rounded-xl shadow-sm border hover:border-purple-600 transition-all">
             <div class="bg-purple-600 p-3 rounded-lg w-fit mb-4"><i data-lucide="book-open" class="text-white"></i></div>
             <h3 class="text-xl font-bold mb-2">База Знаний</h3>
             <p class="text-slate-500 text-sm mb-4">В разработке.</p>

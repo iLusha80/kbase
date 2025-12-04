@@ -1,6 +1,6 @@
 import API from './api.js';
 import { switchView } from './utils/router.js';
-import { initModals, openModal, closeModal } from './components/Modal.js';
+import { initModals, openModal, closeModal } from './components/Modal.js'; // Добавил openModal, closeModal в импорт
 import { renderTasks } from './components/TaskList.js';
 import { renderContacts } from './components/ContactList.js';
 import TagManager from './components/TagManager.js';
@@ -9,8 +9,9 @@ let contactsData = [];
 let tasksData = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
-    const api = new API();
-    window.api = api; // Сделаем api глобальным для доступа из любого места
+    // ИСПРАВЛЕНИЕ 1: Убрали new, так как API это объект, а не класс
+    const api = API; 
+    window.api = api; 
 
     if (window.lucide) {
         lucide.createIcons();
@@ -26,21 +27,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('[data-view]').forEach(button => {
         button.addEventListener('click', (e) => {
             e.preventDefault();
-            switchView(button.dataset.view);
+            // Ищем data-view либо на самом элементе, либо на его родителе (если кликнули по иконке внутри кнопки)
+            const target = e.target.closest('[data-view]'); 
+            if (target) {
+                switchView(target.dataset.view);
+            }
         });
     });
     
-    // Обработчики отправки форм
+    // ... остальной код (handleContactFormSubmit и т.д.) без изменений ...
+    
     const contactForm = document.getElementById('contact-form');
     if (contactForm) contactForm.addEventListener('submit', handleContactFormSubmit);
     
     const taskForm = document.getElementById('task-form');
     if (taskForm) taskForm.addEventListener('submit', handleTaskFormSubmit);
 
-    // Загрузка начальных данных
     await loadInitialData();
 
-    // Первоначальное отображение
     const path = window.location.pathname;
     let initialView = 'dashboard';
     if (path === '/contacts') initialView = 'contacts';
@@ -48,6 +52,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     switchView(initialView, false);
 });
 
+// ... функции loadInitialData, loadContacts и т.д. оставляем как есть ...
 async function loadInitialData() {
     await Promise.all([
         loadContactTypes(),
@@ -59,18 +64,20 @@ async function loadInitialData() {
 }
 
 async function loadContacts() {
-    contactsData = await api.getContacts();
+    contactsData = await window.api.getContacts(); // используем window.api или просто API
     renderContacts(contactsData);
     updateTaskContactSelects();
 }
 
 async function loadTasks() {
-    tasksData = await api.getTasks();
+    tasksData = await window.api.getTasks();
     renderTasks(tasksData);
 }
+// ... (остальные load функции) ...
 
+// ... (функции updateTaskContactSelects, handleContactFormSubmit, handleTaskFormSubmit) ...
 async function loadContactTypes() {
-    const contactTypes = await api.getContactTypes();
+    const contactTypes = await window.api.getContactTypes();
     const select = document.querySelector('select[name="type_id"]');
     if (select) {
         select.innerHTML = contactTypes.map(t => `<option value="${t.id}">${t.name_type}</option>`).join('');
@@ -78,7 +85,7 @@ async function loadContactTypes() {
 }
 
 async function loadTaskStatuses() {
-    const taskStatuses = await api.getTaskStatuses();
+    const taskStatuses = await window.api.getTaskStatuses();
     const select = document.querySelector('select[name="status_id"]');
     if (select) {
         select.innerHTML = taskStatuses.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
@@ -86,8 +93,7 @@ async function loadTaskStatuses() {
 }
 
 async function loadAllTags() {
-    // В будущем можно использовать для автодополнения
-    window.allTags = await api.getTags();
+    window.allTags = await window.api.getTags();
 }
 
 function updateTaskContactSelects() {
@@ -98,24 +104,15 @@ function updateTaskContactSelects() {
     if (authorSelect) authorSelect.innerHTML = options;
 }
 
-// --- ОБРАБОТКА ФОРМ ---
-
 async function handleContactFormSubmit(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
     data.tags = window.contactTagManager.getTags();
-
     const id = data.id;
-    let success = id ? await api.updateContact(id, data) : await api.createContact(data);
-    if (success) {
-        closeModal('contact-modal');
-        e.target.reset();
-        loadContacts();
-        loadAllTags();
-    } else {
-        alert('Ошибка при сохранении контакта');
-    }
+    let success = id ? await window.api.updateContact(id, data) : await window.api.createContact(data);
+    if (success) { closeModal('contact-modal'); e.target.reset(); loadContacts(); loadAllTags(); } 
+    else { alert('Ошибка'); }
 }
 
 async function handleTaskFormSubmit(e) {
@@ -123,21 +120,49 @@ async function handleTaskFormSubmit(e) {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
     data.tags = window.taskTagManager.getTags();
-
     const id = data.id;
-    let success = id ? await api.updateTask(id, data) : await api.createTask(data);
-    if (success) {
-        closeModal('task-modal');
-        e.target.reset();
-        loadTasks();
-        loadAllTags();
-    } else {
-        alert('Ошибка при сохранении задачи');
-    }
+    let success = id ? await window.api.updateTask(id, data) : await window.api.createTask(data);
+    if (success) { closeModal('task-modal'); e.target.reset(); loadTasks(); loadAllTags(); } 
+    else { alert('Ошибка'); }
 }
 
-// --- ГЛОБАЛЬНЫЕ ФУНКЦИИ ДЛЯ ВЫЗОВА ИЗ HTML ---
 
+// --- ВАЖНОЕ ИСПРАВЛЕНИЕ: ГЛОБАЛЬНЫЕ ФУНКЦИИ ---
+// Так как вы используете onclick="..." в HTML, функции должны быть в window
+
+window.closeModal = function() {
+    // Для совместимости со старым кодом modal_contact.html
+    closeModal('contact-modal'); 
+};
+
+window.closeTaskModal = function() {
+    // Для совместимости со старым кодом modal_task.html
+    closeModal('task-modal');
+};
+
+// Функция открытия модалки контакта (универсальная)
+window.openModal = function() {
+    // Сброс формы и открытие
+    const form = document.getElementById('contact-form');
+    if(form) {
+        form.reset();
+        form.querySelector('[name="id"]').value = "";
+    }
+    window.contactTagManager.clear();
+    openModal('contact-modal');
+};
+
+window.openTaskModal = function() {
+    const form = document.getElementById('task-form');
+    if(form) {
+        form.reset();
+        form.querySelector('[name="id"]').value = "";
+    }
+    window.taskTagManager.clear();
+    openModal('task-modal');
+};
+
+// ... остальные window.removeTag, window.editContact и т.д. оставляем как были ...
 window.removeTag = function(containerId, index) {
     if (containerId === 'contact-tags-container') window.contactTagManager.removeTag(index);
     if (containerId === 'task-tags-container') window.taskTagManager.removeTag(index);
@@ -147,10 +172,8 @@ window.editContact = (id) => {
     const form = document.getElementById('contact-form');
     openModal('contact-modal');
     window.contactTagManager.clear();
-
     const contact = contactsData.find(c => c.id === id);
     if (!contact) return;
-    
     form.querySelector('[name="id"]').value = contact.id;
     form.querySelector('[name="last_name"]').value = contact.last_name || '';
     form.querySelector('[name="first_name"]').value = contact.first_name || '';
@@ -162,28 +185,19 @@ window.editContact = (id) => {
     form.querySelector('[name="link"]').value = contact.link || '';
     form.querySelector('[name="notes"]').value = contact.notes || '';
     if (contact.type_id) form.querySelector('select[name="type_id"]').value = contact.type_id;
-    
-    if (contact.tags) {
-        window.contactTagManager.addTags(contact.tags.map(t => t.name));
-    }
+    if (contact.tags) window.contactTagManager.addTags(contact.tags.map(t => t.name));
 };
 
 window.deleteContact = async (id) => {
-    if (confirm('Вы уверены, что хотите удалить этот контакт?')) {
-        if (await api.deleteContact(id)) {
-            loadContacts();
-        }
-    }
+    if (confirm('Вы уверены?')) { if (await window.api.deleteContact(id)) loadContacts(); }
 };
 
 window.editTask = (id) => {
     const form = document.getElementById('task-form');
     openModal('task-modal');
     window.taskTagManager.clear();
-
     const task = tasksData.find(t => t.id === id);
     if (!task) return;
-
     form.querySelector('[name="id"]').value = task.id;
     form.querySelector('[name="title"]').value = task.title;
     form.querySelector('[name="due_date"]').value = task.due_date || '';
@@ -191,16 +205,9 @@ window.editTask = (id) => {
     if (task.status_id) form.querySelector('select[name="status_id"]').value = task.status_id;
     form.querySelector('select[name="assignee_id"]').value = task.assignee_id || '';
     form.querySelector('select[name="author_id"]').value = task.author_id || '';
-    
-    if (task.tags) {
-        window.taskTagManager.addTags(task.tags.map(t => t.name));
-    }
+    if (task.tags) window.taskTagManager.addTags(task.tags.map(t => t.name));
 };
 
 window.deleteTask = async (id) => {
-    if (confirm('Вы уверены, что хотите удалить эту задачу?')) {
-        if (await api.deleteTask(id)) {
-            loadTasks();
-        }
-    }
+    if (confirm('Вы уверены?')) { if (await window.api.deleteTask(id)) loadTasks(); }
 };

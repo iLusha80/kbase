@@ -16,8 +16,23 @@ function renderTasks(tasksData) {
         let contactsHtml = '';
         if (t.assignee || t.author) {
             contactsHtml += '<div class="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-1">';
-            if (t.assignee) contactsHtml += `<div class="flex items-center text-xs text-slate-600"><i data-lucide="user" class="w-3 h-3 mr-2 text-primary-600"></i>${t.assignee.last_name}</div>`;
-            if (t.author) contactsHtml += `<div class="flex items-center text-xs text-slate-600"><i data-lucide="crown" class="w-3 h-3 mr-2 text-amber-500"></i>${t.author.last_name}</div>`;
+            
+           // Добавили ${t.assignee.first_name || ''}
+            if (t.assignee) {
+                contactsHtml += `<div class="flex items-center text-xs text-slate-600">
+                    <i data-lucide="user" class="w-3 h-3 mr-2 text-primary-600"></i>
+                    ${t.assignee.last_name} ${t.assignee.first_name || ''}
+                </div>`;
+            }
+            
+            // Добавили ${t.author.first_name || ''}
+            if (t.author) {
+                contactsHtml += `<div class="flex items-center text-xs text-slate-600">
+                    <i data-lucide="crown" class="w-3 h-3 mr-2 text-amber-500"></i>
+                    ${t.author.last_name} ${t.author.first_name || ''}
+                </div>`;
+            }
+            
             contactsHtml += '</div>';
         }
 
