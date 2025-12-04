@@ -1,4 +1,3 @@
-// Объект для работы с API
 const API = {
     async getContacts() {
         try {
@@ -16,6 +15,34 @@ const API = {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
+            });
+            return response.ok;
+        } catch (err) {
+            console.error("API Error:", err);
+            return false;
+        }
+    },
+
+    // Новый метод
+    async updateContact(id, data) {
+        try {
+            const response = await fetch(`/api/contacts/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            return response.ok;
+        } catch (err) {
+            console.error("API Error:", err);
+            return false;
+        }
+    },
+
+    // Новый метод
+    async deleteContact(id) {
+        try {
+            const response = await fetch(`/api/contacts/${id}`, {
+                method: 'DELETE'
             });
             return response.ok;
         } catch (err) {

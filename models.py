@@ -7,6 +7,7 @@ class Contact(db.Model):
     role = db.Column(db.String(100))
     email = db.Column(db.String(100))
     phone = db.Column(db.String(50))
+    link = db.Column(db.String(256))
     notes = db.Column(db.Text)
 
     def to_dict(self):
