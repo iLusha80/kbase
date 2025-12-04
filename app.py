@@ -1,7 +1,7 @@
 import os
 from flask import Flask, render_template, request, jsonify
 from database import db
-from models import Contact
+from models import Contact, ContactType
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///kbase.db'
@@ -9,8 +9,35 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db.init_app(app)
 
-with app.app_context():
+# --- INITIALIZATION ---
+def init_db():
+    """Создает таблицы и заполняет справочники, если они пусты"""
     db.create_all()
+    
+    # Проверяем, есть ли типы контактов
+    if not ContactType.query.first():
+        print("Initializing default Contact Types...")
+        defaults = [
+            {'name': 'Руководство', 'color': '#ef4444'},   # Red
+            {'name': 'Моя команда', 'color': '#10b981'},   # Emerald/Green
+            {'name': 'Контрагенты', 'color': '#3b82f6'},  # Blue
+            {'name': 'Другое', 'color': '#94a3b8'}        # Slate
+        ]
+        
+        for item in defaults:
+            ct = ContactType(name_type=item['name'], render_color=item['color'])
+            db.session.add(ct)
+        
+        try:
+            db.session.commit()
+            print("Contact Types created.")
+        except Exception as e:
+            print(f"Error initializing types: {e}")
+            db.session.rollback()
+
+with app.app_context():
+    init_db()
+
 
 # --- ROUTES ---
 @app.route('/')
@@ -22,8 +49,17 @@ def contacts_page():
     return render_template('index.html')
 
 # --- API ---
+
+# 1. API Types
+@app.route('/api/contact-types', methods=['GET'])
+def get_contact_types():
+    types = ContactType.query.all()
+    return jsonify([t.to_dict() for t in types])
+
+# 2. API Contacts
 @app.route('/api/contacts', methods=['GET'])
 def get_contacts():
+    # Сортировка по фамилии
     contacts = Contact.query.order_by(Contact.last_name, Contact.first_name).all()
     return jsonify([c.to_dict() for c in contacts])
 
@@ -32,6 +68,13 @@ def add_contact():
     data = request.json
     if not data or not data.get('last_name'):
         return jsonify({'error': 'Last name is required'}), 400
+
+    # Если type_id не передан, ищем ID для "Контрагенты" или берем первый попавшийся
+    type_id = data.get('type_id')
+    if not type_id:
+        default_type = ContactType.query.filter_by(name_type='Контрагенты').first()
+        if default_type:
+            type_id = default_type.id
 
     new_contact = Contact(
         last_name=data.get('last_name'),
@@ -42,7 +85,8 @@ def add_contact():
         email=data.get('email'),
         phone=data.get('phone'),
         link=data.get('link'),
-        notes=data.get('notes')
+        notes=data.get('notes'),
+        type_id=type_id
     )
 
     try:
@@ -71,6 +115,9 @@ def update_contact(id):
         contact.phone = data.get('phone', contact.phone)
         contact.link = data.get('link', contact.link)
         contact.notes = data.get('notes', contact.notes)
+        
+        if 'type_id' in data:
+            contact.type_id = data.get('type_id')
         
         db.session.commit()
         return jsonify(contact.to_dict()), 200

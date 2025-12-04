@@ -9,6 +9,17 @@ const API = {
         }
     },
 
+    // Новый метод для типов
+    async getContactTypes() {
+        try {
+            const response = await fetch('/api/contact-types');
+            return await response.json();
+        } catch (err) {
+            console.error("API Error:", err);
+            return [];
+        }
+    },
+
     async createContact(data) {
         try {
             const response = await fetch('/api/contacts', {
@@ -23,7 +34,6 @@ const API = {
         }
     },
 
-    // Новый метод
     async updateContact(id, data) {
         try {
             const response = await fetch(`/api/contacts/${id}`, {
@@ -38,7 +48,6 @@ const API = {
         }
     },
 
-    // Новый метод
     async deleteContact(id) {
         try {
             const response = await fetch(`/api/contacts/${id}`, {

@@ -1,13 +1,17 @@
 let contactsData = [];
+let contactTypes = []; // Глобальная переменная для типов
 
 document.addEventListener('DOMContentLoaded', async () => {
     if (window.lucide) lucide.createIcons();
+    
+    // Сначала грузим справочники, потом данные
+    await loadContactTypes(); 
     await loadContacts();
     
     const form = document.getElementById('contact-form');
     if (form) form.addEventListener('submit', handleFormSubmit);
 
-    // New logic for handling navigation links
+    // Nav logic
     document.querySelectorAll('.nav-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const path = new URL(e.currentTarget.href).pathname;
@@ -51,7 +55,6 @@ function switchView(viewName, addToHistory = true, path) {
     }
 }
 
-
 window.onpopstate = function(event) {
     const path = window.location.pathname;
     let view = 'dashboard';
@@ -63,6 +66,18 @@ window.onpopstate = function(event) {
 
 
 // --- DATA LOGIC ---
+
+async function loadContactTypes() {
+    contactTypes = await API.getContactTypes();
+    // Наполняем селект в модалке один раз при загрузке
+    const select = document.querySelector('select[name="type_id"]');
+    if (select && contactTypes.length > 0) {
+        select.innerHTML = contactTypes.map(t => 
+            `<option value="${t.id}">${t.name_type}</option>`
+        ).join('');
+    }
+}
+
 async function loadContacts() {
     contactsData = await API.getContacts();
     renderContactList();
@@ -91,22 +106,31 @@ function renderContactList() {
     tbody.innerHTML = filtered.map(c => {
         const fullName = [c.last_name, c.first_name, c.middle_name].filter(Boolean).join(' ');
         const initial = c.last_name ? c.last_name.charAt(0).toUpperCase() : '?';
-
+        
+        // Логика цвета
+        const typeColor = c.type ? c.type.render_color : '#cbd5e1'; // дефолтный серый
+        const typeName = c.type ? c.type.name_type : '';
+        
+        // Применяем стиль border-left прямо к строке
         return `
-        <tr class="hover:bg-slate-50 transition-colors group">
+        <tr class="hover:bg-slate-50 transition-colors group" style="border-left: 4px solid ${typeColor};">
             <td class="px-6 py-4">
                 <div class="flex items-center">
                     <div class="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold mr-3 text-slate-600">
                         ${initial}
                     </div>
-                    <div class="text-sm font-medium text-slate-900">
-                        ${fullName}
-                        ${getLinkHtml(c.link)}
+                    <div>
+                        <div class="text-sm font-medium text-slate-900">
+                            ${fullName}
+                            ${getLinkHtml(c.link)}
+                        </div>
+                        <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">${typeName}</div>
                     </div>
                 </div>
             </td>
             <td class="px-6 py-4">
                 <div class="text-sm text-slate-900">${c.department || '-'}
+                <div class="text-xs text-slate-500">${c.role || ''}</div>
             </td>
             <td class="px-6 py-4 text-sm text-slate-500">
                 <div>${c.email || ''}</div>
@@ -137,6 +161,7 @@ function openModal(contactId = null) {
     const modal = document.getElementById('contact-modal');
     const form = document.getElementById('contact-form');
     const titleText = document.getElementById('modal-title-text');
+    const typeSelect = form.querySelector('select[name="type_id"]');
 
     modal.classList.remove('hidden');
 
@@ -155,10 +180,22 @@ function openModal(contactId = null) {
         form.querySelector('[name="phone"]').value = contact.phone || '';
         form.querySelector('[name="link"]').value = contact.link || '';
         form.querySelector('[name="notes"]').value = contact.notes || '';
+        
+        // Установка типа
+        if (contact.type_id) {
+            typeSelect.value = contact.type_id;
+        }
+
     } else {
         titleText.textContent = "Новый контакт";
         form.reset();
         form.querySelector('[name="id"]').value = "";
+        
+        // Установка дефолтного значения (Контрагенты)
+        const defaultType = contactTypes.find(t => t.name_type === 'Контрагенты');
+        if (defaultType) {
+            typeSelect.value = defaultType.id;
+        }
     }
 }
 
