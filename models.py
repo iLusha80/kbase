@@ -84,7 +84,7 @@ class Task(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     due_date = db.Column(db.Date, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now())
     status_id = db.Column(db.Integer, db.ForeignKey('task_statuses.id'), nullable=False)
     assignee_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), nullable=True)
     author_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), nullable=True)

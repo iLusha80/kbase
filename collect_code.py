@@ -30,11 +30,20 @@ def is_ignored(path):
             return True
     return False
 
+# функция которая проверяет есть ли старый текстовый файл и переименовыает его как - pref_vers_project_code.txt
+def rename_old_file() -> bool:
+    if os.path.exists(OUTPUT_FILE):
+        os.rename(OUTPUT_FILE, f"pref_vers_{OUTPUT_FILE}")
+        return True
+    return False
 
 def collect_project_code():
     root_dir = os.getcwd()  # Текущая папка запуска
 
     print(f"🚀 Начинаю сбор кода из: {root_dir}")
+
+    if rename_old_file():
+        print(f"✅ Старый текстовый файл переименован как: pref_vers_{OUTPUT_FILE}")
 
     with open(OUTPUT_FILE, 'w', encoding='utf-8') as outfile:
         # Проходим по дереву каталогов
@@ -58,9 +67,7 @@ def collect_project_code():
                             content = infile.read()
 
                             # Пишем заголовок
-                            outfile.write("=" * 60 + "\n")
-                            outfile.write(f"FILE START: {relative_path}\n")
-                            outfile.write("=" * 60 + "\n")
+                            outfile.write(f"# FILE START: {relative_path}\n")
 
                             # Пишем код
                             outfile.write(content + "\n\n")
