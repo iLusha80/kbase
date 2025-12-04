@@ -1,17 +1,12 @@
 {% extends 'base.html' %}
 
 {% block content %}
-
     <!-- Вьюхи (Views) -->
     {% include 'partials/view_dashboard.html' %}
     {% include 'partials/view_contacts.html' %}
+    {% include 'partials/view_tasks.html' %} <!-- Подключили Tasks -->
 
-    <!-- Заглушки (Placeholders) -->
-    <div id="view-tasks" class="view-section hidden text-center py-20 text-slate-400">
-        <i data-lucide="clock" class="w-12 h-12 mx-auto mb-4"></i>
-        <h2 class="text-xl font-semibold">Раздел Задач в разработке</h2>
-    </div>
-
+    <!-- Заглушки -->
     <div id="view-kb" class="view-section hidden text-center py-20 text-slate-400">
         <i data-lucide="hammer" class="w-12 h-12 mx-auto mb-4"></i>
         <h2 class="text-xl font-semibold">База Знаний проектируется</h2>
@@ -19,5 +14,5 @@
 
     <!-- Модальные окна -->
     {% include 'partials/modal_contact.html' %}
-
+    {% include 'partials/modal_task.html' %} <!-- Подключили Modal Tasks -->
 {% endblock %}

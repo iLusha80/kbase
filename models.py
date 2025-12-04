@@ -1,39 +1,33 @@
 from database import db
+from datetime import datetime
 
-
+# --- CONTACT MODELS ---
 class ContactType(db.Model):
     __tablename__ = 'contact_types'
-    
+
     id = db.Column(db.Integer, primary_key=True)
     name_type = db.Column(db.String(50), nullable=False, unique=True)
-    render_color = db.Column(db.String(20), default='#cbd5e1') # Default slate color
-    
-    # Связь с контактами (для удобства, если понадобится обратный доступ)
+    render_color = db.Column(db.String(20), default='#cbd5e1')
     contacts = db.relationship('Contact', backref='contact_type', lazy=True)
 
     def to_dict(self):
-        return {
-            'id': self.id,
-            'name_type': self.name_type,
-            'render_color': self.render_color
-        }
+        return {'id': self.id, 'name_type': self.name_type, 'render_color': self.render_color}
 
 class Contact(db.Model):
     __tablename__ = 'contacts'
 
     id = db.Column(db.Integer, primary_key=True)
+
     last_name = db.Column(db.String(100), nullable=False)
     first_name = db.Column(db.String(100), nullable=True)
     middle_name = db.Column(db.String(100), nullable=True)
-    
+
     department = db.Column(db.String(100))
     role = db.Column(db.String(100))
     email = db.Column(db.String(100))
     phone = db.Column(db.String(50))
     link = db.Column(db.String(256))
     notes = db.Column(db.Text)
-    
-    # Внешний ключ на тип контакта
     type_id = db.Column(db.Integer, db.ForeignKey('contact_types.id'), nullable=True)
 
     def to_dict(self):
@@ -50,4 +44,51 @@ class Contact(db.Model):
             'notes': self.notes,
             'type': self.contact_type.to_dict() if self.contact_type else None,
             'type_id': self.type_id
+        }
+
+# --- TASK MODELS ---
+class TaskStatus(db.Model):
+    __tablename__ = 'task_statuses'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(50), nullable=False, unique=True)
+    color = db.Column(db.String(20), default='#94a3b8') # Default slate
+    
+    tasks = db.relationship('Task', backref='status', lazy=True)
+
+    def to_dict(self):
+        return {'id': self.id, 'name': self.name, 'color': self.color}
+
+class Task(db.Model):
+    __tablename__ = 'tasks'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    due_date = db.Column(db.Date, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    # Foreign Keys
+    status_id = db.Column(db.Integer, db.ForeignKey('task_statuses.id'), nullable=False)
+    
+    # Связи с контактами (Исполнитель и Заказчик)
+    assignee_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), nullable=True)
+    author_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), nullable=True)
+
+    # Relationships с указанием foreign_keys, так как две связи на одну таблицу
+    assignee = db.relationship('Contact', foreign_keys=[assignee_id], backref='tasks_assigned')
+    author = db.relationship('Contact', foreign_keys=[author_id], backref='tasks_authored')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'due_date': self.due_date.isoformat() if self.due_date else None,
+            'status': self.status.to_dict() if self.status else None,
+            'status_id': self.status_id,
+            # Возвращаем краткую инфу по людям
+            'assignee': self.assignee.to_dict() if self.assignee else None,
+            'assignee_id': self.assignee_id,
+            'author': self.author.to_dict() if self.author else None,
+            'author_id': self.author_id
         }
