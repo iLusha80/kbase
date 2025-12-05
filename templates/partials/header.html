@@ -14,6 +14,10 @@
                 <a href="/" id="nav-dashboard" data-view="dashboard" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors">
                     <i data-lucide="layout" class="w-4 h-4 mr-2"></i> <span>Главная</span>
                 </a>
+                <!-- NEW PROJECTS LINK -->
+                <a href="/projects" id="nav-projects" data-view="projects" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors">
+                    <i data-lucide="briefcase" class="w-4 h-4 mr-2"></i> <span>Проекты</span>
+                </a>
                 <a href="/contacts" id="nav-contacts" data-view="contacts" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors">
                     <i data-lucide="users" class="w-4 h-4 mr-2"></i> <span>Контакты</span>
                 </a>
@@ -26,19 +30,10 @@
             <div class="h-6 w-px bg-slate-200 dark:bg-slate-700 mx-2"></div>
 
             <!-- ПЕРЕКЛЮЧАТЕЛЬ ТЕМЫ -->
-            <!-- 
-               Изменения для заметности:
-               1. dark:bg-slate-700 - явный фон, светлее шапки
-               2. dark:border dark:border-slate-600 - рамка для четкости
-               3. dark:text-yellow-300 - кислотно-желтый цвет иконки
-            -->
             <button id="theme-toggle" class="p-2 rounded-md transition-all focus:outline-none 
                 text-slate-500 hover:bg-slate-100 
                 dark:text-yellow-300 dark:bg-slate-700 dark:border dark:border-slate-600 dark:hover:bg-slate-600 dark:hover:text-yellow-200">
-                
-                <!-- Иконка солнца (для темной темы) -->
                 <i data-lucide="sun" class="w-5 h-5 hidden dark:block"></i>
-                <!-- Иконка луны (для светлой темы) -->
                 <i data-lucide="moon" class="w-5 h-5 block dark:hidden"></i>
             </button>
         </div>

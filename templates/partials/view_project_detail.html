@@ -1,0 +1,42 @@
+<div id="view-project-detail" class="view-section hidden">
+    <!-- Хедер проекта -->
+    <div class="mb-6">
+        <button onclick="switchView('projects')" class="mb-2 text-sm text-slate-500 hover:text-slate-800 flex items-center dark:text-slate-400 dark:hover:text-white">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> Назад к списку
+        </button>
+        <div class="flex justify-between items-start">
+            <div>
+                <h2 id="p-detail-title" class="text-3xl font-bold text-slate-900 dark:text-white">Название проекта</h2>
+                <p id="p-detail-desc" class="text-slate-500 mt-1 dark:text-slate-400">Описание...</p>
+            </div>
+            <div class="flex gap-2">
+                <button id="p-detail-edit-btn" class="p-2 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400"><i data-lucide="edit-2" class="w-5 h-5"></i></button>
+                <button id="p-detail-delete-btn" class="p-2 text-slate-400 hover:text-red-600 dark:hover:text-red-400"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Левая колонка: Задачи -->
+        <div class="lg:col-span-2">
+            <h3 class="font-semibold text-lg mb-4 text-slate-800 dark:text-white flex items-center">
+                <i data-lucide="check-square" class="w-5 h-5 mr-2 text-primary-600"></i> Задачи проекта
+            </h3>
+            <div id="p-detail-tasks" class="space-y-3">
+                <!-- Tasks will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Правая колонка: Команда -->
+        <div>
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 dark:bg-slate-800 dark:border-slate-700">
+                <h3 class="font-semibold text-lg mb-4 text-slate-800 dark:text-white flex items-center">
+                    <i data-lucide="users" class="w-5 h-5 mr-2 text-blue-600"></i> Команда
+                </h3>
+                <div id="p-detail-team" class="space-y-4">
+                    <!-- Team members here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

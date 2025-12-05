@@ -1,49 +1,64 @@
-<div id="task-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeTaskModal()"></div>
+<div id="contact-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeModal('contact-modal')"></div>
     <div class="flex min-h-screen items-center justify-center p-4">
         <div class="relative bg-white rounded-lg shadow-xl max-w-lg w-full p-6 fade-in dark:bg-slate-800 dark:border dark:border-slate-700">
             <h3 class="text-lg font-semibold mb-4 flex items-center text-slate-900 dark:text-white">
-                <i data-lucide="check-circle" class="w-5 h-5 mr-2 text-primary-600 dark:text-primary-400"></i> <span id="task-modal-title-text">Новая задача</span>
+                <i data-lucide="user-plus" class="w-5 h-5 mr-2 text-primary-600 dark:text-primary-400"></i> 
+                <span id="contact-modal-title">Контакт</span>
             </h3>
-            <form id="task-form">
+            
+            <form id="contact-form">
                 <input type="hidden" name="id" value="">
-                
+
                 <div class="space-y-4">
-                    <input name="title" required placeholder="Что нужно сделать?" class="w-full border border-slate-300 p-2 rounded text-sm font-medium focus:border-primary-600 focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500">
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Статус</label>
-                            <select name="status_id" class="w-full border border-slate-300 p-2 rounded text-sm bg-slate-50 focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white"></select>
+                    <!-- ФИО -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div class="col-span-1 md:col-span-1">
+                            <input name="last_name" required placeholder="Фамилия *" class="w-full border border-slate-300 p-2 rounded text-sm font-medium focus:border-primary-600 focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500">
                         </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Срок</label>
-                            <input name="due_date" type="date" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+                        <div class="col-span-1 md:col-span-1">
+                            <input name="first_name" placeholder="Имя" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500">
                         </div>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Исполнитель</label>
-                            <select name="assignee_id" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white"></select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Заказчик</label>
-                            <select name="author_id" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white"></select>
+                        <div class="col-span-1 md:col-span-1">
+                            <input name="middle_name" placeholder="Отчество" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500">
                         </div>
                     </div>
 
-                    <!-- TAGS INPUT CONTAINER -->
-                    <div id="task-tags-container" class="border border-slate-300 p-2 rounded text-sm bg-slate-50 dark:bg-slate-900 dark:border-slate-600">
+                    <!-- Тип и Должность -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Тип контакта</label>
+                            <select name="type_id" class="w-full border border-slate-300 p-2 rounded text-sm bg-slate-50 focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+                                <!-- JS заполнит это -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Должность</label>
+                            <input name="role" placeholder="Напр. Менеджер" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+                        </div>
+                    </div>
+
+                    <input name="department" placeholder="Департамент / Компания" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500">
+
+                    <!-- Контакты -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <input name="email" type="email" placeholder="Email" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500">
+                        <input name="phone" placeholder="Телефон" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500">
+                    </div>
+
+                    <input name="link" placeholder="Ссылка (Telegram, LinkedIn, Site...)" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500">
+
+                    <!-- TAGS INPUT CONTAINER (ID должен быть contact-tags-container) -->
+                    <div id="contact-tags-container" class="border border-slate-300 p-2 rounded text-sm bg-slate-50 dark:bg-slate-900 dark:border-slate-600">
                         <div class="tags-render-area flex flex-wrap mb-1"></div>
                         <input type="text" placeholder="+ Тег (Enter)" class="w-full bg-transparent focus:outline-none text-slate-700 placeholder-slate-400 dark:text-white dark:placeholder-slate-500">
                     </div>
 
-                    <textarea name="description" placeholder="Детали задачи..." class="w-full border border-slate-300 p-2 rounded text-sm dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" rows="4"></textarea>
+                    <textarea name="notes" placeholder="Заметки..." class="w-full border border-slate-300 p-2 rounded text-sm dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" rows="3"></textarea>
                 </div>
 
                 <div class="mt-6 flex justify-end gap-3">
-                    <button type="button" onclick="closeTaskModal()" class="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded text-sm font-medium dark:text-slate-300 dark:hover:bg-slate-700">Отмена</button>
+                    <button type="button" onclick="closeModal('contact-modal')" class="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded text-sm font-medium dark:text-slate-300 dark:hover:bg-slate-700">Отмена</button>
                     <button type="submit" class="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded text-sm font-medium dark:bg-primary-600 dark:hover:bg-primary-500">Сохранить</button>
                 </div>
             </form>

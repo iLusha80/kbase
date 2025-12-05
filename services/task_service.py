@@ -27,7 +27,8 @@ def create_task(data):
         title=data.get('title'), description=data.get('description'),
         due_date=due_date, status_id=status_id,
         assignee_id=data.get('assignee_id') or None,
-        author_id=data.get('author_id') or None
+        author_id=data.get('author_id') or None,
+        project_id=data.get('project_id') or None # NEW
     )
 
     if 'tags' in data:
@@ -47,6 +48,8 @@ def update_task(task_id, data):
     if 'status_id' in data: t.status_id = data.get('status_id')
     if 'assignee_id' in data: t.assignee_id = data.get('assignee_id') or None
     if 'author_id' in data: t.author_id = data.get('author_id') or None
+    if 'project_id' in data: t.project_id = data.get('project_id') or None # NEW
+    
     if 'due_date' in data:
         if data['due_date']:
             try: t.due_date = datetime.strptime(data['due_date'], '%Y-%m-%d').date()

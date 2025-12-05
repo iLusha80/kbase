@@ -1,7 +1,7 @@
 from database import db
 from datetime import datetime
 
-# --- ASSOCIATION TABLES (Many-to-Many) ---
+# --- ASSOCIATION TABLES ---
 contact_tags = db.Table('contact_tags',
     db.Column('contact_id', db.Integer, db.ForeignKey('contacts.id'), primary_key=True),
     db.Column('tag_id', db.Integer, db.ForeignKey('tags.id'), primary_key=True)
@@ -12,6 +12,17 @@ task_tags = db.Table('task_tags',
     db.Column('tag_id', db.Integer, db.ForeignKey('tags.id'), primary_key=True)
 )
 
+# --- NEW: ASSOCIATION OBJECT FOR PROJECT-CONTACTS (With Role) ---
+class ProjectContact(db.Model):
+    __tablename__ = 'project_contacts'
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), primary_key=True)
+    contact_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), primary_key=True)
+    role = db.Column(db.String(100)) # Роль человека в проекте
+
+    # Relationships
+    contact = db.relationship("Contact", back_populates="project_associations")
+    project = db.relationship("Project", back_populates="contact_associations")
+
 # --- TAG MODEL ---
 class Tag(db.Model):
     __tablename__ = 'tags'
@@ -20,6 +31,34 @@ class Tag(db.Model):
 
     def to_dict(self):
         return {'id': self.id, 'name': self.name}
+
+# --- PROJECT MODEL (NEW) ---
+class Project(db.Model):
+    __tablename__ = 'projects'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text)
+    status = db.Column(db.String(50), default='Active') # Active, Archived, etc.
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    tasks = db.relationship('Task', backref='project', lazy=True)
+    contact_associations = db.relationship("ProjectContact", back_populates="project", cascade="all, delete-orphan")
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'description': self.description,
+            'status': self.status,
+            'tasks_count': len(self.tasks),
+            # Return list of contacts with their roles
+            'team': [{
+                'contact_id': pc.contact.id,
+                'name': f"{pc.contact.last_name} {pc.contact.first_name or ''}".strip(),
+                'role': pc.role
+            } for pc in self.contact_associations]
+        }
 
 # --- CONTACT MODELS ---
 class ContactType(db.Model):
@@ -49,6 +88,9 @@ class Contact(db.Model):
     # Relationship to Tags
     tags = db.relationship('Tag', secondary=contact_tags, lazy='subquery',
         backref=db.backref('contacts', lazy=True))
+    
+    # Relationship to Projects (via Association Object)
+    project_associations = db.relationship("ProjectContact", back_populates="contact")
 
     def to_dict(self):
         return {
@@ -64,7 +106,7 @@ class Contact(db.Model):
             'notes': self.notes,
             'type': self.contact_type.to_dict() if self.contact_type else None,
             'type_id': self.type_id,
-            'tags': [tag.to_dict() for tag in self.tags] # Return tags list
+            'tags': [tag.to_dict() for tag in self.tags]
         }
 
 # --- TASK MODELS ---
@@ -84,10 +126,13 @@ class Task(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     due_date = db.Column(db.Date, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.now())
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
     status_id = db.Column(db.Integer, db.ForeignKey('task_statuses.id'), nullable=False)
     assignee_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), nullable=True)
     author_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), nullable=True)
+    
+    # NEW: Project Link
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
 
     assignee = db.relationship('Contact', foreign_keys=[assignee_id], backref='tasks_assigned')
     author = db.relationship('Contact', foreign_keys=[author_id], backref='tasks_authored')
@@ -108,5 +153,7 @@ class Task(db.Model):
             'assignee_id': self.assignee_id,
             'author': self.author.to_dict() if self.author else None,
             'author_id': self.author_id,
-            'tags': [tag.to_dict() for tag in self.tags] # Return tags list
+            'project_id': self.project_id,
+            'project_title': self.project.title if self.project else None,
+            'tags': [tag.to_dict() for tag in self.tags]
         }

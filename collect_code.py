@@ -56,7 +56,7 @@ def collect_project_code():
                 ext = os.path.splitext(filename)[1].lower()
 
                 # Если расширение подходит и не сам скрипт сборки/вывода
-                if ext in INCLUDE_EXTS and filename != OUTPUT_FILE and filename != 'collect_code.py':
+                if ext in INCLUDE_EXTS and filename != OUTPUT_FILE and filename not in ['collect_code.py', 'pref_vers_all_project_code.txt']:
                     file_path = os.path.join(dirpath, filename)
 
                     # Получаем относительный путь для красивого заголовка (например backend/app.py)

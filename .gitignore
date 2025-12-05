@@ -8,5 +8,7 @@ __pycache__
 
 # My local
 all_project_code.txt
+pref_vers_all_project_code.txt
 collect_code.py
 /instance
+ideas.md

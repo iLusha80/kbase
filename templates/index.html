@@ -4,7 +4,11 @@
     <!-- Вьюхи (Views) -->
     {% include 'partials/view_dashboard.html' %}
     {% include 'partials/view_contacts.html' %}
-    {% include 'partials/view_tasks.html' %} <!-- Подключили Tasks -->
+    {% include 'partials/view_tasks.html' %}
+    
+    <!-- NEW: Project Views -->
+    {% include 'partials/view_projects.html' %}
+    {% include 'partials/view_project_detail.html' %}
 
     <!-- Заглушки -->
     <div id="view-kb" class="view-section hidden text-center py-20 text-slate-400">
@@ -14,5 +18,6 @@
 
     <!-- Модальные окна -->
     {% include 'partials/modal_contact.html' %}
-    {% include 'partials/modal_task.html' %} <!-- Подключили Modal Tasks -->
+    {% include 'partials/modal_task.html' %}
+    {% include 'partials/modal_project.html' %} <!-- NEW -->
 {% endblock %}
