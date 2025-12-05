@@ -1,5 +1,5 @@
 import random
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from app import app, db
 from models import (
     Contact, ContactType, Tag, Project, ProjectContact, 
@@ -119,7 +119,8 @@ def generate_data():
         for i in range(15):
             # Случайные даты (от -5 дней до +14 дней)
             delta = random.randint(-5, 14)
-            due = datetime.utcnow().date() + timedelta(days=delta)
+            # ИСПОЛЬЗУЕМ timezone.utc вместо datetime.utcnow()
+            due = datetime.now(timezone.utc).date() + timedelta(days=delta)
             
             # Случайные участники
             author = random.choice(contacts)
@@ -130,7 +131,7 @@ def generate_data():
             
             t = Task(
                 title=task_titles[i],
-                description=f"Описание для задачи '{task_titles[i]}'. Нужно сделать качественно и в срок.",
+                description=f"Описание задачи '{task_titles[i]}'. Нужно сделать качественно.",
                 due_date=due,
                 status_id=random.choice(statuses).id,
                 author_id=author.id,
