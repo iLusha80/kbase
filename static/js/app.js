@@ -5,7 +5,7 @@ import { renderTasks } from './components/TaskList.js';
 import { renderContacts } from './components/ContactList.js';
 import TagManager from './components/TagManager.js';
 import ThemeManager from './components/ThemeManager.js';
-import ProjectContactManager from './components/ProjectContactManager.js'; // NEW
+import ProjectContactManager from './components/ProjectContactManager.js';
 
 let contactsData = [];
 let tasksData = [];
@@ -33,8 +33,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.contactTagManager = new TagManager('contact-tags-container');
     window.taskTagManager = new TagManager('task-tags-container');
-    
-    // Менеджер команды проекта (инициализируем позже, когда загрузим контакты)
     window.projectContactManager = null;
 
     // --- ПОИСК ---
@@ -59,13 +57,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     });
 
+    // POPSTATE (Кнопка Назад)
     window.addEventListener('popstate', (event) => {
-        const path = window.location.pathname;
-        let view = 'dashboard';
-        if (path === '/contacts') view = 'contacts';
-        else if (path === '/tasks') view = 'tasks';
-        else if (path === '/projects') view = 'projects';
-        switchView(view, false);
+        handleUrlRouting(false);
     });
     
     // Forms
@@ -75,23 +69,43 @@ document.addEventListener('DOMContentLoaded', async () => {
     const taskForm = document.getElementById('task-form');
     if (taskForm) taskForm.addEventListener('submit', handleTaskFormSubmit);
 
-    // NEW: Project Form
     const projectForm = document.getElementById('project-form');
     if (projectForm) projectForm.addEventListener('submit', handleProjectFormSubmit);
 
     await loadInitialData();
     
-    // Init Manager after contacts loaded
     window.projectContactManager = new ProjectContactManager('project-team-container', contactsData);
 
-    // Initial View
+    // Initial View (Обработка URL при загрузке)
+    handleUrlRouting(false);
+});
+
+// --- ЛОГИКА МАРШРУТИЗАЦИИ URL ---
+function handleUrlRouting(addToHistory = false) {
     const path = window.location.pathname;
     let initialView = 'dashboard';
+
+    // Простая проверка путей
     if (path === '/contacts') initialView = 'contacts';
-    if (path === '/tasks') initialView = 'tasks';
-    if (path === '/projects') initialView = 'projects';
-    switchView(initialView, false);
-});
+    else if (path === '/tasks') initialView = 'tasks';
+    else if (path === '/projects') initialView = 'projects';
+    else if (path === '/kb') initialView = 'kb';
+    
+    // Проверка детальных путей (например, /projects/1)
+    const projectMatch = path.match(/^\/projects\/(\d+)$/);
+    if (projectMatch) {
+        // Если это страница проекта, сначала грузим вьюху проектов, потом открываем проект
+        // Но так как openProjectDetail требует клика, нам нужно вызвать его программно
+        const projectId = projectMatch[1];
+        // Сначала переключим на проекты, чтобы было куда возвращаться
+        switchView('projects', false); 
+        // Открываем детальную
+        window.openProjectDetail(projectId);
+        return; 
+    }
+
+    switchView(initialView, addToHistory);
+}
 
 async function loadInitialData() {
     await Promise.all([
@@ -100,7 +114,7 @@ async function loadInitialData() {
         loadAllTags(),
         loadContacts(),
         loadTasks(),
-        loadProjects() // NEW
+        loadProjects()
     ]);
 }
 
@@ -108,7 +122,6 @@ async function loadContacts() {
     contactsData = await window.api.getContacts();
     renderContacts(contactsData);
     updateTaskContactSelects();
-    // Обновим список в менеджере команд, если он уже создан
     if (window.projectContactManager) {
         window.projectContactManager.contactsList = contactsData;
     }
@@ -125,7 +138,6 @@ async function loadProjects() {
     updateTaskProjectSelect();
 }
 
-// ... (loadContactTypes, loadTaskStatuses, loadAllTags без изменений) ...
 async function loadContactTypes() {
     const contactTypes = await window.api.getContactTypes();
     const select = document.querySelector('select[name="type_id"]');
@@ -162,7 +174,6 @@ function updateTaskProjectSelect() {
     }
 }
 
-// --- RENDER PROJECTS ---
 function renderProjectsList() {
     const container = document.getElementById('projects-container');
     if (!container) return;
@@ -189,20 +200,15 @@ function renderProjectsList() {
     if (window.lucide) lucide.createIcons();
 }
 
-// --- PROJECT DETAIL LOGIC ---
 window.openProjectDetail = async (id) => {
-    // Получаем полные данные (включая задачи)
     const p = await window.api.getProject(id);
     if (!p) return;
 
     document.getElementById('p-detail-title').innerText = p.title;
     document.getElementById('p-detail-desc').innerText = p.description || '';
-    
-    // Кнопки управления
     document.getElementById('p-detail-edit-btn').onclick = () => window.editProject(p.id);
     document.getElementById('p-detail-delete-btn').onclick = () => window.deleteProject(p.id);
 
-    // Рендер команды
     const teamContainer = document.getElementById('p-detail-team');
     if (p.team && p.team.length > 0) {
         teamContainer.innerHTML = p.team.map(m => `
@@ -222,10 +228,8 @@ window.openProjectDetail = async (id) => {
         teamContainer.innerHTML = '<div class="text-sm text-slate-400 italic">Нет участников</div>';
     }
 
-    // Рендер задач (переиспользуем логику renderTasks, но вручную для этого контейнера)
     const tasksContainer = document.getElementById('p-detail-tasks');
     if (p.tasks_list && p.tasks_list.length > 0) {
-        // Простая отрисовка списка задач
         tasksContainer.innerHTML = p.tasks_list.map(t => `
             <div class="bg-white border border-slate-200 rounded p-3 flex justify-between items-center hover:shadow-sm dark:bg-slate-800 dark:border-slate-700">
                 <div class="flex items-center gap-3">
@@ -248,13 +252,10 @@ window.openProjectDetail = async (id) => {
     switchView('project-detail', true, `/projects/${id}`);
 };
 
-// --- HANDLERS ---
 async function handleProjectFormSubmit(e) {
     e.preventDefault();
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
-    
-    // Собираем команду из менеджера
     data.team = window.projectContactManager.getTeam();
 
     const id = data.id;
@@ -263,7 +264,6 @@ async function handleProjectFormSubmit(e) {
         closeModal('project-modal'); 
         e.target.reset(); 
         loadProjects(); 
-        // Если мы были в детальке, обновим её
         if (id && !document.getElementById('view-project-detail').classList.contains('hidden')) {
             openProjectDetail(id);
         }
@@ -299,7 +299,6 @@ async function handleTaskFormSubmit(e) {
         e.target.reset(); 
         loadTasks(); 
         loadAllTags(); 
-        // Если мы в проекте, обновим список задач там тоже (грубо, перезагрузкой детальки)
         if (data.project_id && !document.getElementById('view-project-detail').classList.contains('hidden')) {
              openProjectDetail(data.project_id);
         }
@@ -307,7 +306,6 @@ async function handleTaskFormSubmit(e) {
     else { alert('Ошибка'); }
 }
 
-// Global Helpers
 window.closeModal = function(id) { document.getElementById(id).classList.add('hidden'); };
 window.closeTaskModal = function() { closeModal('task-modal'); };
 window.closeProjectModal = function() { closeModal('project-modal'); };
@@ -333,13 +331,11 @@ window.openProjectModal = function() {
     document.getElementById('project-modal').classList.remove('hidden');
 };
 
-// ... removeTag ...
 window.removeTag = function(containerId, index) {
     if (containerId === 'contact-tags-container') window.contactTagManager.removeTag(index);
     if (containerId === 'task-tags-container') window.taskTagManager.removeTag(index);
 };
 
-// ... editContact / deleteContact ... (оставляем старые)
 window.editContact = (id) => {
     const form = document.getElementById('contact-form');
     document.getElementById('contact-modal').classList.remove('hidden');
@@ -364,7 +360,6 @@ window.deleteContact = async (id) => {
     if (confirm('Вы уверены?')) { if (await window.api.deleteContact(id)) loadContacts(); }
 };
 
-// Updated editTask to load project_id
 window.editTask = (id) => {
     const form = document.getElementById('task-form');
     document.getElementById('task-modal').classList.remove('hidden');
@@ -378,7 +373,7 @@ window.editTask = (id) => {
     if (task.status_id) form.querySelector('select[name="status_id"]').value = task.status_id;
     form.querySelector('select[name="assignee_id"]').value = task.assignee_id || '';
     form.querySelector('select[name="author_id"]').value = task.author_id || '';
-    if (task.project_id) form.querySelector('select[name="project_id"]').value = task.project_id; // NEW
+    if (task.project_id) form.querySelector('select[name="project_id"]').value = task.project_id;
     if (task.tags) window.taskTagManager.addTags(task.tags.map(t => t.name));
 };
 
@@ -397,7 +392,6 @@ window.editProject = async (id) => {
     form.querySelector('[name="title"]').value = p.title;
     form.querySelector('[name="description"]').value = p.description || '';
     
-    // Заполняем команду
     window.projectContactManager.setTeam(p.team || []);
 };
 
