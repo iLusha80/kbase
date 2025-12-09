@@ -128,7 +128,7 @@ class Task(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     due_date = db.Column(db.Date, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now())
     status_id = db.Column(db.Integer, db.ForeignKey('task_statuses.id'), nullable=False)
     assignee_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), nullable=True)
     author_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), nullable=True)
@@ -158,4 +158,22 @@ class Task(db.Model):
             'project_id': self.project_id,
             'project_title': self.project.title if self.project else None,
             'tags': [tag.to_dict() for tag in self.tags]
+        }
+
+
+# --- QUICK LINK MODEL (NEW) ---
+class QuickLink(db.Model):
+    __tablename__ = 'quick_links'
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    url = db.Column(db.String(500), nullable=False)
+    icon = db.Column(db.String(50), default='link') # Название иконки из Lucide (напр. 'trello', 'git-branch')
+    created_at = db.Column(db.DateTime, default=datetime.now())
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'url': self.url,
+            'icon': self.icon
         }

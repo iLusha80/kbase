@@ -5,6 +5,8 @@ from services.dashboard_service import (
     get_top_active_projects,
     global_search
 )
+from models import QuickLink # NEW IMPORT
+from database import db # NEW IMPORT
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -15,13 +17,12 @@ def get_dashboard_data():
     priority = get_priority_tasks()
     waiting = get_waiting_tasks()
     projects = get_top_active_projects()
+    # NEW: Fetch links
+    links = QuickLink.query.order_by(QuickLink.created_at).all()
     
-    # Формируем ответ, обогащая проекты счетчиком активных задач для UI
     projects_data = []
     for p in projects:
         p_dict = p.to_dict()
-        # Для UI полезно знать, почему этот проект в топе (кол-во активных задач)
-        # Считаем "на лету" для простоты, так как выборка уже маленькая (3 шт)
         active_count = sum(1 for t in p.tasks if t.status and t.status.name in ['В работе', 'К выполнению'])
         p_dict['active_work_count'] = active_count
         projects_data.append(p_dict)
@@ -29,7 +30,8 @@ def get_dashboard_data():
     return jsonify({
         'priority_tasks': [t.to_dict() for t in priority],
         'waiting_tasks': [t.to_dict() for t in waiting],
-        'top_projects': projects_data
+        'top_projects': projects_data,
+        'quick_links': [l.to_dict() for l in links] # NEW
     })
 
 @dashboard_bp.route('/search', methods=['GET'])
@@ -37,3 +39,30 @@ def search_route():
     query = request.args.get('q', '')
     results = global_search(query)
     return jsonify(results)
+
+# --- NEW: QUICK LINKS CRUD ---
+
+@dashboard_bp.route('/quick-links', methods=['POST'])
+def add_quick_link():
+    data = request.json
+    if not data.get('title') or not data.get('url'):
+        return jsonify({'error': 'Title and URL required'}), 400
+    
+    link = QuickLink(
+        title=data['title'],
+        url=data['url'],
+        icon=data.get('icon', 'link')
+    )
+    db.session.add(link)
+    db.session.commit()
+    return jsonify(link.to_dict()), 201
+
+@dashboard_bp.route('/quick-links/<int:link_id>', methods=['DELETE'])
+def delete_quick_link(link_id):
+    link = QuickLink.query.get(link_id)
+    if not link:
+        return jsonify({'error': 'Not found'}), 404
+    
+    db.session.delete(link)
+    db.session.commit()
+    return jsonify({'message': 'Deleted'}), 200

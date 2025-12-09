@@ -436,3 +436,18 @@ window.deleteProject = async (id) => {
         }
     }
 };
+
+// NEW: Quick Link Helpers
+window.openQuickLinkModal = function() {
+    const form = document.getElementById('quick-link-form');
+    if (form) form.reset();
+    document.getElementById('quick-link-modal').classList.remove('hidden');
+};
+
+window.deleteQuickLink = async function(id) {
+    if (confirm('Удалить ссылку?')) {
+        if (await window.api.deleteQuickLink(id)) {
+            Dashboard.init(); // Refresh dashboard
+        }
+    }
+};

@@ -12,6 +12,22 @@ const API = {
             return await response.json();
         } catch (err) { console.error(err); return {}; }
     },
+    
+    // Quick Links
+    async createQuickLink(data) {
+        try {
+            const response = await fetch('/api/quick-links', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
+            return response.ok;
+        } catch (err) { console.error(err); return false; }
+    },
+    async deleteQuickLink(id) {
+        try {
+            const response = await fetch(`/api/quick-links/${id}`, { method: 'DELETE' });
+            return response.ok;
+        } catch (err) { console.error(err); return false; }
+    },
 
     // --- CONTACTS ---
     async getContacts() {
