@@ -1,4 +1,18 @@
 const API = {
+    // --- DASHBOARD & SEARCH (NEW) ---
+    async getDashboard() {
+        try {
+            const response = await fetch('/api/dashboard');
+            return await response.json();
+        } catch (err) { console.error(err); return null; }
+    },
+    async search(query) {
+        try {
+            const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+            return await response.json();
+        } catch (err) { console.error(err); return {}; }
+    },
+
     // --- CONTACTS ---
     async getContacts() {
         try {

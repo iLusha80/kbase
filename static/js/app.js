@@ -6,6 +6,7 @@ import { renderContacts } from './components/ContactList.js';
 import TagManager from './components/TagManager.js';
 import ThemeManager from './components/ThemeManager.js';
 import ProjectContactManager from './components/ProjectContactManager.js';
+import Dashboard from './components/Dashboard.js'; // NEW IMPORT
 
 let contactsData = [];
 let tasksData = [];
@@ -35,7 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.taskTagManager = new TagManager('task-tags-container');
     window.projectContactManager = null;
 
-    // --- ПОИСК ---
+    // --- ПОИСК (Контактов) ---
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
@@ -52,6 +53,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (target) {
                 const viewName = target.dataset.view;
                 const path = viewPaths[viewName] || '/';
+                
+                // Если переходим на дашборд, обновляем его
+                if (viewName === 'dashboard') {
+                    Dashboard.init();
+                }
+                
                 switchView(viewName, true, path);
             }
         });
@@ -74,6 +81,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     await loadInitialData();
     
+    // NEW: Init Dashboard on start
+    Dashboard.init();
+
     window.projectContactManager = new ProjectContactManager('project-team-container', contactsData);
 
     // Initial View (Обработка URL при загрузке)
@@ -94,14 +104,15 @@ function handleUrlRouting(addToHistory = false) {
     // Проверка детальных путей (например, /projects/1)
     const projectMatch = path.match(/^\/projects\/(\d+)$/);
     if (projectMatch) {
-        // Если это страница проекта, сначала грузим вьюху проектов, потом открываем проект
-        // Но так как openProjectDetail требует клика, нам нужно вызвать его программно
         const projectId = projectMatch[1];
-        // Сначала переключим на проекты, чтобы было куда возвращаться
         switchView('projects', false); 
-        // Открываем детальную
         window.openProjectDetail(projectId);
         return; 
+    }
+    
+    // Если идем на главную, рендерим дашборд
+    if (initialView === 'dashboard') {
+        Dashboard.init();
     }
 
     switchView(initialView, addToHistory);
@@ -209,7 +220,6 @@ window.openProjectDetail = async (id) => {
     document.getElementById('p-detail-edit-btn').onclick = () => window.editProject(p.id);
     document.getElementById('p-detail-delete-btn').onclick = () => window.deleteProject(p.id);
     
-    // NEW: Link button
     const linkContainer = document.getElementById('p-detail-link-container');
     if (linkContainer) {
         if (p.link) {
@@ -277,6 +287,8 @@ async function handleProjectFormSubmit(e) {
         if (id && !document.getElementById('view-project-detail').classList.contains('hidden')) {
             openProjectDetail(id);
         }
+        // Обновляем дашборд тоже, вдруг проект там был
+        Dashboard.init();
     } 
     else { alert('Ошибка'); }
 }
@@ -312,6 +324,8 @@ async function handleTaskFormSubmit(e) {
         if (data.project_id && !document.getElementById('view-project-detail').classList.contains('hidden')) {
              openProjectDetail(data.project_id);
         }
+        // Обновляем дашборд, так как задача могла быть срочной
+        Dashboard.init();
     } 
     else { alert('Ошибка'); }
 }
@@ -339,7 +353,6 @@ window.openProjectModal = function() {
     if(form) { 
         form.reset(); 
         form.querySelector('[name="id"]').value = "";
-        // Сброс статуса на дефолт
         const statusSelect = form.querySelector('select[name="status"]');
         if (statusSelect) statusSelect.value = "Active";
     }
@@ -408,7 +421,6 @@ window.editProject = async (id) => {
     form.querySelector('[name="title"]').value = p.title;
     form.querySelector('[name="description"]').value = p.description || '';
     
-    // NEW: Set link and status
     const statusSelect = form.querySelector('select[name="status"]');
     if (statusSelect) statusSelect.value = p.status || 'Active';
     form.querySelector('[name="link"]').value = p.link || '';
