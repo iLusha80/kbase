@@ -1,0 +1,39 @@
+from flask import Blueprint, jsonify, request
+from services.dashboard_service import (
+    get_priority_tasks, 
+    get_waiting_tasks, 
+    get_top_active_projects,
+    global_search
+)
+
+dashboard_bp = Blueprint('dashboard', __name__)
+
+@dashboard_bp.route('/dashboard', methods=['GET'])
+def get_dashboard_data():
+    """Сводные данные для главной страницы"""
+    
+    priority = get_priority_tasks()
+    waiting = get_waiting_tasks()
+    projects = get_top_active_projects()
+    
+    # Формируем ответ, обогащая проекты счетчиком активных задач для UI
+    projects_data = []
+    for p in projects:
+        p_dict = p.to_dict()
+        # Для UI полезно знать, почему этот проект в топе (кол-во активных задач)
+        # Считаем "на лету" для простоты, так как выборка уже маленькая (3 шт)
+        active_count = sum(1 for t in p.tasks if t.status and t.status.name in ['В работе', 'К выполнению'])
+        p_dict['active_work_count'] = active_count
+        projects_data.append(p_dict)
+
+    return jsonify({
+        'priority_tasks': [t.to_dict() for t in priority],
+        'waiting_tasks': [t.to_dict() for t in waiting],
+        'top_projects': projects_data
+    })
+
+@dashboard_bp.route('/search', methods=['GET'])
+def search_route():
+    query = request.args.get('q', '')
+    results = global_search(query)
+    return jsonify(results)

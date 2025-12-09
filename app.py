@@ -8,7 +8,9 @@ from routes.main import main_bp
 from routes.tasks import tasks_bp
 from routes.contacts import contacts_bp
 from routes.tags import tags_bp
-from routes.projects import projects_bp 
+from routes.projects import projects_bp
+from routes.dashboard import dashboard_bp
+
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -47,7 +49,8 @@ app.register_blueprint(main_bp)
 app.register_blueprint(tasks_bp, url_prefix='/api')
 app.register_blueprint(contacts_bp, url_prefix='/api')
 app.register_blueprint(tags_bp, url_prefix='/api')
-app.register_blueprint(projects_bp, url_prefix='/api') 
+app.register_blueprint(projects_bp, url_prefix='/api')
+app.register_blueprint(dashboard_bp, url_prefix='/api')
 
 if __name__ == '__main__':
     with app.app_context():
