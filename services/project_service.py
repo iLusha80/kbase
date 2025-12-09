@@ -13,7 +13,9 @@ def create_project(data):
     
     new_p = Project(
         title=data.get('title'),
-        description=data.get('description')
+        description=data.get('description'),
+        link=data.get('link'),
+        status=data.get('status', 'Active')
     )
     
     # Обработка команды (список объектов {contact_id, role})
@@ -35,6 +37,7 @@ def update_project(project_id, data):
     
     p.title = data.get('title', p.title)
     p.description = data.get('description', p.description)
+    p.link = data.get('link', p.link)
     if 'status' in data:
         p.status = data.get('status')
 

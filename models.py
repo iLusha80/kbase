@@ -38,8 +38,9 @@ class Project(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    status = db.Column(db.String(50), default='Active') # Active, Archived, etc.
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(50), default='Active') # Active, Archived, Planning, On Hold
+    link = db.Column(db.String(256), nullable=True) # Ссылка на ресурсы проекта
+    created_at = db.Column(db.DateTime, default=datetime.now())
     
     # Relationships
     tasks = db.relationship('Task', backref='project', lazy=True)
@@ -51,6 +52,7 @@ class Project(db.Model):
             'title': self.title,
             'description': self.description,
             'status': self.status,
+            'link': self.link,
             'tasks_count': len(self.tasks),
             # Return list of contacts with their roles
             'team': [{

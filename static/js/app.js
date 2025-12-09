@@ -208,6 +208,16 @@ window.openProjectDetail = async (id) => {
     document.getElementById('p-detail-desc').innerText = p.description || '';
     document.getElementById('p-detail-edit-btn').onclick = () => window.editProject(p.id);
     document.getElementById('p-detail-delete-btn').onclick = () => window.deleteProject(p.id);
+    
+    // NEW: Link button
+    const linkContainer = document.getElementById('p-detail-link-container');
+    if (linkContainer) {
+        if (p.link) {
+            linkContainer.innerHTML = `<a href="${p.link}" target="_blank" class="inline-flex items-center px-3 py-1.5 rounded-md bg-slate-100 text-slate-700 text-sm hover:bg-slate-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600 transition-colors"><i data-lucide="external-link" class="w-4 h-4 mr-2"></i>Открыть ресурс</a>`;
+        } else {
+            linkContainer.innerHTML = '';
+        }
+    }
 
     const teamContainer = document.getElementById('p-detail-team');
     if (p.team && p.team.length > 0) {
@@ -326,7 +336,13 @@ window.openTaskModal = function() {
 
 window.openProjectModal = function() {
     const form = document.getElementById('project-form');
-    if(form) { form.reset(); form.querySelector('[name="id"]').value = ""; }
+    if(form) { 
+        form.reset(); 
+        form.querySelector('[name="id"]').value = "";
+        // Сброс статуса на дефолт
+        const statusSelect = form.querySelector('select[name="status"]');
+        if (statusSelect) statusSelect.value = "Active";
+    }
     window.projectContactManager.clear();
     document.getElementById('project-modal').classList.remove('hidden');
 };
@@ -391,6 +407,11 @@ window.editProject = async (id) => {
     form.querySelector('[name="id"]').value = p.id;
     form.querySelector('[name="title"]').value = p.title;
     form.querySelector('[name="description"]').value = p.description || '';
+    
+    // NEW: Set link and status
+    const statusSelect = form.querySelector('select[name="status"]');
+    if (statusSelect) statusSelect.value = p.status || 'Active';
+    form.querySelector('[name="link"]').value = p.link || '';
     
     window.projectContactManager.setTeam(p.team || []);
 };

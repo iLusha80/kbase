@@ -11,13 +11,30 @@
                 <div class="space-y-4">
                     <input name="title" required placeholder="Название проекта *" class="w-full border border-slate-300 p-2 rounded text-sm font-medium focus:border-primary-600 focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500">
                     
+                    <div class="grid grid-cols-2 gap-4">
+                         <!-- Статус -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Статус</label>
+                            <select name="status" class="w-full border border-slate-300 p-2 rounded text-sm bg-slate-50 focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+                                <option value="Active">В работе (Active)</option>
+                                <option value="Planning">Планирование</option>
+                                <option value="On Hold">На паузе</option>
+                                <option value="Archived">Архив</option>
+                                <option value="Done">Завершен</option>
+                            </select>
+                        </div>
+                         <!-- Ссылка -->
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Ссылка</label>
+                            <input name="link" placeholder="Jira, Trello, Google Doc..." class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500">
+                        </div>
+                    </div>
+
                     <textarea name="description" placeholder="Описание проекта..." class="w-full border border-slate-300 p-2 rounded text-sm dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" rows="3"></textarea>
 
-                    <!-- ИСПРАВЛЕНИЕ ЗДЕСЬ: ID перенесен на общий контейнер -->
                     <div id="project-team-container">
                         <div class="flex justify-between items-center mb-2">
                             <label class="block text-xs font-medium text-slate-500 dark:text-slate-400">Команда проекта</label>
-                            <!-- Теперь кнопка внутри контейнера с ID, и JS ее найдет -->
                             <button type="button" class="add-member-btn text-xs text-primary-600 hover:text-primary-800 dark:text-primary-400">+ Добавить</button>
                         </div>
                         <div class="team-render-area space-y-2">

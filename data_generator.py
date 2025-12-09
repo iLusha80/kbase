@@ -89,14 +89,14 @@ def populate_test_data():
 
     # --- 4. ПРОЕКТЫ ---
     projects_data = [
-        ('Редизайн корпоративного портала', 'Полное обновление UI/UX внутреннего портала компании.', 'Active'),
-        ('Мобильное приложение "KBase"', 'Разработка нативного приложения под iOS и Android.', 'Active'),
-        ('Маркетинговая кампания Q3', 'Подготовка рекламных материалов для осеннего сезона.', 'Active')
+        ('Редизайн корпоративного портала', 'Полное обновление UI/UX внутреннего портала компании.', 'Active', 'https://figma.com/design/123'),
+        ('Мобильное приложение "KBase"', 'Разработка нативного приложения под iOS и Android.', 'Active', 'https://github.com/repo/kbase-mobile'),
+        ('Маркетинговая кампания Q3', 'Подготовка рекламных материалов для осеннего сезона.', 'Planning', None)
     ]
 
     projects = []
-    for title, desc, status in projects_data:
-        p = Project(title=title, description=desc, status=status)
+    for title, desc, status, link in projects_data:
+        p = Project(title=title, description=desc, status=status, link=link)
         projects.append(p)
         db.session.add(p)
     
