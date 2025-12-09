@@ -13,7 +13,7 @@ from app import app, db
 # Импортируем сами классы моделей и объекты таблиц
 from models import (
     ContactType, TaskStatus, Tag, Contact, Project, ProjectContact, 
-    Task, contact_tags, task_tags
+    Task, QuickLink, contact_tags, task_tags
 )
 
 # --- CONFIGURATION ---
@@ -33,7 +33,7 @@ def clean_db():
     db.create_all()
 
 def populate_test_data():
-    """Генерация тестовых данных (старая логика)"""
+    """Генерация тестовых данных"""
     print("🎲 Генерация тестовых данных...")
     
     # --- 1. СПРАВОЧНИКИ ---
@@ -144,8 +144,20 @@ def populate_test_data():
         t.tags = random.sample(tags_objs, k=random.randint(1, 3))
         db.session.add(t)
 
+    # --- 6. БЫСТРЫЕ ССЫЛКИ (Quick Links) ---
+    links_data = [
+        ('Корпоративный Jira', 'https://jira.corp.example.com', 'trello'),
+        ('GitLab Репозиторий', 'https://git.corp.example.com', 'git-branch'),
+        ('Почта Outlook', 'https://outlook.office.com', 'mail'),
+        ('База знаний Confluence', 'https://confluence.corp.example.com', 'book')
+    ]
+    
+    for title, url, icon in links_data:
+        ql = QuickLink(title=title, url=url, icon=icon)
+        db.session.add(ql)
+
     db.session.commit()
-    print("✅ Тестовые данные успешно загружены.")
+    print("✅ Тестовые данные (включая ссылки) успешно загружены.")
 
 def migrate_data():
     """
@@ -184,6 +196,7 @@ def migrate_data():
         ('contact_types', ContactType),
         ('task_statuses', TaskStatus),
         ('tags', Tag),
+        ('quick_links', QuickLink),
         ('contacts', Contact),
         ('projects', Project),
         ('project_contacts', ProjectContact),
