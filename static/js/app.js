@@ -4,6 +4,7 @@ import { initModals, openModal, closeModal } from './components/Modal.js';
 import TagManager from './components/TagManager.js';
 import ThemeManager from './components/ThemeManager.js';
 import Dashboard from './components/Dashboard.js';
+import GlobalSearch from './components/GlobalSearch.js'; // NEW IMPORT
 
 import { TaskController } from './controllers/TaskController.js';
 import { ContactController } from './controllers/ContactController.js';
@@ -34,9 +35,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.contactTagManager = new TagManager('contact-tags-container');
     window.taskTagManager = new TagManager('task-tags-container');
 
+    // Init Global Search
+    GlobalSearch.init();
+
     ContactController.init();
     TaskController.init();
-
+    
     Dashboard.setup();
 
     document.querySelectorAll('[data-view]').forEach(button => {
@@ -142,7 +146,6 @@ function handleUrlRouting(addToHistory = false) {
     else if (path === '/projects') initialView = 'projects';
     else if (path === '/kb') initialView = 'kb';
     
-    // PROJECT DETAIL
     const projectMatch = path.match(/^\/projects\/(\d+)$/);
     if (projectMatch) {
         const projectId = projectMatch[1];
@@ -151,7 +154,6 @@ function handleUrlRouting(addToHistory = false) {
         return; 
     }
 
-    // NEW: CONTACT DETAIL
     const contactMatch = path.match(/^\/contacts\/(\d+)$/);
     if (contactMatch) {
         const contactId = contactMatch[1];
