@@ -1,6 +1,6 @@
 import API from './api.js';
 import { switchView } from './utils/router.js';
-import { initModals } from './components/Modal.js';
+import { initModals, openModal, closeModal } from './components/Modal.js';
 import TagManager from './components/TagManager.js';
 import ThemeManager from './components/ThemeManager.js';
 import Dashboard from './components/Dashboard.js';
@@ -31,16 +31,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     new ThemeManager('theme-toggle');
     initModals();
 
+    // ВАЖНО: Делаем closeModal глобальным, чтобы onclick="closeModal('id')" работал в HTML
+    window.closeModal = closeModal;
+    window.openModal = openModal;
+
     window.contactTagManager = new TagManager('contact-tags-container');
     window.taskTagManager = new TagManager('task-tags-container');
 
     // 2. Инициализация контроллеров
-    // Они вешают слушатели на формы и экспортируют глобальные функции
     ContactController.init();
     TaskController.init();
     // ProjectController инициализируем чуть позже, так как ему нужны контакты
 
-    // 3. Обработка навигации
+    // 3. Инициализация слушателей Дашборда (Search и QuickLinks) - один раз!
+    Dashboard.setup();
+
+    // 4. Обработка навигации
     document.querySelectorAll('[data-view]').forEach(button => {
         button.addEventListener('click', (e) => {
             e.preventDefault();
@@ -50,7 +56,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const path = viewPaths[viewName] || '/';
                 
                 if (viewName === 'dashboard') {
-                    Dashboard.init();
+                    Dashboard.init(); // Только обновление данных
                 }
                 
                 switchView(viewName, true, path);
@@ -62,22 +68,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         handleUrlRouting(false);
     });
     
-    // Quick Links handlers (можно тоже вынести, но они мелкие)
+    // Quick Links handlers (вызов открытия модалки)
     window.openQuickLinkModal = function() {
         const form = document.getElementById('quick-link-form');
         if (form) form.reset();
         document.getElementById('quick-link-modal').classList.remove('hidden');
     };
+    
     window.deleteQuickLink = async function(id) {
         if (confirm('Удалить ссылку?')) {
             if (await window.api.deleteQuickLink(id)) Dashboard.init();
         }
     };
 
-    // 4. Загрузка данных
+    // 5. Загрузка данных
     await loadInitialData();
     
-    // 5. Запуск
+    // 6. Запуск
     Dashboard.init();
     handleUrlRouting(false);
 });

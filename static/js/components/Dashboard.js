@@ -1,12 +1,17 @@
 import API from '../api.js';
 import { switchView } from '../utils/router.js';
-import { closeModal } from './Modal.js'; // Need this for form handler
+import { closeModal } from './Modal.js';
 
 const Dashboard = {
+    // Метод для инициализации слушателей событий (выполняется 1 раз при загрузке App)
+    setup() {
+        this.initSearch();
+        this.initQuickLinkForm();
+    },
+
+    // Метод для загрузки данных (выполняется каждый раз при переходе на Dashboard)
     async init() {
         await this.loadData();
-        this.initSearch();
-        this.initQuickLinkForm(); // Init form listener
     },
 
     async loadData() {
@@ -16,12 +21,11 @@ const Dashboard = {
         this.renderPriorityTasks(data.priority_tasks);
         this.renderWaitingTasks(data.waiting_tasks);
         this.renderTopProjects(data.top_projects);
-        this.renderQuickLinks(data.quick_links); // NEW
+        this.renderQuickLinks(data.quick_links);
         
         if (window.lucide) lucide.createIcons();
     },
 
-    // ... (renderPriorityTasks, renderWaitingTasks, renderTopProjects без изменений) ...
     renderPriorityTasks(tasks) {
         const container = document.getElementById('dash-priority-tasks');
         if (!container) return;
@@ -88,7 +92,6 @@ const Dashboard = {
         `).join('');
     },
 
-    // NEW: RENDER QUICK LINKS
     renderQuickLinks(links) {
         const container = document.getElementById('dash-quick-links');
         if (!container) return;
@@ -111,19 +114,22 @@ const Dashboard = {
         `).join('');
     },
 
-    // NEW: FORM HANDLING
     initQuickLinkForm() {
         const form = document.getElementById('quick-link-form');
         if (form) {
-            form.addEventListener('submit', async (e) => {
+            // Удаляем старые слушатели путем клонирования (самый простой способ без именованной функции)
+            const newForm = form.cloneNode(true);
+            form.parentNode.replaceChild(newForm, form);
+
+            newForm.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData.entries());
                 
                 if (await API.createQuickLink(data)) {
                     closeModal('quick-link-modal');
-                    form.reset();
-                    this.loadData(); // Refresh dashboard
+                    e.target.reset(); // Сброс формы
+                    this.loadData(); // Обновление дашборда
                 } else {
                     alert('Ошибка при создании ссылки');
                 }
@@ -131,14 +137,18 @@ const Dashboard = {
         }
     },
 
-    // --- SEARCH LOGIC (Без изменений, но нужно включить в файл) ---
     initSearch() {
         const input = document.getElementById('globalSearchInput');
         const resultsContainer = document.getElementById('globalSearchResults');
         
         if (!input || !resultsContainer) return;
+        
+        // Клонируем input чтобы убрать старые слушатели, если они были
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+        
         let debounceTimer;
-        input.addEventListener('input', (e) => {
+        newInput.addEventListener('input', (e) => {
             const val = e.target.value.trim();
             clearTimeout(debounceTimer);
             if (val.length < 2) {
@@ -151,13 +161,17 @@ const Dashboard = {
                 this.renderSearchResults(data, resultsContainer);
             }, 300);
         });
+
+        // Слушатель клика на документе лучше оставить один раз в app.js или проверить, не дублируется ли он
+        // Для простоты здесь оставим, но добавим проверку (хотя при SPA переходе initSearch не должен вызываться много раз, если мы используем setup)
         document.addEventListener('click', (e) => {
-            if (!input.contains(e.target) && !resultsContainer.contains(e.target)) {
+            if (!newInput.contains(e.target) && !resultsContainer.contains(e.target)) {
                 resultsContainer.classList.add('hidden');
             }
         });
-        input.addEventListener('focus', () => {
-            if (input.value.length >= 2 && resultsContainer.children.length > 0) {
+
+        newInput.addEventListener('focus', () => {
+            if (newInput.value.length >= 2 && resultsContainer.children.length > 0) {
                 resultsContainer.classList.remove('hidden');
             }
         });
