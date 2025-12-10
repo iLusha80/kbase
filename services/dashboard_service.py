@@ -63,7 +63,7 @@ def get_top_active_projects(limit=3):
         
     return projects
 
-def global_search(query_str):
+def global_search(query_str: str):
     """
     Поиск по Задачам, Проектам и Контактам.
     """
@@ -76,7 +76,7 @@ def global_search(query_str):
     tasks = Task.query.filter(Task.title.ilike(term)).limit(5).all()
     
     # 2. Проекты
-    projects = Project.query.filter(Project.title.ilike(term)).limit(5).all()
+    projects = Project.query.filter(Project.title.ilike(term)).limit(5).all() 
     
     # 3. Контакты (По фамилии или имени)
     contacts = Contact.query.filter(
