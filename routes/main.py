@@ -29,8 +29,11 @@ def projects_page():
 def kb_page():
     return render_template('index.html')
 
-# Ловушка для детальных страниц (например, /projects/5)
-# Flask будет отдавать index.html, а JS распарсит ID из URL
+# Ловушка для детальных страниц
 @main_bp.route('/projects/<path:subpath>')
 def projects_detail_page(subpath):
+    return render_template('index.html')
+
+@main_bp.route('/contacts/<path:subpath>')
+def contacts_detail_page(subpath):
     return render_template('index.html')

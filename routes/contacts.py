@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from services.contact_service import (
-    get_all_contacts, create_contact, get_contact_by_id, update_contact, delete_contact, get_contact_types
+    get_all_contacts, create_contact, get_contact_by_id, update_contact, 
+    delete_contact, get_contact_types, get_contact_full_details
 )
 
 contacts_bp = Blueprint('contacts', __name__)
@@ -17,10 +18,11 @@ def list_contacts():
 
 @contacts_bp.route('/contacts/<int:contact_id>', methods=['GET'])
 def get_contact_detail(contact_id):
-    contact = get_contact_by_id(contact_id)
-    if not contact:
+    # Используем расширенную функцию для детального вида
+    contact_data = get_contact_full_details(contact_id)
+    if not contact_data:
         return jsonify({'error': 'Contact not found'}), 404
-    return jsonify(contact.to_dict())
+    return jsonify(contact_data)
 
 @contacts_bp.route('/contacts', methods=['POST'])
 def add_contact():

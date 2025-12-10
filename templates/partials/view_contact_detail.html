@@ -1,0 +1,104 @@
+<div id="view-contact-detail" class="view-section hidden">
+    <!-- Кнопка Назад -->
+    <div class="mb-6">
+        <button onclick="switchView('contacts')" class="mb-2 text-sm text-slate-500 hover:text-slate-800 flex items-center dark:text-slate-400 dark:hover:text-white">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> К списку контактов
+        </button>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- SIDEBAR (Static Info) -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 dark:bg-slate-800 dark:border-slate-700 relative overflow-hidden">
+                <!-- Фон-шапка -->
+                <div id="c-detail-header-bg" class="absolute top-0 left-0 right-0 h-20 bg-slate-100 dark:bg-slate-700"></div>
+                
+                <div class="relative z-10 flex flex-col items-center text-center">
+                    <!-- Аватар -->
+                    <div id="c-detail-avatar" class="w-20 h-20 rounded-full border-4 border-white dark:border-slate-800 bg-slate-300 flex items-center justify-center text-2xl font-bold text-slate-700 shadow-md mb-3 mt-4">
+                        ?
+                    </div>
+                    
+                    <h2 id="c-detail-name" class="text-xl font-bold text-slate-900 dark:text-white">Загрузка...</h2>
+                    <p id="c-detail-role" class="text-sm text-slate-500 mb-1 dark:text-slate-400">...</p>
+                    
+                    <div id="c-detail-badges" class="flex flex-wrap gap-2 justify-center mt-2 mb-6">
+                        <!-- Badges via JS -->
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex gap-2 w-full mb-6">
+                        <button id="c-detail-edit-btn" class="flex-1 py-2 text-xs font-medium border border-slate-300 rounded hover:bg-slate-50 text-slate-700 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">
+                            <i data-lucide="edit-2" class="w-3 h-3 inline mr-1"></i> Редактировать
+                        </button>
+                    </div>
+
+                    <!-- Contact Info -->
+                    <div class="w-full space-y-3 text-left border-t border-slate-100 pt-5 dark:border-slate-700">
+                        <div class="flex items-start gap-3">
+                            <div class="p-2 bg-slate-50 rounded text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"><i data-lucide="mail" class="w-4 h-4"></i></div>
+                            <div class="overflow-hidden">
+                                <div class="text-[10px] text-slate-400 uppercase font-bold">Email</div>
+                                <div id="c-detail-email" class="text-sm text-slate-800 dark:text-slate-200 truncate">-</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="p-2 bg-slate-50 rounded text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"><i data-lucide="phone" class="w-4 h-4"></i></div>
+                            <div>
+                                <div class="text-[10px] text-slate-400 uppercase font-bold">Телефон</div>
+                                <div id="c-detail-phone" class="text-sm text-slate-800 dark:text-slate-200">-</div>
+                            </div>
+                        </div>
+                        <div class="flex items-start gap-3">
+                            <div class="p-2 bg-slate-50 rounded text-slate-500 dark:bg-slate-700/50 dark:text-slate-400"><i data-lucide="link" class="w-4 h-4"></i></div>
+                            <div class="overflow-hidden">
+                                <div class="text-[10px] text-slate-400 uppercase font-bold">Ссылка</div>
+                                <div id="c-detail-link" class="text-sm text-primary-600 hover:underline truncate">-</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div id="c-detail-notes-block" class="w-full mt-6 text-left hidden">
+                         <div class="text-[10px] text-slate-400 uppercase font-bold mb-1">Заметки</div>
+                         <div id="c-detail-notes" class="text-sm text-slate-600 bg-amber-50 p-3 rounded border border-amber-100 italic dark:bg-slate-700/30 dark:border-slate-700 dark:text-slate-400"></div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN CONTENT (Dynamic) -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- PROJECTS BLOCK -->
+            <section>
+                <h3 class="text-lg font-bold text-slate-800 mb-4 flex items-center dark:text-white">
+                    <i data-lucide="briefcase" class="w-5 h-5 mr-2 text-primary-600"></i> Участие в проектах
+                </h3>
+                <div id="c-detail-projects" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- JS generated -->
+                </div>
+            </section>
+
+            <!-- TASKS BLOCK -->
+            <section>
+                <div class="flex items-center justify-between mb-4 border-b border-slate-200 dark:border-slate-700">
+                    <div class="flex gap-6">
+                        <button onclick="switchContactTaskTab('assigned')" id="tab-btn-assigned" class="pb-2 border-b-2 border-primary-600 text-primary-600 font-medium text-sm transition-colors">
+                            На исполнении <span id="count-assigned" class="ml-1 text-xs bg-primary-100 text-primary-700 px-1.5 py-0.5 rounded-full dark:bg-primary-900/30 dark:text-primary-400">0</span>
+                        </button>
+                        <button onclick="switchContactTaskTab('authored')" id="tab-btn-authored" class="pb-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 font-medium text-sm transition-colors dark:text-slate-400 dark:hover:text-slate-300">
+                            Поручения от него <span id="count-authored" class="ml-1 text-xs bg-slate-100 text-slate-600 px-1.5 py-0.5 rounded-full dark:bg-slate-700 dark:text-slate-400">0</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="c-detail-tasks-assigned" class="space-y-3"></div>
+                <div id="c-detail-tasks-authored" class="space-y-3 hidden"></div>
+            </section>
+
+        </div>
+    </div>
+</div>

@@ -25,15 +25,16 @@ export function renderContacts(contactsData, search = '') {
         const initial = c.last_name ? c.last_name.charAt(0).toUpperCase() : '?';
         const typeColor = c.type ? c.type.render_color : '#cbd5e1';
         
+        // ВАЖНО: Добавили cursor-pointer и onclick на ячейку с именем
         return `
         <tr class="hover:bg-slate-50 transition-colors group dark:hover:bg-slate-800/50" style="border-left: 4px solid ${typeColor};">
-            <td class="px-6 py-4 border-b border-slate-100 dark:border-slate-700/50">
+            <td class="px-6 py-4 border-b border-slate-100 dark:border-slate-700/50 cursor-pointer" onclick="openContactDetail(${c.id})">
                 <div class="flex items-center">
-                    <div class="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold mr-3 text-slate-600 dark:bg-slate-700 dark:text-slate-300">${initial}</div>
+                    <div class="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold mr-3 text-slate-600 dark:bg-slate-700 dark:text-slate-300" style="background-color: ${typeColor}40; color: ${typeColor}">${initial}</div>
                     <div>
-                        <div class="text-sm font-medium text-slate-900 dark:text-slate-100">
+                        <div class="text-sm font-medium text-slate-900 group-hover:text-primary-600 transition-colors dark:text-slate-100 dark:group-hover:text-primary-400">
                             ${fullName} 
-                            ${c.link ? `<a href="${c.link}" target="_blank" class="text-primary-600 ml-1 hover:text-primary-500"><i data-lucide="external-link" class="w-3 h-3 inline"></i></a>` : ''}
+                            ${c.link ? `<i data-lucide="external-link" class="w-3 h-3 inline text-slate-400 ml-1"></i>` : ''}
                         </div>
                         <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider dark:text-slate-500">${c.type ? c.type.name_type : ''}</div>
                     </div>

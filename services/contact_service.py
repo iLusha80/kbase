@@ -60,3 +60,38 @@ def delete_contact(contact_id):
 
 def get_contact_by_id(contact_id):
     return Contact.query.get(contact_id)
+
+def get_contact_full_details(contact_id):
+    """Возвращает полную информацию о контакте, включая проекты и задачи"""
+    c = Contact.query.get(contact_id)
+    if not c:
+        return None
+    
+    data = c.to_dict()
+    
+    # 1. Проекты (через Association Object)
+    projects_list = []
+    for pc in c.project_associations:
+        if pc.project:
+            projects_list.append({
+                'id': pc.project.id,
+                'title': pc.project.title,
+                'status': pc.project.status,
+                'role_in_project': pc.role  # Роль человека в этом проекте
+            })
+    data['projects'] = projects_list
+    
+    # 2. Задачи (Назначенные ему)
+    assigned_tasks = []
+    for t in c.tasks_assigned:
+        assigned_tasks.append(t.to_dict())
+    
+    # 3. Задачи (Автор он)
+    authored_tasks = []
+    for t in c.tasks_authored:
+        authored_tasks.append(t.to_dict())
+        
+    data['tasks_assigned'] = sorted(assigned_tasks, key=lambda x: x['due_date'] or '9999-99-99')
+    data['tasks_authored'] = sorted(authored_tasks, key=lambda x: x['created_at'] if 'created_at' in x else '2000-01-01', reverse=True)
+    
+    return data

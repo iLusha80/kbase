@@ -5,12 +5,10 @@ import TagManager from './components/TagManager.js';
 import ThemeManager from './components/ThemeManager.js';
 import Dashboard from './components/Dashboard.js';
 
-// Импорт новых контроллеров
 import { TaskController } from './controllers/TaskController.js';
 import { ContactController } from './controllers/ContactController.js';
 import { ProjectController } from './controllers/ProjectController.js';
 
-// Карта маршрутов: viewName -> URL path
 const viewPaths = {
     'dashboard': '/',
     'contacts': '/contacts',
@@ -21,32 +19,26 @@ const viewPaths = {
 
 document.addEventListener('DOMContentLoaded', async () => {
     const api = API; 
-    window.api = api; // Оставляем для отладки в консоли браузера
+    window.api = api; 
 
     if (window.lucide) {
         lucide.createIcons();
     }
     
-    // 1. Инициализация UI-компонентов
     new ThemeManager('theme-toggle');
     initModals();
 
-    // ВАЖНО: Делаем closeModal глобальным, чтобы onclick="closeModal('id')" работал в HTML
     window.closeModal = closeModal;
     window.openModal = openModal;
 
     window.contactTagManager = new TagManager('contact-tags-container');
     window.taskTagManager = new TagManager('task-tags-container');
 
-    // 2. Инициализация контроллеров
     ContactController.init();
     TaskController.init();
-    // ProjectController инициализируем чуть позже, так как ему нужны контакты
 
-    // 3. Инициализация слушателей Дашборда (Search и QuickLinks) - один раз!
     Dashboard.setup();
 
-    // 4. Обработка навигации
     document.querySelectorAll('[data-view]').forEach(button => {
         button.addEventListener('click', (e) => {
             e.preventDefault();
@@ -56,7 +48,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const path = viewPaths[viewName] || '/';
                 
                 if (viewName === 'dashboard') {
-                    Dashboard.init(); // Только обновление данных
+                    Dashboard.init(); 
                 }
                 
                 switchView(viewName, true, path);
@@ -68,7 +60,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         handleUrlRouting(false);
     });
     
-    // Quick Links handlers (вызов открытия модалки)
     window.openQuickLinkModal = function() {
         const form = document.getElementById('quick-link-form');
         if (form) form.reset();
@@ -81,35 +72,26 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    // 5. Загрузка данных
     await loadInitialData();
     
-    // 6. Запуск
     Dashboard.init();
     handleUrlRouting(false);
 });
 
-// --- HELPER FUNCTIONS ---
-
 async function loadInitialData() {
-    // Сначала грузим справочники
     await Promise.all([
         loadContactTypes(),
         loadTaskStatuses(),
         loadAllTags()
     ]);
 
-    // Затем сущности
-    // Важен порядок: Контакты нужны для Проектов (команда) и Задач (селекты)
     const contacts = await ContactController.loadAll();
     
-    // Теперь можно инициализировать контроллер проектов, передав ему контакты
     ProjectController.init(contacts);
     await ProjectController.loadAll();
     
     await TaskController.loadAll();
     
-    // Обновляем зависимые селекты в модалках
     updateTaskSelects(contacts, ProjectController.getData());
 }
 
@@ -133,7 +115,6 @@ async function loadAllTags() {
     window.allTags = await window.api.getTags();
 }
 
-// Эту функцию экспортируем глобально, чтобы ContactController мог ее вызвать после создания контакта
 window.loadAllTags = loadAllTags;
 
 function updateTaskSelects(contacts, projects) {
@@ -161,11 +142,21 @@ function handleUrlRouting(addToHistory = false) {
     else if (path === '/projects') initialView = 'projects';
     else if (path === '/kb') initialView = 'kb';
     
+    // PROJECT DETAIL
     const projectMatch = path.match(/^\/projects\/(\d+)$/);
     if (projectMatch) {
         const projectId = projectMatch[1];
         switchView('projects', false); 
         ProjectController.openProjectDetail(projectId);
+        return; 
+    }
+
+    // NEW: CONTACT DETAIL
+    const contactMatch = path.match(/^\/contacts\/(\d+)$/);
+    if (contactMatch) {
+        const contactId = contactMatch[1];
+        switchView('contacts', false); 
+        ContactController.openContactDetail(contactId);
         return; 
     }
     
