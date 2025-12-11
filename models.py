@@ -12,7 +12,7 @@ task_tags = db.Table('task_tags',
     db.Column('tag_id', db.Integer, db.ForeignKey('tags.id'), primary_key=True)
 )
 
-# --- NEW: ASSOCIATION OBJECT FOR PROJECT-CONTACTS (With Role) ---
+# --- ASSOCIATION OBJECT FOR PROJECT-CONTACTS (With Role) ---
 class ProjectContact(db.Model):
     __tablename__ = 'project_contacts'
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), primary_key=True)
@@ -32,7 +32,7 @@ class Tag(db.Model):
     def to_dict(self):
         return {'id': self.id, 'name': self.name}
 
-# --- PROJECT MODEL (NEW) ---
+# --- PROJECT MODEL ---
 class Project(db.Model):
     __tablename__ = 'projects'
     id = db.Column(db.Integer, primary_key=True)
@@ -40,7 +40,9 @@ class Project(db.Model):
     description = db.Column(db.Text)
     status = db.Column(db.String(50), default='Active') # Active, Archived, Planning, On Hold
     link = db.Column(db.String(256), nullable=True) # Ссылка на ресурсы проекта
-    created_at = db.Column(db.DateTime, default=datetime.now())
+    
+    # FIX: Передаем функцию datetime.now без скобок
+    created_at = db.Column(db.DateTime, default=datetime.now)
     
     # Relationships
     tasks = db.relationship('Task', backref='project', lazy=True)
@@ -54,7 +56,6 @@ class Project(db.Model):
             'status': self.status,
             'link': self.link,
             'tasks_count': len(self.tasks),
-            # Return list of contacts with their roles
             'team': [{
                 'contact_id': pc.contact.id,
                 'name': f"{pc.contact.last_name} {pc.contact.first_name or ''}".strip(),
@@ -128,12 +129,13 @@ class Task(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     due_date = db.Column(db.Date, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.now())
+    
+    # FIX: Передаем функцию datetime.now без скобок
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    
     status_id = db.Column(db.Integer, db.ForeignKey('task_statuses.id'), nullable=False)
     assignee_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), nullable=True)
     author_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), nullable=True)
-    
-    # NEW: Project Link
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
 
     assignee = db.relationship('Contact', foreign_keys=[assignee_id], backref='tasks_assigned')
@@ -161,14 +163,16 @@ class Task(db.Model):
         }
 
 
-# --- QUICK LINK MODEL (NEW) ---
+# --- QUICK LINK MODEL ---
 class QuickLink(db.Model):
     __tablename__ = 'quick_links'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(100), nullable=False)
     url = db.Column(db.String(500), nullable=False)
-    icon = db.Column(db.String(50), default='link') # Название иконки из Lucide (напр. 'trello', 'git-branch')
-    created_at = db.Column(db.DateTime, default=datetime.now())
+    icon = db.Column(db.String(50), default='link')
+    
+    # FIX: Передаем функцию datetime.now без скобок
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
         return {

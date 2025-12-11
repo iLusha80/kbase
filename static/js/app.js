@@ -114,7 +114,7 @@ function setupHotkeysAndHints() {
             // Добавляем красивую полупрозрачную подпись
             const hintSpan = document.createElement('span');
             hintSpan.className = 'ml-1.5 opacity-60 text-[10px] font-normal';
-            hintSpan.innerText = `${modKeySymbol}J`;
+            hintSpan.innerText = `(${modKeySymbol}J)`;
             textSpan.appendChild(hintSpan);
         }
     });
