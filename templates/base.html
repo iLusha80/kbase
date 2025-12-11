@@ -5,11 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}KBase System{% endblock %}</title>
     
-    <!-- Tailwind Config -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- LOCAL TAILWIND -->
+    <script src="{{ url_for('static', filename='js/libs/tailwindcss.js') }}"></script>
     <script>
       tailwind.config = {
-        darkMode: 'class', // ВАЖНО: Включаем режим по классу
+        darkMode: 'class',
         theme: {
           extend: {
             colors: {
@@ -30,13 +30,12 @@
         }
     </script>
     
-    <!-- Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- LOCAL ICONS -->
+    <script src="{{ url_for('static', filename='js/libs/lucide.min.js') }}"></script>
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<!-- Добавили dark:bg-slate-900 dark:text-slate-100 -->
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col transition-colors duration-200 dark:bg-slate-900 dark:text-slate-100">
 
     <!-- Подключаем Header -->
