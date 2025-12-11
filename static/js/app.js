@@ -4,7 +4,7 @@ import { initModals, openModal, closeModal } from './components/Modal.js';
 import TagManager from './components/TagManager.js';
 import ThemeManager from './components/ThemeManager.js';
 import Dashboard from './components/Dashboard.js';
-import GlobalSearch from './components/GlobalSearch.js'; // NEW IMPORT
+import GlobalSearch from './components/GlobalSearch.js'; 
 
 import { TaskController } from './controllers/TaskController.js';
 import { ContactController } from './controllers/ContactController.js';
@@ -35,13 +35,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.contactTagManager = new TagManager('contact-tags-container');
     window.taskTagManager = new TagManager('task-tags-container');
 
-    // Init Global Search
     GlobalSearch.init();
 
     ContactController.init();
     TaskController.init();
     
     Dashboard.setup();
+
+    // --- HOTKEYS & UI HINTS ---
+    setupHotkeysAndHints();
 
     document.querySelectorAll('[data-view]').forEach(button => {
         button.addEventListener('click', (e) => {
@@ -81,6 +83,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     Dashboard.init();
     handleUrlRouting(false);
 });
+
+// --- UPDATED: Helper for Hotkeys and Visible Hints ---
+function setupHotkeysAndHints() {
+    // 1. Detect OS
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const modKeySymbol = isMac ? '⌘' : 'Ctrl';
+
+    // 2. Global Hotkey Listener (Cmd+J for New Task)
+    document.addEventListener('keydown', (e) => {
+        if ((e.metaKey || e.ctrlKey) && e.code === 'KeyJ') {
+            e.preventDefault();
+            const modal = document.getElementById('task-modal');
+            if (modal && modal.classList.contains('hidden')) {
+                window.openTaskModal();
+            }
+        }
+    });
+
+    // 3. Update Button Hints (Visible text)
+    const newTaskBtns = document.querySelectorAll('[onclick="openTaskModal()"]');
+    newTaskBtns.forEach(btn => {
+        btn.title = `Новая задача (${modKeySymbol}J)`; // Tooltip fallback
+        
+        // Пытаемся найти текстовый span внутри кнопки
+        // В HTML у нас: <i ...></i> <span>Текст</span>
+        // На мобильных span скрыт, поэтому hotkey тоже будет скрыт (что логично)
+        const textSpan = btn.querySelector('span');
+        if (textSpan) {
+            // Добавляем красивую полупрозрачную подпись
+            const hintSpan = document.createElement('span');
+            hintSpan.className = 'ml-1.5 opacity-60 text-[10px] font-normal';
+            hintSpan.innerText = `${modKeySymbol}J`;
+            textSpan.appendChild(hintSpan);
+        }
+    });
+}
 
 async function loadInitialData() {
     await Promise.all([

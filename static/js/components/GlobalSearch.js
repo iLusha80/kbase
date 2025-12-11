@@ -7,9 +7,13 @@ const GlobalSearch = {
         
         if (!input || !resultsContainer) return;
 
+        // 1. Определение ОС для правильной подсказки
+        const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+        const modKeySymbol = isMac ? '⌘' : 'Ctrl';
+        input.placeholder = `Поиск (${modKeySymbol}K)...`;
+
         let debounceTimer;
 
-        // Listener for typing
         input.addEventListener('input', (e) => {
             const val = e.target.value.trim();
             clearTimeout(debounceTimer);
@@ -26,23 +30,22 @@ const GlobalSearch = {
             }, 300);
         });
 
-        // Focus listeners
         input.addEventListener('focus', () => {
             if (input.value.length >= 2 && resultsContainer.children.length > 0) {
                 resultsContainer.classList.remove('hidden');
             }
         });
 
-        // Click outside to close
         document.addEventListener('click', (e) => {
             if (!input.contains(e.target) && !resultsContainer.contains(e.target)) {
                 resultsContainer.classList.add('hidden');
             }
         });
 
-        // Hotkey Ctrl/Cmd + K
+        // 2. Исправление горячей клавиши (e.code работает на любой раскладке)
         document.addEventListener('keydown', (e) => {
-            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+            // Проверяем нажатие Cmd (Mac) или Ctrl (PC) + физическую клавишу K
+            if ((e.metaKey || e.ctrlKey) && e.code === 'KeyK') {
                 e.preventDefault();
                 input.focus();
             }
@@ -61,7 +64,6 @@ const GlobalSearch = {
             return;
         }
 
-        // Projects
         if (hasProjects) {
             html += `<div class="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase bg-slate-50 dark:bg-slate-700/50 dark:text-slate-300">Проекты</div>`;
             html += data.projects.map(p => `
@@ -73,7 +75,6 @@ const GlobalSearch = {
             `).join('');
         }
 
-        // Contacts
         if (hasContacts) {
             html += `<div class="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase bg-slate-50 border-t border-slate-100 dark:bg-slate-700/50 dark:border-slate-700 dark:text-slate-300">Контакты</div>`;
             html += data.contacts.map(c => `
@@ -88,7 +89,6 @@ const GlobalSearch = {
             `).join('');
         }
 
-        // Tasks
         if (hasTasks) {
             html += `<div class="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase bg-slate-50 border-t border-slate-100 dark:bg-slate-700/50 dark:border-slate-700 dark:text-slate-300">Задачи</div>`;
             html += data.tasks.map(t => `
