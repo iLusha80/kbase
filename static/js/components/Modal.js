@@ -40,6 +40,18 @@ function initModals() {
             }
         });
     });
+
+    // --- NEW: Закрытие по нажатию Esc ---
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            // Ищем любое открытое модальное окно (у которого нет класса hidden)
+            // Селектор ищет элементы с фиксированным позиционированием (наши модалки), которые видимы
+            const visibleModal = document.querySelector('.fixed.inset-0.z-50:not(.hidden)');
+            if (visibleModal) {
+                closeModal(visibleModal.id);
+            }
+        }
+    });
 }
 
 export { initModals, openModal, closeModal };
