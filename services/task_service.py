@@ -1,5 +1,5 @@
 from database import db
-from models import Task, TaskStatus
+from models import Task, TaskStatus, TaskComment
 from datetime import datetime
 from services.tag_service import process_tags
 
@@ -50,9 +50,12 @@ def get_task_full_details(task_id):
     
     # Пока просто возвращаем to_dict(), но это место для расширения
     data = t.to_dict()
+
+    # NEW: Загружаем комментарии (сортировка: сначала новые)
+    sorted_comments = sorted(t.comments, key=lambda x: x.created_at, reverse=True)
+    data['comments'] = [c.to_dict() for c in sorted_comments]
     
     # Пример на будущее:
-    # data['comments'] = [c.to_dict() for c in t.comments]
     # data['history'] = [h.to_dict() for h in t.history]
     
     return data
@@ -100,3 +103,22 @@ def update_task_status(task_id, status_id):
     t.status_id = status_id
     db.session.commit()
     return t
+
+# --- NEW: Comment Logic ---
+
+def add_comment_to_task(task_id, text):
+    if not text or not text.strip():
+        return None
+        
+    comment = TaskComment(task_id=task_id, text=text)
+    db.session.add(comment)
+    db.session.commit()
+    return comment
+
+def delete_comment(comment_id):
+    c = TaskComment.query.get(comment_id)
+    if not c:
+        return False
+    db.session.delete(c)
+    db.session.commit()
+    return True

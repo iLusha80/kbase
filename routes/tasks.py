@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify
 from services.task_service import (
     get_all_tasks, create_task, get_task_by_id,
     update_task, delete_task, update_task_status, get_task_statuses,
-    get_task_full_details # NEW IMPORT
+    get_task_full_details, add_comment_to_task, delete_comment
 )
 
 tasks_bp = Blueprint('tasks', __name__)
@@ -50,3 +50,21 @@ def delete_task_route(task_id):
     if delete_task(task_id):
         return jsonify({'message': 'Task deleted successfully'}), 200
     return jsonify({'error': 'Task not found'}), 404
+
+
+@tasks_bp.route('/tasks/<int:task_id>/comments', methods=['POST'])
+def add_task_comment(task_id):
+    data = request.json
+    text = data.get('text')
+    
+    comment = add_comment_to_task(task_id, text)
+    if not comment:
+        return jsonify({'error': 'Failed to add comment'}), 400
+        
+    return jsonify(comment.to_dict()), 201
+
+@tasks_bp.route('/comments/<int:comment_id>', methods=['DELETE'])
+def delete_task_comment(comment_id):
+    if delete_comment(comment_id):
+        return jsonify({'message': 'Deleted'}), 200
+    return jsonify({'error': 'Not found'}), 404

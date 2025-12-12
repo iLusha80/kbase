@@ -13,7 +13,7 @@ from app import app, db
 # Импортируем сами классы моделей и объекты таблиц
 from models import (
     ContactType, TaskStatus, Tag, Contact, Project, ProjectContact, 
-    Task, QuickLink, contact_tags, task_tags
+    Task, QuickLink, contact_tags, task_tags, TaskComment
 )
 
 # --- CONFIGURATION ---
@@ -202,7 +202,8 @@ def migrate_data():
         ('project_contacts', ProjectContact),
         ('tasks', Task),
         ('contact_tags', contact_tags),
-        ('task_tags', task_tags)
+        ('task_tags', task_tags),
+        ('task_comments', TaskComment)
     ]
 
     print("🚀 Начало переноса данных...")

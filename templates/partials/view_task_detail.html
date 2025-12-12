@@ -1,5 +1,5 @@
 <div id="view-task-detail" class="view-section hidden">
-    <!-- Навигация -->
+    <!-- ... (Верхняя часть: Навигация, Заголовок - без изменений) ... -->
     <div class="mb-4">
         <button onclick="switchView('tasks')" class="text-sm text-slate-500 hover:text-slate-800 flex items-center dark:text-slate-400 dark:hover:text-white">
             <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> К списку задач
@@ -9,13 +9,11 @@
     <!-- Заголовок и Действия -->
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-200 pb-4 dark:border-slate-700">
         <div class="flex items-center gap-3">
-             <!-- Status Badge Large -->
              <span id="t-detail-status" class="px-3 py-1 rounded text-sm font-bold uppercase text-white tracking-wider bg-slate-400">STATUS</span>
              <span id="t-detail-id" class="text-slate-400 text-sm">#ID</span>
         </div>
         
         <div class="flex gap-2">
-            <!-- Edit Button triggers Modal for quick edits -->
             <button id="t-detail-edit-btn" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded text-sm hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">
                 <i data-lucide="edit-2" class="w-4 h-4 inline mr-1"></i> Редактировать
             </button>
@@ -42,61 +40,67 @@
                 </div>
             </div>
 
-            <!-- Future: Comments & History will go here -->
-            <div class="border-t border-slate-200 pt-8 mt-8 dark:border-slate-700 text-center text-slate-400 italic text-sm">
-                Место для комментариев (Скоро)
+            <!-- COMMENTS SECTION (NEW) -->
+            <div class="pt-6 border-t border-slate-200 dark:border-slate-700">
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-4 dark:text-slate-400 flex items-center">
+                    <i data-lucide="message-square" class="w-4 h-4 mr-2"></i> Комментарии
+                </h3>
+                
+                <!-- Input -->
+                <div class="flex gap-3 mb-6">
+                    <div class="w-8 h-8 rounded-full bg-slate-200 flex-shrink-0 flex items-center justify-center text-slate-500 dark:bg-slate-700">
+                        <i data-lucide="user" class="w-4 h-4"></i>
+                    </div>
+                    <div class="flex-grow">
+                        <textarea id="comment-input" rows="2" placeholder="Напишите комментарий..." class="w-full p-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-primary-500 dark:bg-slate-800 dark:border-slate-600 dark:text-white dark:placeholder-slate-500"></textarea>
+                        <div class="flex justify-end mt-2">
+                            <button id="comment-submit-btn" class="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded hover:bg-slate-700 dark:bg-primary-600 dark:hover:bg-primary-500">
+                                Отправить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- List -->
+                <div id="t-detail-comments-list" class="space-y-4">
+                    <!-- JS fills this -->
+                </div>
             </div>
         </div>
 
         <!-- RIGHT COLUMN: Sidebar (1/3) -->
         <div class="space-y-6">
-            
             <!-- Project Card -->
             <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700">
                 <h3 class="text-xs font-bold text-slate-500 uppercase mb-3 dark:text-slate-400">Проект</h3>
-                <div id="t-detail-project" class="text-sm text-slate-800 dark:text-slate-200">
-                    -
-                </div>
+                <div id="t-detail-project" class="text-sm text-slate-800 dark:text-slate-200">-</div>
             </div>
 
             <!-- People -->
             <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700">
                 <h3 class="text-xs font-bold text-slate-500 uppercase mb-3 dark:text-slate-400">Люди</h3>
-                
                 <div class="mb-4">
                     <div class="text-xs text-slate-400 mb-1">Исполнитель</div>
-                    <div id="t-detail-assignee" class="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-200">
-                        <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-600">?</div>
-                        <span>Не назначен</span>
-                    </div>
+                    <div id="t-detail-assignee" class="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-200"></div>
                 </div>
-
                 <div>
                     <div class="text-xs text-slate-400 mb-1">Автор</div>
-                    <div id="t-detail-author" class="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-200">
-                        <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-600">?</div>
-                        <span>Неизвестен</span>
-                    </div>
+                    <div id="t-detail-author" class="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-200"></div>
                 </div>
             </div>
 
-            <!-- Meta (Dates & Tags) -->
+            <!-- Meta -->
             <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700">
                 <h3 class="text-xs font-bold text-slate-500 uppercase mb-3 dark:text-slate-400">Детали</h3>
-                
                 <div class="mb-4">
                     <div class="text-xs text-slate-400 mb-1">Срок исполнения</div>
                     <div id="t-detail-due" class="text-sm font-medium">-</div>
                 </div>
-
                 <div>
                     <div class="text-xs text-slate-400 mb-1">Теги</div>
-                    <div id="t-detail-tags" class="flex flex-wrap gap-1">
-                        -
-                    </div>
+                    <div id="t-detail-tags" class="flex flex-wrap gap-1">-</div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>

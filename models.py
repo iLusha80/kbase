@@ -123,14 +123,13 @@ class TaskStatus(db.Model):
     def to_dict(self):
         return {'id': self.id, 'name': self.name, 'color': self.color}
 
+# --- TASK MODEL (UPDATE) ---
 class Task(db.Model):
     __tablename__ = 'tasks'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
     due_date = db.Column(db.Date, nullable=True)
-    
-    # FIX: Передаем функцию datetime.now без скобок
     created_at = db.Column(db.DateTime, default=datetime.now)
     
     status_id = db.Column(db.Integer, db.ForeignKey('task_statuses.id'), nullable=False)
@@ -141,9 +140,11 @@ class Task(db.Model):
     assignee = db.relationship('Contact', foreign_keys=[assignee_id], backref='tasks_assigned')
     author = db.relationship('Contact', foreign_keys=[author_id], backref='tasks_authored')
     
-    # Relationship to Tags
     tags = db.relationship('Tag', secondary=task_tags, lazy='subquery',
         backref=db.backref('tasks', lazy=True))
+    
+    # NEW: Relationship to Comments
+    comments = db.relationship('TaskComment', backref='task', lazy=True, cascade="all, delete-orphan")
 
     def to_dict(self):
         return {
@@ -160,6 +161,23 @@ class Task(db.Model):
             'project_id': self.project_id,
             'project_title': self.project.title if self.project else None,
             'tags': [tag.to_dict() for tag in self.tags]
+        }
+
+# --- NEW: COMMENT MODEL ---
+class TaskComment(db.Model):
+    __tablename__ = 'task_comments'
+    id = db.Column(db.Integer, primary_key=True)
+    text = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    
+    task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=False)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'text': self.text,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M'), # Форматируем для фронта
+            'task_id': self.task_id
         }
 
 
