@@ -40,14 +40,14 @@ const Dashboard = {
                 <div class="flex items-center gap-3 overflow-hidden">
                     <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background-color: ${t.status ? t.status.color : '#ccc'}"></div>
                     <div class="min-w-0">
-                        <div class="text-sm font-medium text-slate-800 truncate dark:text-white cursor-pointer hover:text-primary-600" onclick="editTask(${t.id})">${t.title}</div>
+                        <div class="text-sm font-medium text-slate-800 truncate dark:text-white cursor-pointer hover:text-primary-600" onclick="openTaskDetail(${t.id})">${t.title}</div>
                         <div class="text-xs text-slate-500 flex items-center gap-2 mt-0.5 dark:text-slate-400">
                             ${t.project_title ? `<span class="bg-slate-100 px-1.5 py-0.5 rounded text-[10px] dark:bg-slate-700">${t.project_title}</span>` : ''}
                             <span class="${dateColorClass} flex items-center gap-1"><i data-lucide="${dateIcon}" class="w-3 h-3"></i> ${t.due_date || 'Без срока'}</span>
                         </div>
                     </div>
                 </div>
-                <button onclick="editTask(${t.id})" class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-primary-600 transition-opacity dark:hover:text-primary-400"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                <button onclick="openTaskDetail(${t.id})" class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-primary-600 transition-opacity dark:hover:text-primary-400"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
             </div>`;
         }).join('');
     },
@@ -65,7 +65,7 @@ const Dashboard = {
                     <div class="text-sm font-medium text-slate-800 truncate dark:text-white">${t.title}</div>
                     <div class="text-xs text-slate-500 mt-0.5 dark:text-slate-400">${t.assignee ? `<i data-lucide="user" class="w-3 h-3 inline mr-1"></i>${t.assignee.last_name}` : 'Нет исполнителя'}</div>
                 </div>
-                <button onclick="editTask(${t.id})" class="text-slate-300 hover:text-purple-600 dark:text-slate-600 dark:hover:text-purple-400"><i data-lucide="arrow-right-circle" class="w-5 h-5"></i></button>
+                <button onclick="openTaskDetail(${t.id})" class="text-slate-300 hover:text-purple-600 dark:text-slate-600 dark:hover:text-purple-400"><i data-lucide="arrow-right-circle" class="w-5 h-5"></i></button>
             </div>
         `).join('');
     },

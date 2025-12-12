@@ -37,3 +37,8 @@ def projects_detail_page(subpath):
 @main_bp.route('/contacts/<path:subpath>')
 def contacts_detail_page(subpath):
     return render_template('index.html')
+
+# NEW
+@main_bp.route('/tasks/<path:subpath>')
+def tasks_detail_page(subpath):
+    return render_template('index.html')

@@ -107,8 +107,6 @@ function setupHotkeysAndHints() {
         btn.title = `Новая задача (${modKeySymbol}J)`; // Tooltip fallback
         
         // Пытаемся найти текстовый span внутри кнопки
-        // В HTML у нас: <i ...></i> <span>Текст</span>
-        // На мобильных span скрыт, поэтому hotkey тоже будет скрыт (что логично)
         const textSpan = btn.querySelector('span');
         if (textSpan) {
             // Добавляем красивую полупрозрачную подпись
@@ -184,6 +182,7 @@ function handleUrlRouting(addToHistory = false) {
     else if (path === '/projects') initialView = 'projects';
     else if (path === '/kb') initialView = 'kb';
     
+    // Project Detail
     const projectMatch = path.match(/^\/projects\/(\d+)$/);
     if (projectMatch) {
         const projectId = projectMatch[1];
@@ -192,11 +191,21 @@ function handleUrlRouting(addToHistory = false) {
         return; 
     }
 
+    // Contact Detail
     const contactMatch = path.match(/^\/contacts\/(\d+)$/);
     if (contactMatch) {
         const contactId = contactMatch[1];
         switchView('contacts', false); 
         ContactController.openContactDetail(contactId);
+        return; 
+    }
+
+    // NEW: Task Detail
+    const taskMatch = path.match(/^\/tasks\/(\d+)$/);
+    if (taskMatch) {
+        const taskId = taskMatch[1];
+        switchView('tasks', false);
+        TaskController.openTaskDetail(taskId);
         return; 
     }
     

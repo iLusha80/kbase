@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from services.task_service import (
     get_all_tasks, create_task, get_task_by_id,
-    update_task, delete_task, update_task_status, get_task_statuses
+    update_task, delete_task, update_task_status, get_task_statuses,
+    get_task_full_details # NEW IMPORT
 )
 
 tasks_bp = Blueprint('tasks', __name__)
@@ -18,10 +19,11 @@ def list_tasks():
 
 @tasks_bp.route('/tasks/<int:task_id>', methods=['GET'])
 def get_task_detail(task_id):
-    task = get_task_by_id(task_id)
+    # Используем расширенную функцию
+    task = get_task_full_details(task_id)
     if not task:
         return jsonify({'error': 'Task not found'}), 404
-    return jsonify(task.to_dict())
+    return jsonify(task)
 
 @tasks_bp.route('/tasks', methods=['POST'])
 def add_task():

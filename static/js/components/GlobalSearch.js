@@ -92,7 +92,7 @@ const GlobalSearch = {
         if (hasTasks) {
             html += `<div class="px-3 py-2 text-[10px] font-bold text-slate-400 uppercase bg-slate-50 border-t border-slate-100 dark:bg-slate-700/50 dark:border-slate-700 dark:text-slate-300">Задачи</div>`;
             html += data.tasks.map(t => `
-                <div onclick="editTask(${t.id}); document.getElementById('globalHeaderSearchResults').classList.add('hidden');" 
+                <div onclick="openTaskDetail(${t.id})"; document.getElementById('globalHeaderSearchResults').classList.add('hidden');" 
                      class="px-4 py-2 hover:bg-slate-50 cursor-pointer flex items-center transition-colors dark:hover:bg-slate-700">
                     <div class="w-2 h-2 rounded-full mr-3 flex-shrink-0" style="background-color: ${t.status ? t.status.color : '#ccc'}"></div>
                     <span class="text-sm text-slate-800 truncate dark:text-slate-200">${t.title}</span>

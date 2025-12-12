@@ -1,0 +1,102 @@
+<div id="view-task-detail" class="view-section hidden">
+    <!-- Навигация -->
+    <div class="mb-4">
+        <button onclick="switchView('tasks')" class="text-sm text-slate-500 hover:text-slate-800 flex items-center dark:text-slate-400 dark:hover:text-white">
+            <i data-lucide="arrow-left" class="w-4 h-4 mr-1"></i> К списку задач
+        </button>
+    </div>
+
+    <!-- Заголовок и Действия -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 border-b border-slate-200 pb-4 dark:border-slate-700">
+        <div class="flex items-center gap-3">
+             <!-- Status Badge Large -->
+             <span id="t-detail-status" class="px-3 py-1 rounded text-sm font-bold uppercase text-white tracking-wider bg-slate-400">STATUS</span>
+             <span id="t-detail-id" class="text-slate-400 text-sm">#ID</span>
+        </div>
+        
+        <div class="flex gap-2">
+            <!-- Edit Button triggers Modal for quick edits -->
+            <button id="t-detail-edit-btn" class="px-3 py-1.5 bg-white border border-slate-300 text-slate-700 rounded text-sm hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">
+                <i data-lucide="edit-2" class="w-4 h-4 inline mr-1"></i> Редактировать
+            </button>
+            <button id="t-detail-delete-btn" class="px-3 py-1.5 bg-white border border-slate-300 text-red-600 rounded text-sm hover:bg-red-50 hover:border-red-200 dark:bg-slate-800 dark:border-slate-600 dark:text-red-400 dark:hover:bg-slate-700">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- LEFT COLUMN: Content (2/3) -->
+        <div class="lg:col-span-2 space-y-8">
+            <!-- Title -->
+            <h1 id="t-detail-title" class="text-2xl font-bold text-slate-900 dark:text-white leading-tight">
+                Загрузка...
+            </h1>
+
+            <!-- Description -->
+            <div>
+                <h3 class="text-sm font-bold text-slate-500 uppercase mb-2 dark:text-slate-400">Описание</h3>
+                <div id="t-detail-desc" class="prose prose-sm max-w-none text-slate-800 dark:text-slate-300 bg-slate-50 p-4 rounded-lg border border-slate-100 dark:bg-slate-800 dark:border-slate-700 whitespace-pre-wrap">
+                    Нет описания
+                </div>
+            </div>
+
+            <!-- Future: Comments & History will go here -->
+            <div class="border-t border-slate-200 pt-8 mt-8 dark:border-slate-700 text-center text-slate-400 italic text-sm">
+                Место для комментариев (Скоро)
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: Sidebar (1/3) -->
+        <div class="space-y-6">
+            
+            <!-- Project Card -->
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+                <h3 class="text-xs font-bold text-slate-500 uppercase mb-3 dark:text-slate-400">Проект</h3>
+                <div id="t-detail-project" class="text-sm text-slate-800 dark:text-slate-200">
+                    -
+                </div>
+            </div>
+
+            <!-- People -->
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+                <h3 class="text-xs font-bold text-slate-500 uppercase mb-3 dark:text-slate-400">Люди</h3>
+                
+                <div class="mb-4">
+                    <div class="text-xs text-slate-400 mb-1">Исполнитель</div>
+                    <div id="t-detail-assignee" class="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-200">
+                        <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-600">?</div>
+                        <span>Не назначен</span>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="text-xs text-slate-400 mb-1">Автор</div>
+                    <div id="t-detail-author" class="flex items-center gap-2 text-sm text-slate-800 dark:text-slate-200">
+                        <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[10px] text-slate-600">?</div>
+                        <span>Неизвестен</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meta (Dates & Tags) -->
+            <div class="bg-white p-4 rounded-lg border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-700">
+                <h3 class="text-xs font-bold text-slate-500 uppercase mb-3 dark:text-slate-400">Детали</h3>
+                
+                <div class="mb-4">
+                    <div class="text-xs text-slate-400 mb-1">Срок исполнения</div>
+                    <div id="t-detail-due" class="text-sm font-medium">-</div>
+                </div>
+
+                <div>
+                    <div class="text-xs text-slate-400 mb-1">Теги</div>
+                    <div id="t-detail-tags" class="flex flex-wrap gap-1">
+                        -
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

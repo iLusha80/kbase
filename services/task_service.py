@@ -38,6 +38,26 @@ def create_task(data):
     db.session.commit()
     return new_t
 
+
+def get_task_full_details(task_id):
+    """
+    Возвращает расширенные данные задачи.
+    В будущем сюда добавим загрузку комментариев и истории.
+    """
+    t = Task.query.get(task_id)
+    if not t:
+        return None
+    
+    # Пока просто возвращаем to_dict(), но это место для расширения
+    data = t.to_dict()
+    
+    # Пример на будущее:
+    # data['comments'] = [c.to_dict() for c in t.comments]
+    # data['history'] = [h.to_dict() for h in t.history]
+    
+    return data
+
+
 def update_task(task_id, data):
     t = Task.query.get(task_id)
     if not t:
