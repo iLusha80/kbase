@@ -199,3 +199,32 @@ class QuickLink(db.Model):
             'url': self.url,
             'icon': self.icon
         }
+    
+# --- NEW: ACTIVITY LOG MODEL ---
+class ActivityLog(db.Model):
+    __tablename__ = 'activity_logs'
+    id = db.Column(db.Integer, primary_key=True)
+    
+    entity_type = db.Column(db.String(50), nullable=False) # 'task', 'project'
+    entity_id = db.Column(db.Integer, nullable=False)
+    
+    event_type = db.Column(db.String(50)) # 'update', 'create'
+    field_name = db.Column(db.String(50)) # 'status', 'assignee', 'due_date'
+    
+    old_value = db.Column(db.Text, nullable=True) # Храним читаемые значения ('В работе')
+    new_value = db.Column(db.Text, nullable=True)
+    
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'entity_type': self.entity_type,
+            'entity_id': self.entity_id,
+            'event_type': self.event_type,
+            'field_name': self.field_name,
+            'old_value': self.old_value,
+            'new_value': self.new_value,
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M'),
+            'timestamp': self.created_at.timestamp() # Для сортировки на JS
+        }

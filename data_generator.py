@@ -13,7 +13,7 @@ from app import app, db
 # Импортируем сами классы моделей и объекты таблиц
 from models import (
     ContactType, TaskStatus, Tag, Contact, Project, ProjectContact, 
-    Task, QuickLink, contact_tags, task_tags, TaskComment
+    Task, QuickLink, contact_tags, task_tags, TaskComment, ActivityLog
 )
 
 # --- CONFIGURATION ---
@@ -186,7 +186,7 @@ def migrate_data():
         print(f"❌ Ошибка чтения бэкапа: {e}")
         return
 
-    # 3. Пересоздание НОВОЙ базы
+    # 3. Пересоздание НОВОЙ базы2
     print("♻️  Пересоздание схемы БД (DROP/CREATE)...")
     db.drop_all()
     db.create_all()
@@ -203,7 +203,8 @@ def migrate_data():
         ('tasks', Task),
         ('contact_tags', contact_tags),
         ('task_tags', task_tags),
-        ('task_comments', TaskComment)
+        ('task_comments', TaskComment),
+        ('activity_logs', ActivityLog)
     ]
 
     print("🚀 Начало переноса данных...")

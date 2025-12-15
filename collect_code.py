@@ -22,6 +22,16 @@ INCLUDE_EXTS = {
     '.json', '.txt', '.yaml', '.yml', '.env.example', '.ini'
 }
 
+IGNORE_FILES = {
+    OUTPUT_FILE,
+    'pref_vers_all_project_code.txt',
+    'kbase.db',       
+    'package-lock.json',
+    '.DS_Store',      
+    'tailwindcss.js', # <--- На всякий случай
+    'lucide.min.js'   # <--- На всякий случай
+}
+
 def is_ignored(path):
     parts = path.split(os.sep)
     for part in parts:
@@ -45,7 +55,7 @@ def generate_tree_structure(root_dir):
         subindent = ' ' * 4 * (level + 1)
         for f in filenames:
             ext = os.path.splitext(f)[1].lower()
-            if ext in INCLUDE_EXTS and f != OUTPUT_FILE and f != 'collect_code.py':
+            if ext in INCLUDE_EXTS and f not in IGNORE_FILES:
                 tree_str += f"{subindent}{f}\n"
     return tree_str
 
@@ -88,7 +98,7 @@ def collect_project_code():
                 ext = os.path.splitext(filename)[1].lower()
 
                 # Исключаем сам скрипт сбора и выходной файл
-                if ext in INCLUDE_EXTS and filename != OUTPUT_FILE and filename != 'collect_code.py' and not filename.startswith('pref_vers_'):
+                if ext in INCLUDE_EXTS and filename not in IGNORE_FILES:
                     file_path = os.path.join(dirpath, filename)
                     relative_path = os.path.relpath(file_path, root_dir)
                     
