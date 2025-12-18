@@ -44,22 +44,44 @@ def get_top_active_projects(limit=3):
 def get_favorite_contacts_list():
     """
     Получает список избранных контактов с подгрузкой данных самого контакта.
+    Считает:
+    1. active_task_count: Задачи НА человеке (Assignee)
+    2. overdue_task_count: Просроченные задачи НА человеке
+    3. authored_task_count: Задачи ОТ человека (Author)
     """
     favorites = db.session.query(FavoriteContact)\
         .join(Contact)\
         .order_by(FavoriteContact.created_at.desc())\
         .all()
     
+    # Получаем ID статуса "Готово" для исключения
+    done_status = TaskStatus.query.filter_by(name='Готово').first()
+    done_id = done_status.id if done_status else -1
+    today = date.today()
+
     result = []
     for fav in favorites:
         c = fav.contact
+        
+        # 1. Задачи, назначенные НА него (Active Assignments)
+        active_assigned = [t for t in c.tasks_assigned if t.status_id != done_id]
+        total_active = len(active_assigned)
+        overdue_count = sum(1 for t in active_assigned if t.due_date and t.due_date < today)
+
+        # 2. Задачи, поставленные ИМ (Active Authored / Requests)
+        active_authored = [t for t in c.tasks_authored if t.status_id != done_id]
+        authored_count = len(active_authored)
+
         result.append({
             'contact_id': c.id,
             'last_name': c.last_name,
             'first_name': c.first_name,
             'role': c.role,
             'department': c.department,
-            'type_color': c.contact_type.render_color if c.contact_type else '#cbd5e1'
+            'type_color': c.contact_type.render_color if c.contact_type else '#cbd5e1',
+            'active_task_count': total_active,
+            'overdue_task_count': overdue_count,
+            'authored_task_count': authored_count # NEW
         })
     return result
 

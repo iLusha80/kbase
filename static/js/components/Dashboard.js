@@ -143,19 +143,41 @@ const Dashboard = {
 
         container.innerHTML = favorites.map(f => {
             const initial = f.last_name ? f.last_name.charAt(0) : '?';
+            
+            // 1. Огонек (просроченные НА нём)
+            const flameHtml = f.overdue_task_count > 0 
+                ? `<div class="flex items-center text-orange-500 font-bold" title="Просрочено"><i data-lucide="flame" class="w-3 h-3 mr-0.5"></i>${f.overdue_task_count}</div>` 
+                : '';
+            
+            // 2. Отправлено (поручения ОТ него)
+            const authoredHtml = f.authored_task_count > 0
+                ? `<div class="flex items-center text-indigo-500 font-medium" title="Поручения от него"><i data-lucide="send" class="w-3 h-3 mr-0.5"></i>${f.authored_task_count}</div>`
+                : '';
+
             return `
-            <div onclick="openContactDetail(${f.contact_id})" class="relative group cursor-pointer flex items-center p-3 rounded-lg bg-white border border-slate-200 hover:border-yellow-400 transition-all shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:hover:border-yellow-500/50">
-                <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white mr-3" style="background-color: ${f.type_color}">
-                    ${initial}
+            <div onclick="openContactDetail(${f.contact_id})" class="relative group cursor-pointer flex items-center justify-between p-2 rounded-lg bg-white border border-slate-200 hover:border-yellow-400 transition-all shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:hover:border-yellow-500/50">
+                <div class="flex items-center min-w-0 mr-2">
+                    <div class="w-6 h-6 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-white mr-2" style="background-color: ${f.type_color}">
+                        ${initial}
+                    </div>
+                    <div class="min-w-0">
+                        <div class="text-xs font-medium text-slate-800 truncate dark:text-white leading-tight">${f.last_name} ${f.first_name ? f.first_name.charAt(0) + '.' : ''}</div>
+                        <div class="text-[9px] text-slate-400 truncate leading-tight">${f.role || f.department || ''}</div>
+                    </div>
                 </div>
-                <div class="min-w-0">
-                    <div class="text-sm font-medium text-slate-800 truncate dark:text-white">${f.last_name} ${f.first_name || ''}</div>
-                    <div class="text-[10px] text-slate-400 truncate">${f.role || f.department || ''}</div>
+
+                <!-- Stats -->
+                <div class="flex items-center gap-2 text-[10px]">
+                    ${flameHtml}
+                    
+                    ${authoredHtml}
+
+                    <div class="flex items-center text-slate-400" title="В работе (на исполнении)"><i data-lucide="layers" class="w-3 h-3 mr-0.5"></i>${f.active_task_count}</div>
                 </div>
                 
                 <!-- Unstar button -->
-                <button onclick="event.stopPropagation(); removeFavoriteFromDash(${f.contact_id})" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-opacity p-1">
-                     <i data-lucide="x" class="w-3 h-3"></i>
+                <button onclick="event.stopPropagation(); removeFavoriteFromDash(${f.contact_id})" class="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-opacity p-0.5">
+                     <i data-lucide="x" class="w-2.5 h-2.5"></i>
                 </button>
             </div>
             `;
