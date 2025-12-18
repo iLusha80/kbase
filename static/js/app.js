@@ -40,6 +40,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ContactController.init();
     TaskController.init();
     
+    // Инициализация дашборда (здесь назначаются window.deleteQuickLink и др.)
     Dashboard.setup();
 
     // --- HOTKEYS & UI HINTS ---
@@ -65,18 +66,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.addEventListener('popstate', (event) => {
         handleUrlRouting(false);
     });
-    
-    window.openQuickLinkModal = function() {
-        const form = document.getElementById('quick-link-form');
-        if (form) form.reset();
-        document.getElementById('quick-link-modal').classList.remove('hidden');
-    };
-    
-    window.deleteQuickLink = async function(id) {
-        if (confirm('Удалить ссылку?')) {
-            if (await window.api.deleteQuickLink(id)) Dashboard.init();
-        }
-    };
+
+    // Убрана дублирующая логика window.openQuickLinkModal и deleteQuickLink,
+    // так как они теперь внутри Dashboard.setup()
 
     await loadInitialData();
     
@@ -200,7 +192,7 @@ function handleUrlRouting(addToHistory = false) {
         return; 
     }
 
-    // NEW: Task Detail
+    // Task Detail
     const taskMatch = path.match(/^\/tasks\/(\d+)$/);
     if (taskMatch) {
         const taskId = taskMatch[1];

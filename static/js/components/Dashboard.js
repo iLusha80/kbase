@@ -1,11 +1,33 @@
 import API from '../api.js';
 import { switchView } from '../utils/router.js';
-import { closeModal } from './Modal.js';
+import { closeModal, openModal } from './Modal.js';
+
+// Локальное хранилище данных для быстрого доступа при редактировании
+let cachedLinks = []; 
 
 const Dashboard = {
-    // Setup listeners (Search logic REMOVED from here)
     setup() {
         this.initQuickLinkForm();
+        
+        window.editQuickLink = (id) => {
+            const link = cachedLinks.find(l => l.id === id);
+            if (link) this.openLinkModal(link);
+        };
+        
+        window.deleteQuickLink = async (id) => {
+            if (confirm('Удалить эту быструю ссылку?')) {
+                const success = await API.deleteQuickLink(id);
+                if (success) {
+                    await this.loadData();
+                } else {
+                    alert('Не удалось удалить ссылку');
+                }
+            }
+        };
+        
+        window.openQuickLinkModal = () => {
+            this.openLinkModal(null);
+        };
     },
 
     async init() {
@@ -19,7 +41,9 @@ const Dashboard = {
         this.renderPriorityTasks(data.priority_tasks);
         this.renderWaitingTasks(data.waiting_tasks);
         this.renderTopProjects(data.top_projects);
-        this.renderQuickLinks(data.quick_links);
+        
+        cachedLinks = data.quick_links || [];
+        this.renderQuickLinks(cachedLinks);
         
         if (window.lucide) lucide.createIcons();
     },
@@ -100,16 +124,48 @@ const Dashboard = {
         }
 
         container.innerHTML = links.map(l => `
-            <div class="relative group flex flex-col items-center justify-center p-3 rounded-lg bg-slate-50 hover:bg-slate-100 border border-slate-200 transition-colors text-center dark:bg-slate-700/50 dark:border-slate-600 dark:hover:bg-slate-700 dark:text-slate-200">
-                <a href="${l.url}" target="_blank" class="w-full flex flex-col items-center">
-                    <i data-lucide="${l.icon || 'link'}" class="w-5 h-5 mb-1 text-slate-500 dark:text-slate-300"></i>
-                    <span class="text-xs font-medium truncate w-full">${l.title}</span>
+            <div class="relative group h-full">
+                <!-- Ссылка -->
+                <a href="${l.url}" target="_blank" class="flex flex-col items-center justify-center p-4 h-full rounded-lg bg-slate-50 border border-slate-200 hover:bg-slate-100 transition-colors text-center dark:bg-slate-700/50 dark:border-slate-600 dark:hover:bg-slate-700 dark:text-slate-200">
+                    <i data-lucide="${l.icon || 'link'}" class="w-6 h-6 mb-2 text-slate-500 dark:text-slate-300"></i>
+                    <span class="text-xs font-medium truncate w-full px-1">${l.title}</span>
                 </a>
-                <button onclick="deleteQuickLink(${l.id})" class="absolute top-1 right-1 text-slate-300 hover:text-red-500 hidden group-hover:block transition-colors">
-                    <i data-lucide="x-circle" class="w-3 h-3"></i>
-                </button>
+                
+                <!-- Кнопки управления -->
+                <!-- FIX: Используем opacity-0 вместо hidden, так как style.css блокирует hidden -->
+                <div class="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
+                    <button onclick="editQuickLink(${l.id})" class="p-1.5 rounded-md bg-white text-slate-400 hover:text-primary-600 hover:bg-slate-50 border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-600 dark:text-slate-400 dark:hover:text-primary-400 transition-colors" title="Редактировать">
+                        <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="deleteQuickLink(${l.id})" class="p-1.5 rounded-md bg-white text-slate-400 hover:text-red-600 hover:bg-red-50 border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-600 dark:text-slate-400 dark:hover:text-red-400 transition-colors" title="Удалить">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
             </div>
         `).join('');
+    },
+
+    openLinkModal(link) {
+        const form = document.getElementById('quick-link-form');
+        const titleEl = document.getElementById('quick-link-modal-title');
+        
+        if (form) {
+            form.reset();
+            
+            if (link) {
+                // Режим редактирования
+                titleEl.innerText = "Редактировать ссылку";
+                form.querySelector('[name="id"]').value = link.id;
+                form.querySelector('[name="title"]').value = link.title;
+                form.querySelector('[name="url"]').value = link.url;
+                form.querySelector('[name="icon"]').value = link.icon || '';
+            } else {
+                // Режим создания
+                titleEl.innerText = "Добавить ссылку";
+                form.querySelector('[name="id"]').value = "";
+            }
+        }
+        openModal('quick-link-modal');
     },
 
     initQuickLinkForm() {
@@ -123,12 +179,21 @@ const Dashboard = {
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData.entries());
                 
-                if (await API.createQuickLink(data)) {
+                const id = data.id;
+                let success = false;
+
+                if (id) {
+                    success = await API.updateQuickLink(id, data);
+                } else {
+                    success = await API.createQuickLink(data);
+                }
+                
+                if (success) {
                     closeModal('quick-link-modal');
                     e.target.reset(); 
                     this.loadData(); 
                 } else {
-                    alert('Ошибка при создании ссылки');
+                    alert('Ошибка при сохранении ссылки');
                 }
             });
         }

@@ -22,6 +22,16 @@ const API = {
             return response.ok;
         } catch (err) { console.error(err); return false; }
     },
+    // NEW
+    async updateQuickLink(id, data) {
+        try {
+            const response = await fetch(`/api/quick-links/${id}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
+            return response.ok;
+        } catch (err) { console.error(err); return false; }
+    },
+
     async deleteQuickLink(id) {
         try {
             const response = await fetch(`/api/quick-links/${id}`, { method: 'DELETE' });

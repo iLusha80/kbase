@@ -57,6 +57,22 @@ def add_quick_link():
     db.session.commit()
     return jsonify(link.to_dict()), 201
 
+
+# --- NEW: UPDATE ROUTE ---
+@dashboard_bp.route('/quick-links/<int:link_id>', methods=['PUT'])
+def update_quick_link(link_id):
+    link = QuickLink.query.get(link_id)
+    if not link:
+        return jsonify({'error': 'Not found'}), 404
+    
+    data = request.json
+    link.title = data.get('title', link.title)
+    link.url = data.get('url', link.url)
+    link.icon = data.get('icon', link.icon)
+    
+    db.session.commit()
+    return jsonify(link.to_dict())
+
 @dashboard_bp.route('/quick-links/<int:link_id>', methods=['DELETE'])
 def delete_quick_link(link_id):
     link = QuickLink.query.get(link_id)

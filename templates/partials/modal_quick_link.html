@@ -2,21 +2,26 @@
     <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeModal('quick-link-modal')"></div>
     <div class="flex min-h-screen items-center justify-center p-4">
         <div class="relative bg-white rounded-lg shadow-xl max-w-sm w-full p-6 fade-in dark:bg-slate-800 dark:border dark:border-slate-700">
-            <h3 class="text-lg font-semibold mb-4 text-slate-900 dark:text-white">Добавить ссылку</h3>
+            <h3 class="text-lg font-semibold mb-4 text-slate-900 dark:text-white">
+                <span id="quick-link-modal-title">Добавить ссылку</span>
+            </h3>
             
             <form id="quick-link-form">
+                <!-- NEW: Hidden ID field -->
+                <input type="hidden" name="id" value="">
+
                 <div class="space-y-3">
                     <input name="title" required placeholder="Название (Jira, Git...)" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none focus:border-primary-500 dark:bg-slate-900 dark:border-slate-600 dark:text-white">
                     
                     <input name="url" type="url" required placeholder="URL (https://...)" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none focus:border-primary-500 dark:bg-slate-900 dark:border-slate-600 dark:text-white">
                     
                     <input name="icon" placeholder="Иконка (lucide name: trello, git-branch...)" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none focus:border-primary-500 dark:bg-slate-900 dark:border-slate-600 dark:text-white">
-                    <p class="text-[10px] text-slate-400">По умолчанию 'link'. <a href="https://lucide.dev/" target="_blank">См. lucide.dev для имен.</a></p>
+                    <p class="text-[10px] text-slate-400">По умолчанию 'link'. <a href="https://lucide.dev/" target="_blank" class="hover:text-primary-500 underline">См. lucide.dev для имен.</a></p>
                 </div>
 
                 <div class="mt-6 flex justify-end gap-3">
                     <button type="button" onclick="closeModal('quick-link-modal')" class="px-3 py-1.5 text-slate-600 hover:bg-slate-100 rounded text-sm dark:text-slate-300 dark:hover:bg-slate-700">Отмена</button>
-                    <button type="submit" class="px-3 py-1.5 bg-primary-600 text-white hover:bg-primary-700 rounded text-sm dark:bg-primary-600 dark:hover:bg-primary-500">Добавить</button>
+                    <button type="submit" class="px-3 py-1.5 bg-primary-600 text-white hover:bg-primary-700 rounded text-sm dark:bg-primary-600 dark:hover:bg-primary-500">Сохранить</button>
                 </div>
             </form>
         </div>
