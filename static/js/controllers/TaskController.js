@@ -5,7 +5,7 @@ import Dashboard from '../components/Dashboard.js';
 import { switchView } from '../utils/router.js'; 
 
 let tasksData = [];
-let currentTaskId = null; // Для хранения ID текущей открытой задачи
+let currentTaskId = null; 
 
 export const TaskController = {
     init() {
@@ -18,18 +18,15 @@ export const TaskController = {
         window.deleteTask = this.deleteTask.bind(this);
         window.openTaskModal = this.openModal.bind(this);
         window.closeTaskModal = () => closeModal('task-modal');
-        
-        // Открытие детальной страницы
         window.openTaskDetail = this.openTaskDetail.bind(this);
 
-        // Слушатели для комментариев
         const commentBtn = document.getElementById('comment-submit-btn');
         if (commentBtn) {
             commentBtn.addEventListener('click', () => this.submitComment());
         }
         
-        // Удаление комментариев (глобально)
         window.deleteTaskComment = this.deleteTaskComment.bind(this);
+        window.toggleTaskStatus = this.toggleTaskStatus.bind(this);
     },
 
     async loadAll() {
@@ -42,24 +39,39 @@ export const TaskController = {
         return tasksData;
     },
 
-    // --- TASK DETAIL VIEW LOGIC ---
+    async toggleTaskStatus(id, currentStatusId) {
+        const taskStatuses = await window.api.getTaskStatuses();
+        
+        const doneStatus = taskStatuses.find(s => s.name === 'Готово');
+        const todoStatus = taskStatuses.find(s => s.name === 'К выполнению');
+
+        if (!doneStatus || !todoStatus) return;
+
+        const newStatusId = (currentStatusId === doneStatus.id) ? todoStatus.id : doneStatus.id;
+        const success = await API.updateTask(id, { status_id: newStatusId });
+        
+        if (success) {
+            // Обновляем локально без перезагрузки, чтобы не сбрасывать фильтры
+            // В идеале можно обновить tasksData и перерисовать, но проще загрузить заново
+            await this.loadAll();
+            Dashboard.init(); 
+        }
+    },
+
+    // --- Остальные методы без изменений (openTaskDetail, submitComment и т.д.) ---
     async openTaskDetail(id) {
         currentTaskId = id; 
-
         const response = await fetch(`/api/tasks/${id}`);
         if (!response.ok) return;
         const t = await response.json();
 
-        // 1. Header (Status, ID, Actions)
         document.getElementById('t-detail-id').innerText = `#${t.id}`;
-        
         const statusEl = document.getElementById('t-detail-status');
         if (t.status) {
             statusEl.innerText = t.status.name;
             statusEl.style.backgroundColor = t.status.color;
         }
 
-        // Кнопки действий
         document.getElementById('t-detail-edit-btn').onclick = () => this.editTask(t.id);
         document.getElementById('t-detail-delete-btn').onclick = async () => {
             if (await this.deleteTask(t.id)) {
@@ -67,11 +79,9 @@ export const TaskController = {
             }
         };
 
-        // 2. Main Content (Title, Description)
         document.getElementById('t-detail-title').innerText = t.title;
         document.getElementById('t-detail-desc').innerText = t.description || 'Нет описания';
 
-        // 3. Sidebar - Project
         const projContainer = document.getElementById('t-detail-project');
         if (t.project_id) {
             projContainer.innerHTML = `
@@ -83,11 +93,9 @@ export const TaskController = {
             projContainer.innerHTML = '<span class="text-slate-400 italic">Без проекта</span>';
         }
 
-        // 4. Sidebar - People
         this.renderUser(t.assignee, 't-detail-assignee');
         this.renderUser(t.author, 't-detail-author');
 
-        // 5. Sidebar - Meta (Due Date, Tags)
         const dueEl = document.getElementById('t-detail-due');
         if (t.due_date) {
             const isOverdue = new Date(t.due_date) < new Date().setHours(0,0,0,0);
@@ -105,32 +113,19 @@ export const TaskController = {
             tagsContainer.innerHTML = '<span class="text-slate-400 text-xs">-</span>';
         }
 
-        // --- 6. RENDER TIMELINE (Comments + History) ---
         this.renderTimeline(t.comments, t.history);
-
         if (window.lucide) lucide.createIcons();
         switchView('task-detail', true, `/tasks/${id}`);
     },
 
     renderTimeline(comments, history) {
         const container = document.getElementById('t-detail-comments-list');
-        
-        // 1. Подготовка данных
         const cItems = (comments || []).map(c => ({ 
-            ...c, 
-            type: 'comment', 
-            // created_at приходит строкой "YYYY-MM-DD HH:MM", парсим для сортировки
-            sortTime: new Date(c.created_at).getTime() 
+            ...c, type: 'comment', sortTime: new Date(c.created_at).getTime() 
         }));
-        
         const hItems = (history || []).map(h => ({ 
-            ...h, 
-            type: 'history', 
-            // timestamp приходит числом секунд из Python, переводим в мс
-            sortTime: h.timestamp * 1000 
+            ...h, type: 'history', sortTime: h.timestamp * 1000 
         }));
-
-        // 2. Объединение и сортировка (Новые сверху)
         const timeline = [...cItems, ...hItems].sort((a, b) => b.sortTime - a.sortTime);
 
         if (timeline.length === 0) {
@@ -138,15 +133,11 @@ export const TaskController = {
             return;
         }
 
-        // 3. Рендеринг
         container.innerHTML = timeline.map(item => {
             if (item.type === 'comment') {
-                // --- Комментарий ---
                 return `
                 <div class="flex gap-3 group relative">
-                    <!-- Линия таймлайна -->
                     <div class="before:absolute before:left-4 before:top-8 before:bottom-[-20px] before:w-px before:bg-slate-200 dark:before:bg-slate-700 last:before:hidden"></div>
-                    
                     <div class="w-8 h-8 rounded-full bg-slate-100 flex-shrink-0 flex items-center justify-center text-slate-500 text-xs dark:bg-slate-700 z-10 ring-4 ring-white dark:ring-slate-900">
                         <i data-lucide="message-square" class="w-4 h-4"></i>
                     </div>
@@ -154,20 +145,15 @@ export const TaskController = {
                         <div class="flex items-center gap-2 mb-1">
                             <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Вы</span>
                             <span class="text-[10px] text-slate-400">${item.created_at}</span>
-                            <button onclick="deleteTaskComment(${item.id})" class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-opacity ml-auto">
-                                <i data-lucide="trash-2" class="w-3 h-3"></i>
-                            </button>
+                            <button onclick="deleteTaskComment(${item.id})" class="opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-opacity ml-auto"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
                         </div>
                         <div class="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-wrap leading-relaxed bg-white p-3 rounded-br-lg rounded-bl-lg rounded-tr-lg border border-slate-200 dark:bg-slate-800 dark:border-slate-700 shadow-sm">${item.text}</div>
                     </div>
                 </div>`;
             } else {
-                // --- История ---
                 return `
                 <div class="flex gap-3 relative">
-                    <!-- Линия таймлайна -->
                     <div class="before:absolute before:left-4 before:top-6 before:bottom-[-12px] before:w-px before:bg-slate-200 dark:before:bg-slate-700 last:before:hidden"></div>
-                    
                     <div class="w-8 h-8 flex-shrink-0 flex items-center justify-center z-10">
                         <div class="w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-600 ring-4 ring-white dark:ring-slate-900"></div>
                     </div>
@@ -185,7 +171,6 @@ export const TaskController = {
                 </div>`;
             }
         }).join('');
-        
         if (window.lucide) lucide.createIcons();
     },
 
@@ -194,100 +179,62 @@ export const TaskController = {
         const input = document.getElementById('comment-input');
         const text = input.value.trim();
         if (!text) return;
-
         try {
             const response = await fetch(`/api/tasks/${currentTaskId}/comments`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text })
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text })
             });
-
-            if (response.ok) {
-                input.value = ''; // Очистка
-                // Перезагружаем только данные задачи (не всю страницу)
-                this.openTaskDetail(currentTaskId);
-            }
-        } catch (err) {
-            console.error(err);
-        }
+            if (response.ok) { input.value = ''; this.openTaskDetail(currentTaskId); }
+        } catch (err) { console.error(err); }
     },
 
     async deleteTaskComment(commentId) {
         if (!confirm('Удалить комментарий?')) return;
         try {
             const response = await fetch(`/api/comments/${commentId}`, { method: 'DELETE' });
-            if (response.ok) {
-                this.openTaskDetail(currentTaskId);
-            }
+            if (response.ok) { this.openTaskDetail(currentTaskId); }
         } catch (err) { console.error(err); }
     },
 
     renderUser(user, containerId) {
         const container = document.getElementById(containerId);
         if (!user) {
-            container.innerHTML = `
-                <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 dark:bg-slate-700">
-                        <i data-lucide="user" class="w-3 h-3"></i>
-                    </div>
-                    <span class="text-slate-400 italic">Не указан</span>
-                </div>`;
+            container.innerHTML = `<div class="flex items-center gap-2"><div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 dark:bg-slate-700"><i data-lucide="user" class="w-3 h-3"></i></div><span class="text-slate-400 italic">Не указан</span></div>`;
             return;
         }
-        
         const initial = user.last_name ? user.last_name.charAt(0) : '?';
-        container.innerHTML = `
-            <div class="flex items-center gap-2 cursor-pointer hover:text-primary-600 transition-colors" onclick="openContactDetail(${user.id})">
-                <div class="w-6 h-6 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-[10px] font-bold border border-primary-200 dark:bg-primary-900 dark:text-primary-300 dark:border-primary-800">${initial}</div>
-                <span class="truncate">${user.last_name} ${user.first_name || ''}</span>
-            </div>`;
+        container.innerHTML = `<div class="flex items-center gap-2 cursor-pointer hover:text-primary-600 transition-colors" onclick="openContactDetail(${user.id})"><div class="w-6 h-6 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-[10px] font-bold border border-primary-200 dark:bg-primary-900 dark:text-primary-300 dark:border-primary-800">${initial}</div><span class="truncate">${user.last_name} ${user.first_name || ''}</span></div>`;
     },
 
-    // --- MODAL LOGIC (CREATE / EDIT) ---
     openModal() {
         const form = document.getElementById('task-form');
-        if (form) { 
-            form.reset(); 
-            form.querySelector('[name="id"]').value = ""; 
-        }
+        if (form) { form.reset(); form.querySelector('[name="id"]').value = ""; }
         if (window.taskTagManager) window.taskTagManager.clear();
         document.getElementById('task-modal').classList.remove('hidden');
     },
 
     editTask(id) {
         const task = tasksData.find(t => t.id === id);
-        if (!task) { 
-            this.fetchAndEdit(id); 
-            return; 
-        }
+        if (!task) { this.fetchAndEdit(id); return; }
         this.populateModal(task);
     },
     
     async fetchAndEdit(id) {
          const response = await fetch(`/api/tasks/${id}`);
-         if(response.ok) {
-             const t = await response.json();
-             this.populateModal(t);
-         }
+         if(response.ok) { const t = await response.json(); this.populateModal(t); }
     },
 
     populateModal(task) {
         const form = document.getElementById('task-form');
         this.openModal();
-        
         form.querySelector('[name="id"]').value = task.id;
         form.querySelector('[name="title"]').value = task.title;
         form.querySelector('[name="due_date"]').value = task.due_date || '';
         form.querySelector('[name="description"]').value = task.description || '';
-        
         if (task.status_id) form.querySelector('select[name="status_id"]').value = task.status_id;
         form.querySelector('select[name="assignee_id"]').value = task.assignee_id || '';
         form.querySelector('select[name="author_id"]').value = task.author_id || '';
         if (task.project_id) form.querySelector('select[name="project_id"]').value = task.project_id;
-        
-        if (task.tags && window.taskTagManager) {
-            window.taskTagManager.addTags(task.tags.map(t => t.name));
-        }
+        if (task.tags && window.taskTagManager) { window.taskTagManager.addTags(task.tags.map(t => t.name)); }
     },
 
     async deleteTask(id) {
@@ -305,32 +252,14 @@ export const TaskController = {
         e.preventDefault();
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
-        
-        if (window.taskTagManager) {
-            data.tags = window.taskTagManager.getTags();
-        }
-        
+        if (window.taskTagManager) { data.tags = window.taskTagManager.getTags(); }
         const id = data.id;
         let success = id ? await API.updateTask(id, data) : await API.createTask(data);
-        
         if (success) { 
-            closeModal('task-modal'); 
-            e.target.reset(); 
-            await this.loadAll(); 
-            
-            // Если мы находимся на странице этой задачи, обновим её
-            if (id && !document.getElementById('view-task-detail').classList.contains('hidden')) {
-                 this.openTaskDetail(id);
-            } 
-            // Если задача создана/обновлена в контексте проекта, обновим проект
-            else if (data.project_id && !document.getElementById('view-project-detail').classList.contains('hidden')) {
-                 if (window.openProjectDetail) window.openProjectDetail(data.project_id);
-            }
-            
+            closeModal('task-modal'); e.target.reset(); await this.loadAll(); 
+            if (id && !document.getElementById('view-task-detail').classList.contains('hidden')) { this.openTaskDetail(id); } 
+            else if (data.project_id && !document.getElementById('view-project-detail').classList.contains('hidden')) { if (window.openProjectDetail) window.openProjectDetail(data.project_id); }
             Dashboard.init();
-        } 
-        else { 
-            alert('Ошибка при сохранении задачи'); 
-        }
+        } else { alert('Ошибка при сохранении задачи'); }
     }
 };
