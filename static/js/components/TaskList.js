@@ -1,14 +1,14 @@
 // Global State for Task View
 const state = {
-    allTasks: [],     // Сырые данные
-    filteredTasks: [], // После фильтрации
+    allTasks: [],     
+    filteredTasks: [], 
     filter: {
-        type: 'all',  // 'all', 'my', 'authored', 'overdue', 'project', 'tag'
-        value: null,  // id проекта или имя тега
-        search: ''    // текстовый поиск
+        type: 'active', // <--- ИЗМЕНЕНО: По умолчанию показываем только "В работе"
+        value: null,  
+        search: ''    
     },
     sort: {
-        field: 'due_date', // 'status', 'title', 'project', 'assignee', 'due_date'
+        field: 'due_date',
         direction: 'asc'
     }
 };
@@ -16,44 +16,45 @@ const state = {
 // --- 1. ENTRY POINT ---
 function renderTasks(tasksData) {
     state.allTasks = tasksData;
-    
-    // Инициализация сайдбара только один раз или при изменении данных
     renderSidebarFilters();
-    
-    // Применяем текущие фильтры и сортировку
     applyFiltersAndSort();
 }
 
 // --- 2. LOGIC ---
 function applyFiltersAndSort() {
     let result = [...state.allTasks];
-    const myId = 1; // TODO: В реальном приложении брать ID текущего юзера. Пока заглушка или берем первого.
-
-    // A. Filter by Type
-    if (state.filter.type === 'my') {
-        // Предположим, что "Я" - это контакт с ID=2 (Смирнова Анна - PM) для теста, 
-        // или просто фильтруем тех, у кого есть assignee. 
-        // Для локальной версии без авторизации: фильтруем "без исполнителя" или по конкретному ID.
-        // Пусть будет: задачи, где assignee != null (назначенные)
+    
+    // Фильтр по типу
+    if (state.filter.type === 'active') {
+        // НОВОЕ: Все, кроме статуса "Готово"
+        result = result.filter(t => !t.status || t.status.name !== 'Готово');
+    } 
+    else if (state.filter.type === 'my') {
+        // Заглушка: берем тех, у кого есть исполнитель (для демо)
         result = result.filter(t => t.assignee_id !== null); 
-    } else if (state.filter.type === 'authored') {
+    } 
+    else if (state.filter.type === 'authored') {
         result = result.filter(t => t.author_id !== null);
-    } else if (state.filter.type === 'overdue') {
+    } 
+    else if (state.filter.type === 'overdue') {
         const today = new Date().setHours(0,0,0,0);
-        result = result.filter(t => t.due_date && new Date(t.due_date) < today && t.status.name !== 'Готово');
-    } else if (state.filter.type === 'project') {
+        result = result.filter(t => t.due_date && new Date(t.due_date) < today && (!t.status || t.status.name !== 'Готово'));
+    } 
+    else if (state.filter.type === 'project') {
         result = result.filter(t => t.project_id === state.filter.value);
-    } else if (state.filter.type === 'tag') {
+    } 
+    else if (state.filter.type === 'tag') {
         result = result.filter(t => t.tags && t.tags.some(tag => tag.name === state.filter.value));
     }
+    // Если 'all' - ничего не фильтруем (кроме поиска)
 
-    // B. Search
+    // Поиск
     if (state.filter.search) {
         const term = state.filter.search.toLowerCase();
         result = result.filter(t => t.title.toLowerCase().includes(term));
     }
 
-    // C. Sort
+    // Сортировка
     result.sort((a, b) => {
         let valA, valB;
 
@@ -67,7 +68,6 @@ function applyFiltersAndSort() {
             case 'assignee': 
                 valA = a.assignee ? a.assignee.last_name : ''; valB = b.assignee ? b.assignee.last_name : ''; break;
             case 'due_date':
-                // null даты всегда в конце
                 valA = a.due_date ? new Date(a.due_date).getTime() : 9999999999999; 
                 valB = b.due_date ? new Date(b.due_date).getTime() : 9999999999999; 
                 break;
@@ -91,8 +91,14 @@ function renderTable() {
     if (!tbody) return;
 
     if (state.filteredTasks.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400 italic">Задачи не найдены</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="7" class="px-4 py-12 text-center text-slate-400 italic">
+            <div class="flex flex-col items-center justify-center">
+                <i data-lucide="clipboard-list" class="w-10 h-10 mb-2 opacity-20"></i>
+                <p>Задачи не найдены</p>
+            </div>
+        </td></tr>`;
         if (footerCount) footerCount.innerText = '0 задач';
+        if (window.lucide) lucide.createIcons();
         return;
     }
 
@@ -102,71 +108,77 @@ function renderTable() {
         const isDone = t.status && t.status.name === 'Готово';
         const isOverdue = !isDone && t.due_date && new Date(t.due_date) < new Date().setHours(0,0,0,0);
         
-        // Status Dot
-        const statusHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border" 
-            style="background-color: ${t.status?.color}20; color: ${t.status?.color}; border-color: ${t.status?.color}40">
+        // VISUAL: Тусклость для завершенных
+        const rowClass = isDone ? 'opacity-60 grayscale-[0.5]' : 'opacity-100';
+
+        // Status Dot (Soft style)
+        const statusHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border whitespace-nowrap" 
+            style="background-color: ${t.status?.color}15; color: ${t.status?.color}; border-color: ${t.status?.color}30">
             ${t.status?.name}
         </span>`;
 
         // Date
-        const dateClass = isOverdue ? 'text-red-600 font-bold' : (isDone ? 'text-slate-400' : 'text-slate-600 dark:text-slate-300');
+        let dateClass = 'text-slate-600 dark:text-slate-300';
+        if (isOverdue) dateClass = 'text-red-600 font-bold';
+        if (isDone) dateClass = 'text-slate-400 line-through';
         
         // Tags
         const tagsHtml = t.tags && t.tags.length 
-            ? `<div class="flex gap-1 mt-1">${t.tags.map(tag => `<span class="text-[9px] text-slate-400">#${tag.name}</span>`).join('')}</div>` 
+            ? `<div class="flex gap-1 mt-1 flex-wrap">${t.tags.map(tag => `<span class="px-1.5 py-0.5 rounded-sm bg-slate-100 text-[9px] text-slate-500 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400">#${tag.name}</span>`).join('')}</div>` 
             : '';
 
         return `
-        <tr class="group hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors dark:hover:bg-slate-800 dark:border-slate-800">
+        <tr class="group hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors dark:hover:bg-slate-800/50 dark:border-slate-800 ${rowClass}">
             <!-- Checkbox -->
-            <td class="px-4 py-2 text-center">
+            <td class="px-4 py-3 text-center align-top pt-3.5">
                  <button onclick="event.stopPropagation(); toggleTaskStatus(${t.id}, ${t.status_id})" 
-                    class="w-4 h-4 rounded border flex items-center justify-center transition-colors"
-                    style="border-color: ${t.status?.color}">
-                    ${isDone ? `<i data-lucide="check" class="w-3 h-3" style="color: ${t.status?.color}"></i>` : ''}
+                    class="w-4 h-4 rounded border flex items-center justify-center transition-all hover:scale-110"
+                    style="border-color: ${t.status?.color}; ${isDone ? `background-color: ${t.status?.color}` : ''}">
+                    ${isDone ? `<i data-lucide="check" class="w-3 h-3 text-white"></i>` : ''}
                 </button>
             </td>
 
             <!-- Status -->
-            <td class="px-4 py-2 whitespace-nowrap">${statusHtml}</td>
+            <td class="px-4 py-3 align-top pt-3.5">${statusHtml}</td>
 
             <!-- Title -->
-            <td class="px-4 py-2 max-w-xs">
-                <div class="truncate font-medium text-slate-800 dark:text-slate-200 cursor-pointer hover:text-primary-600" onclick="openTaskDetail(${t.id})">
+            <td class="px-4 py-3 max-w-xs align-top">
+                <div class="font-medium text-slate-800 dark:text-slate-200 cursor-pointer hover:text-primary-600 leading-snug ${isDone ? 'line-through decoration-slate-400' : ''}" onclick="openTaskDetail(${t.id})">
                     ${t.title}
                 </div>
                 ${tagsHtml}
             </td>
 
             <!-- Project -->
-            <td class="px-4 py-2 whitespace-nowrap">
+            <td class="px-4 py-3 whitespace-nowrap align-top pt-3.5">
                 ${t.project_id ? 
-                    `<span onclick="openProjectDetail(${t.project_id})" class="cursor-pointer text-xs text-slate-500 hover:text-primary-600 dark:text-slate-400">
-                        <i data-lucide="briefcase" class="w-3 h-3 inline mr-1 opacity-50"></i>${t.project_title}
-                     </span>` 
-                    : '<span class="text-xs text-slate-300 dark:text-slate-600">-</span>'}
+                    `<div onclick="openProjectDetail(${t.project_id})" class="cursor-pointer flex items-center gap-1.5 text-xs text-slate-500 hover:text-primary-600 dark:text-slate-400 transition-colors max-w-[140px]">
+                        <i data-lucide="briefcase" class="w-3 h-3 flex-shrink-0 opacity-50"></i>
+                        <span class="truncate">${t.project_title}</span>
+                     </div>` 
+                    : '<span class="text-xs text-slate-300 dark:text-slate-600 pl-4">-</span>'}
             </td>
 
             <!-- Assignee -->
-            <td class="px-4 py-2 whitespace-nowrap">
+            <td class="px-4 py-3 whitespace-nowrap align-top pt-3">
                 ${t.assignee ? 
-                    `<div class="flex items-center text-xs text-slate-600 dark:text-slate-300" title="${t.assignee.last_name} ${t.assignee.first_name}">
-                        <div class="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[9px] font-bold mr-2 dark:bg-slate-700">
+                    `<div class="flex items-center text-xs text-slate-600 dark:text-slate-300 group/u" title="${t.assignee.last_name} ${t.assignee.first_name}">
+                        <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[9px] font-bold mr-2 dark:bg-slate-700 ring-2 ring-white dark:ring-slate-800 group-hover/u:ring-primary-100 dark:group-hover/u:ring-primary-900 transition-all">
                             ${t.assignee.last_name.charAt(0)}
                         </div>
                         <span class="truncate max-w-[80px]">${t.assignee.last_name}</span>
                      </div>` 
-                    : '<span class="text-xs text-slate-300 dark:text-slate-600">-</span>'}
+                    : '<span class="text-xs text-slate-300 dark:text-slate-600 pl-4">-</span>'}
             </td>
 
             <!-- Date -->
-            <td class="px-4 py-2 whitespace-nowrap text-right">
+            <td class="px-4 py-3 whitespace-nowrap text-right align-top pt-3.5">
                 <span class="text-xs ${dateClass}">${t.due_date || '-'}</span>
             </td>
 
             <!-- Actions -->
-            <td class="px-4 py-2 text-right opacity-0 group-hover:opacity-100 transition-opacity">
-                <button onclick="editTask(${t.id})" class="p-1 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
+            <td class="px-4 py-3 text-right opacity-0 group-hover:opacity-100 transition-opacity align-top pt-2.5">
+                <button onclick="editTask(${t.id})" class="p-1.5 rounded-md text-slate-400 hover:text-primary-600 hover:bg-white border border-transparent hover:border-slate-200 shadow-sm dark:hover:bg-slate-700 dark:hover:border-slate-600 dark:hover:text-primary-400"><i data-lucide="edit-2" class="w-3.5 h-3.5"></i></button>
             </td>
         </tr>
         `;
@@ -177,8 +189,7 @@ function renderTable() {
 
 // --- 4. RENDER SIDEBAR ---
 function renderSidebarFilters() {
-    // A. Projects
-    // Собираем уникальные проекты из задач (или можно брать Projects API, но для задач лучше брать используемые)
+    // Projects
     const projectsMap = new Map();
     state.allTasks.forEach(t => {
         if (t.project_id) {
@@ -198,14 +209,14 @@ function renderSidebarFilters() {
                 <button onclick="window.setTaskFilter('project', ${p.id})" 
                     class="task-filter-btn w-full text-left px-2 py-1.5 rounded text-xs font-medium text-slate-600 hover:bg-slate-100 flex justify-between group dark:text-slate-300 dark:hover:bg-slate-700" 
                     data-filter="project-${p.id}">
-                    <span class="truncate">${p.title}</span>
-                    <span class="text-slate-400 group-hover:text-slate-600 dark:text-slate-500">${p.count}</span>
+                    <span class="truncate pr-2">${p.title}</span>
+                    <span class="text-[10px] py-0.5 px-1.5 rounded-full bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-primary-600 dark:bg-slate-800 dark:text-slate-500 dark:group-hover:text-primary-400">${p.count}</span>
                 </button>
             </li>
         `).join('');
     }
 
-    // B. Tags
+    // Tags
     const tagsMap = new Map();
     state.allTasks.forEach(t => {
         if (t.tags) {
@@ -219,9 +230,9 @@ function renderSidebarFilters() {
     if (tagsContainer) {
         tagsContainer.innerHTML = Array.from(tagsMap.entries()).map(([name, count]) => `
             <button onclick="window.setTaskFilter('tag', '${name}')" 
-                class="task-filter-btn px-2 py-1 rounded-full text-[10px] bg-slate-100 text-slate-600 border border-slate-200 hover:bg-white hover:border-primary-300 transition-colors dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600"
+                class="task-filter-btn px-2 py-1 rounded text-[10px] bg-white border border-slate-200 text-slate-600 hover:border-primary-400 hover:text-primary-600 transition-colors dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
                 data-filter="tag-${name}">
-                #${name}
+                #${name} <span class="opacity-50 ml-0.5">${count}</span>
             </button>
         `).join('');
     }
@@ -229,19 +240,19 @@ function renderSidebarFilters() {
 
 function updateSidebarActiveState() {
     document.querySelectorAll('.task-filter-btn').forEach(btn => {
-        // Сброс стилей
-        btn.classList.remove('bg-primary-50', 'text-primary-700', 'dark:bg-primary-900/20', 'dark:text-primary-400');
+        // Reset
+        btn.classList.remove('bg-primary-50', 'text-primary-700', 'font-bold', 'dark:bg-primary-900/20', 'dark:text-primary-400');
         
-        // Обычный стиль
-        if (!btn.classList.contains('text-red-600')) { // Исключаем кнопку просроченных из стандартного сброса
-           btn.classList.add('text-slate-600', 'dark:text-slate-300');
-        }
+        // Restore defaults based on type (simple check)
+        if (btn.dataset.filter === 'overdue') btn.classList.add('text-red-600', 'dark:text-red-400');
+        else btn.classList.add('text-slate-600', 'dark:text-slate-300');
 
-        // Логика проверки
+        // Check active
         let isActive = false;
         const dataFilter = btn.dataset.filter;
         
-        if (state.filter.type === 'all' && dataFilter === 'all') isActive = true;
+        if (state.filter.type === 'active' && dataFilter === 'active') isActive = true;
+        else if (state.filter.type === 'all' && dataFilter === 'all') isActive = true;
         else if (state.filter.type === 'my' && dataFilter === 'my') isActive = true;
         else if (state.filter.type === 'authored' && dataFilter === 'authored') isActive = true;
         else if (state.filter.type === 'overdue' && dataFilter === 'overdue') isActive = true;
@@ -249,18 +260,19 @@ function updateSidebarActiveState() {
         else if (state.filter.type === 'tag' && dataFilter === `tag-${state.filter.value}`) isActive = true;
 
         if (isActive) {
-            btn.classList.remove('text-slate-600', 'hover:bg-slate-100', 'dark:text-slate-300');
-            btn.classList.add('bg-primary-50', 'text-primary-700', 'dark:bg-primary-900/20', 'dark:text-primary-400');
+            btn.classList.remove('text-slate-600', 'text-red-600', 'hover:bg-slate-100', 'hover:bg-red-50', 'dark:text-slate-300', 'dark:text-red-400');
+            btn.classList.add('bg-primary-50', 'text-primary-700', 'font-bold', 'dark:bg-primary-900/20', 'dark:text-primary-400');
         }
     });
 }
 
-// --- EXPORTS TO WINDOW ---
+// --- EXPORTS ---
 window.setTaskFilter = function(type, value = null) {
     state.filter.type = type;
     state.filter.value = value;
-    state.filter.search = ''; // Сброс поиска при смене фильтра
-    document.getElementById('taskLocalSearch').value = '';
+    state.filter.search = '';
+    const searchInput = document.getElementById('taskLocalSearch');
+    if(searchInput) searchInput.value = '';
     applyFiltersAndSort();
 };
 
@@ -271,7 +283,6 @@ window.filterTasksLocal = function(val) {
 
 window.sortTasks = function(field) {
     if (state.sort.field === field) {
-        // Toggle direction
         state.sort.direction = state.sort.direction === 'asc' ? 'desc' : 'asc';
     } else {
         state.sort.field = field;
