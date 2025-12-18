@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
 from services.contact_service import (
     get_all_contacts, create_contact, get_contact_by_id, update_contact, 
-    delete_contact, get_contact_types, get_contact_full_details
+    delete_contact, get_contact_types, get_contact_full_details,
+    toggle_favorite_status
 )
 
 contacts_bp = Blueprint('contacts', __name__)
@@ -18,7 +19,6 @@ def list_contacts():
 
 @contacts_bp.route('/contacts/<int:contact_id>', methods=['GET'])
 def get_contact_detail(contact_id):
-    # Используем расширенную функцию для детального вида
     contact_data = get_contact_full_details(contact_id)
     if not contact_data:
         return jsonify({'error': 'Contact not found'}), 404
@@ -49,3 +49,9 @@ def delete_contact_route(contact_id):
     if delete_contact(contact_id):
         return jsonify({'message': 'Contact deleted successfully'}), 200
     return jsonify({'error': 'Contact not found'}), 404
+
+# --- NEW: TOGGLE FAVORITE ---
+@contacts_bp.route('/contacts/<int:contact_id>/favorite', methods=['POST'])
+def toggle_favorite_route(contact_id):
+    is_fav = toggle_favorite_status(contact_id)
+    return jsonify({'is_favorite': is_fav}), 200

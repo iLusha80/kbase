@@ -4,7 +4,8 @@ from flask import Flask
 from sqlalchemy import event # New import
 from sqlalchemy.engine import Engine # New import
 from database import db
-from models import ContactType, TaskStatus
+# Импортируем новую модель FavoriteContact, чтобы db.create_all() её увидел
+from models import ContactType, TaskStatus, FavoriteContact
 from config import Config
 
 from routes.main import main_bp

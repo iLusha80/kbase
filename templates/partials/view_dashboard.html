@@ -39,7 +39,7 @@
                     <i data-lucide="clock" class="w-5 h-5 mr-2 text-purple-500"></i> Ожидаю ответа
                 </h3>
                 <div id="dash-waiting-tasks" class="space-y-3">
-                    <div class="p-4 text-center text-slate-400 text-sm bg-white rounded-lg border border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500">Загрузка...</div>
+                    <div class="p-4 text-center text-slate-400 text-sm bg-white rounded-lg border border-slate-200 border-dashed dark:bg-slate-800 dark:border-slate-700 dark:text-slate-500">Загрузка...</div>
                 </div>
             </section>
         </div>
@@ -48,11 +48,21 @@
         <div class="space-y-6">
             <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 dark:bg-slate-800 dark:border-slate-700">
                 <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center justify-between dark:text-white">
-                    <span><i data-lucide="target" class="w-4 h-4 inline mr-2 text-blue-500"></i>Активные Проектов</span>
+                    <span><i data-lucide="target" class="w-4 h-4 inline mr-2 text-blue-500"></i>Активные Проекты</span>
                     <a href="/projects" onclick="switchView('projects')" class="text-xs text-primary-600 hover:underline dark:text-primary-400">Все</a>
                 </h3>
                 <div id="dash-active-projects" class="space-y-3">
                     <div class="h-16 bg-slate-50 rounded animate-pulse dark:bg-slate-700/50"></div>
+                </div>
+            </section>
+            
+            <!-- FAVORITES (NEW) -->
+             <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 dark:bg-slate-800 dark:border-slate-700">
+                <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center dark:text-white">
+                    <i data-lucide="star" class="w-4 h-4 mr-2 text-yellow-500"></i>Избранное
+                </h3>
+                <div id="dash-favorites" class="space-y-3">
+                    <!-- JS Fills -->
                 </div>
             </section>
 

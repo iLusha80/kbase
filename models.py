@@ -41,7 +41,6 @@ class Project(db.Model):
     status = db.Column(db.String(50), default='Active') # Active, Archived, Planning, On Hold
     link = db.Column(db.String(256), nullable=True) # Ссылка на ресурсы проекта
     
-    # FIX: Передаем функцию datetime.now без скобок
     created_at = db.Column(db.DateTime, default=datetime.now)
     
     # Relationships
@@ -123,7 +122,6 @@ class TaskStatus(db.Model):
     def to_dict(self):
         return {'id': self.id, 'name': self.name, 'color': self.color}
 
-# --- TASK MODEL (UPDATE) ---
 class Task(db.Model):
     __tablename__ = 'tasks'
     id = db.Column(db.Integer, primary_key=True)
@@ -143,7 +141,6 @@ class Task(db.Model):
     tags = db.relationship('Tag', secondary=task_tags, lazy='subquery',
         backref=db.backref('tasks', lazy=True))
     
-    # NEW: Relationship to Comments
     comments = db.relationship('TaskComment', backref='task', lazy=True, cascade="all, delete-orphan")
 
     def to_dict(self):
@@ -163,7 +160,6 @@ class Task(db.Model):
             'tags': [tag.to_dict() for tag in self.tags]
         }
 
-# --- NEW: COMMENT MODEL ---
 class TaskComment(db.Model):
     __tablename__ = 'task_comments'
     id = db.Column(db.Integer, primary_key=True)
@@ -176,12 +172,10 @@ class TaskComment(db.Model):
         return {
             'id': self.id,
             'text': self.text,
-            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M'), # Форматируем для фронта
+            'created_at': self.created_at.strftime('%Y-%m-%d %H:%M'),
             'task_id': self.task_id
         }
 
-
-# --- QUICK LINK MODEL ---
 class QuickLink(db.Model):
     __tablename__ = 'quick_links'
     id = db.Column(db.Integer, primary_key=True)
@@ -189,7 +183,6 @@ class QuickLink(db.Model):
     url = db.Column(db.String(500), nullable=False)
     icon = db.Column(db.String(50), default='link')
     
-    # FIX: Передаем функцию datetime.now без скобок
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
@@ -200,18 +193,17 @@ class QuickLink(db.Model):
             'icon': self.icon
         }
     
-# --- NEW: ACTIVITY LOG MODEL ---
 class ActivityLog(db.Model):
     __tablename__ = 'activity_logs'
     id = db.Column(db.Integer, primary_key=True)
     
-    entity_type = db.Column(db.String(50), nullable=False) # 'task', 'project'
+    entity_type = db.Column(db.String(50), nullable=False)
     entity_id = db.Column(db.Integer, nullable=False)
     
-    event_type = db.Column(db.String(50)) # 'update', 'create'
-    field_name = db.Column(db.String(50)) # 'status', 'assignee', 'due_date'
+    event_type = db.Column(db.String(50))
+    field_name = db.Column(db.String(50))
     
-    old_value = db.Column(db.Text, nullable=True) # Храним читаемые значения ('В работе')
+    old_value = db.Column(db.Text, nullable=True)
     new_value = db.Column(db.Text, nullable=True)
     
     created_at = db.Column(db.DateTime, default=datetime.now)
@@ -226,5 +218,15 @@ class ActivityLog(db.Model):
             'old_value': self.old_value,
             'new_value': self.new_value,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M'),
-            'timestamp': self.created_at.timestamp() # Для сортировки на JS
+            'timestamp': self.created_at.timestamp()
         }
+
+# --- NEW: FAVORITE CONTACTS ---
+class FavoriteContact(db.Model):
+    __tablename__ = 'favorite_contacts'
+    id = db.Column(db.Integer, primary_key=True)
+    contact_id = db.Column(db.Integer, db.ForeignKey('contacts.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    # Relationship
+    contact = db.relationship('Contact', backref=db.backref('favorite_entry', uselist=False))

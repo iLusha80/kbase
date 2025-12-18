@@ -6,34 +6,30 @@ import sqlite3
 import random
 from datetime import datetime, timedelta, timezone
 
-# Импортируем типы для проверки колонок
 from sqlalchemy.sql import sqltypes
 
 from app import app, db
-# Импортируем сами классы моделей и объекты таблиц
 from models import (
     ContactType, TaskStatus, Tag, Contact, Project, ProjectContact, 
-    Task, QuickLink, contact_tags, task_tags, TaskComment, ActivityLog
+    Task, QuickLink, contact_tags, task_tags, TaskComment, ActivityLog,
+    FavoriteContact # NEW IMPORT
 )
 
 # --- CONFIGURATION ---
 DB_FILENAME = 'instance/kbase.db'
 
 def get_db_path():
-    """Возвращает путь к файлу БД (SQLite)"""
     return DB_FILENAME
 
 # --- ACTIONS ---
 
 def clean_db():
-    """Удаляет все таблицы и создает их заново (чистая схема)"""
     print("🧹 Очистка базы данных (DROP ALL)...")
     db.drop_all()
     print("🏗  Создание новой схемы (CREATE ALL)...")
     db.create_all()
 
 def populate_test_data():
-    """Генерация тестовых данных"""
     print("🎲 Генерация тестовых данных...")
     
     # --- 1. СПРАВОЧНИКИ ---
@@ -156,8 +152,13 @@ def populate_test_data():
         ql = QuickLink(title=title, url=url, icon=icon)
         db.session.add(ql)
 
+    # --- 7. ИЗБРАННЫЕ КОНТАКТЫ (NEW) ---
+    # Добавим пару избранных контактов
+    db.session.add(FavoriteContact(contact_id=contacts[0].id))
+    db.session.add(FavoriteContact(contact_id=contacts[1].id))
+
     db.session.commit()
-    print("✅ Тестовые данные (включая ссылки) успешно загружены.")
+    print("✅ Тестовые данные (включая ссылки и избранное) успешно загружены.")
 
 def migrate_data():
     """
@@ -177,16 +178,16 @@ def migrate_data():
     print(f"📦 Создание резервной копии: {backup_path}")
     shutil.copy2(db_path, backup_path)
 
-    # 2. Подключение к СТАРОЙ базе (через чистый SQLite, чтобы читать сырые данные)
+    # 2. Подключение к СТАРОЙ базе
     try:
         old_conn = sqlite3.connect(backup_path)
-        old_conn.row_factory = sqlite3.Row # Позволяет обращаться по именам колонок
+        old_conn.row_factory = sqlite3.Row
         old_cursor = old_conn.cursor()
     except Exception as e:
         print(f"❌ Ошибка чтения бэкапа: {e}")
         return
 
-    # 3. Пересоздание НОВОЙ базы2
+    # 3. Пересоздание НОВОЙ базы
     print("♻️  Пересоздание схемы БД (DROP/CREATE)...")
     db.drop_all()
     db.create_all()
@@ -204,7 +205,8 @@ def migrate_data():
         ('contact_tags', contact_tags),
         ('task_tags', task_tags),
         ('task_comments', TaskComment),
-        ('activity_logs', ActivityLog)
+        ('activity_logs', ActivityLog),
+        ('favorite_contacts', FavoriteContact) # NEW TABLE
     ]
 
     print("🚀 Начало переноса данных...")
@@ -222,7 +224,6 @@ def migrate_data():
             print("Пусто.")
             continue
 
-        # Определение типа объекта и доступных колонок
         if hasattr(model_or_table, '__table__'):
             target_columns = model_or_table.__table__.columns
             is_model = True
@@ -239,27 +240,16 @@ def migrate_data():
                 if col_name in row_dict:
                     val = row_dict[col_name]
                     
-                    # --- ИСПРАВЛЕНИЕ: КОНВЕРТАЦИЯ ДАТ ---
-                    # Получаем тип колонки в модели SQLAlchemy
+                    # --- КОНВЕРТАЦИЯ ДАТ ---
                     col_type = target_columns[col_name].type
-                    
-                    # Если значение - строка, но колонка ожидает дату/время
                     if val is not None and isinstance(val, str):
-                        # Проверка для DateTime (например, created_at)
                         if isinstance(col_type, (db.DateTime, sqltypes.DateTime)):
-                            try:
-                                # SQLite обычно хранит как ISO строку, пробуем распарсить
-                                val = datetime.fromisoformat(val)
+                            try: val = datetime.fromisoformat(val)
                             except ValueError:
-                                # Fallback на всякий случай
                                 try: val = datetime.strptime(val, "%Y-%m-%d %H:%M:%S")
                                 except: pass
-                        
-                        # Проверка для Date (например, due_date)
                         elif isinstance(col_type, (db.Date, sqltypes.Date)):
-                            try:
-                                # Обычно YYYY-MM-DD
-                                val = datetime.strptime(val, "%Y-%m-%d").date()
+                            try: val = datetime.strptime(val, "%Y-%m-%d").date()
                             except ValueError:
                                 try: val = datetime.fromisoformat(val).date()
                                 except: pass
@@ -283,31 +273,20 @@ def migrate_data():
     old_conn.close()
     print(f"✅ Миграция завершена успешно! Старая база сохранена как {backup_path}")
 
-# --- MAIN ---
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Утилита управления базой данных KBase.")
     group = parser.add_mutually_exclusive_group(required=True)
-    
-    group.add_argument('--full-reload', action='store_true', 
-                       help='Полностью удалить БД и создать пустую структуру.')
-    
-    group.add_argument('--gen-test-data', action='store_true', 
-                       help='Пересоздать БД и заполнить тестовыми данными.')
-    
-    group.add_argument('--migrate-data', action='store_true', 
-                       help='Сделать бэкап, обновить структуру и перенести данные из старой БД.')
-
+    group.add_argument('--full-reload', action='store_true', help='Полностью удалить БД и создать пустую структуру.')
+    group.add_argument('--gen-test-data', action='store_true', help='Пересоздать БД и заполнить тестовыми данными.')
+    group.add_argument('--migrate-data', action='store_true', help='Сделать бэкап, обновить структуру и перенести данные.')
     args = parser.parse_args()
 
     with app.app_context():
         if args.full_reload:
             clean_db()
             print("🆗 База данных пуста и готова к работе.")
-            
         elif args.gen_test_data:
             clean_db()
             populate_test_data()
-            
         elif args.migrate_data:
             migrate_data()

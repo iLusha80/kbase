@@ -1,5 +1,5 @@
 from database import db
-from models import Contact, ContactType
+from models import Contact, ContactType, FavoriteContact
 from services.tag_service import process_tags
 
 def get_contact_types():
@@ -54,6 +54,9 @@ def delete_contact(contact_id):
     c = Contact.query.get(contact_id)
     if not c:
         return False
+    # Сначала удаляем из избранного, если там есть
+    FavoriteContact.query.filter_by(contact_id=contact_id).delete()
+    
     db.session.delete(c)
     db.session.commit()
     return True
@@ -69,6 +72,10 @@ def get_contact_full_details(contact_id):
     
     data = c.to_dict()
     
+    # NEW: Check if favorite
+    is_fav = FavoriteContact.query.filter_by(contact_id=c.id).first() is not None
+    data['is_favorite'] = is_fav
+
     # 1. Проекты (через Association Object)
     projects_list = []
     for pc in c.project_associations:
@@ -95,3 +102,16 @@ def get_contact_full_details(contact_id):
     data['tasks_authored'] = sorted(authored_tasks, key=lambda x: x['created_at'] if 'created_at' in x else '2000-01-01', reverse=True)
     
     return data
+
+# --- NEW: FAVORITE METHODS ---
+def toggle_favorite_status(contact_id):
+    existing = FavoriteContact.query.filter_by(contact_id=contact_id).first()
+    if existing:
+        db.session.delete(existing)
+        db.session.commit()
+        return False # Removed
+    else:
+        new_fav = FavoriteContact(contact_id=contact_id)
+        db.session.add(new_fav)
+        db.session.commit()
+        return True # Added

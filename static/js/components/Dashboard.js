@@ -9,24 +9,38 @@ const Dashboard = {
     setup() {
         this.initQuickLinkForm();
         
+        // --- Глобальные функции для HTML-событий ---
+        
+        // Открытие модалки редактирования
         window.editQuickLink = (id) => {
             const link = cachedLinks.find(l => l.id === id);
             if (link) this.openLinkModal(link);
         };
         
+        // Удаление ссылки
         window.deleteQuickLink = async (id) => {
             if (confirm('Удалить эту быструю ссылку?')) {
                 const success = await API.deleteQuickLink(id);
                 if (success) {
-                    await this.loadData();
+                    await this.loadData(); // Перезагружаем данные
                 } else {
                     alert('Не удалось удалить ссылку');
                 }
             }
         };
         
+        // Открытие модалки создания
         window.openQuickLinkModal = () => {
             this.openLinkModal(null);
+        };
+        
+        // Быстрое удаление из избранного
+        window.removeFavoriteFromDash = async (id) => {
+            // event.stopPropagation(); // уже прописан в HTML
+            const res = await API.toggleContactFavorite(id);
+            if (!res.is_favorite) {
+                await this.loadData();
+            }
         };
     },
 
@@ -42,6 +56,10 @@ const Dashboard = {
         this.renderWaitingTasks(data.waiting_tasks);
         this.renderTopProjects(data.top_projects);
         
+        // Избранные контакты
+        this.renderFavorites(data.favorite_contacts);
+
+        // Сохраняем и рендерим ссылки
         cachedLinks = data.quick_links || [];
         this.renderQuickLinks(cachedLinks);
         
@@ -114,6 +132,36 @@ const Dashboard = {
         `).join('');
     },
 
+    renderFavorites(favorites) {
+        const container = document.getElementById('dash-favorites');
+        if (!container) return;
+
+        if (!favorites || favorites.length === 0) {
+            container.innerHTML = `<div class="col-span-2 text-center text-xs text-slate-400 py-4 border border-dashed border-slate-200 rounded dark:border-slate-700">Нет избранных</div>`;
+            return;
+        }
+
+        container.innerHTML = favorites.map(f => {
+            const initial = f.last_name ? f.last_name.charAt(0) : '?';
+            return `
+            <div onclick="openContactDetail(${f.contact_id})" class="relative group cursor-pointer flex items-center p-3 rounded-lg bg-white border border-slate-200 hover:border-yellow-400 transition-all shadow-sm dark:bg-slate-800 dark:border-slate-700 dark:hover:border-yellow-500/50">
+                <div class="w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold text-white mr-3" style="background-color: ${f.type_color}">
+                    ${initial}
+                </div>
+                <div class="min-w-0">
+                    <div class="text-sm font-medium text-slate-800 truncate dark:text-white">${f.last_name} ${f.first_name || ''}</div>
+                    <div class="text-[10px] text-slate-400 truncate">${f.role || f.department || ''}</div>
+                </div>
+                
+                <!-- Unstar button -->
+                <button onclick="event.stopPropagation(); removeFavoriteFromDash(${f.contact_id})" class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-opacity p-1">
+                     <i data-lucide="x" class="w-3 h-3"></i>
+                </button>
+            </div>
+            `;
+        }).join('');
+    },
+
     renderQuickLinks(links) {
         const container = document.getElementById('dash-quick-links');
         if (!container) return;
@@ -132,7 +180,6 @@ const Dashboard = {
                 </a>
                 
                 <!-- Кнопки управления -->
-                <!-- FIX: Используем opacity-0 вместо hidden, так как style.css блокирует hidden -->
                 <div class="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto">
                     <button onclick="editQuickLink(${l.id})" class="p-1.5 rounded-md bg-white text-slate-400 hover:text-primary-600 hover:bg-slate-50 border border-slate-200 shadow-sm dark:bg-slate-800 dark:border-slate-600 dark:text-slate-400 dark:hover:text-primary-400 transition-colors" title="Редактировать">
                         <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>

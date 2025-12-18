@@ -31,22 +31,56 @@ export const ContactController = {
             const btnAssigned = document.getElementById('tab-btn-assigned');
             const btnAuthored = document.getElementById('tab-btn-authored');
 
+            if (!assignedList || !authoredList) return;
+
             if (tabName === 'assigned') {
                 assignedList.classList.remove('hidden');
                 authoredList.classList.add('hidden');
-                btnAssigned.classList.add('border-primary-600', 'text-primary-600');
-                btnAssigned.classList.remove('border-transparent', 'text-slate-500');
-                btnAuthored.classList.remove('border-primary-600', 'text-primary-600');
-                btnAuthored.classList.add('border-transparent', 'text-slate-500');
+                if(btnAssigned) {
+                    btnAssigned.classList.add('border-primary-600', 'text-primary-600');
+                    btnAssigned.classList.remove('border-transparent', 'text-slate-500');
+                }
+                if(btnAuthored) {
+                    btnAuthored.classList.remove('border-primary-600', 'text-primary-600');
+                    btnAuthored.classList.add('border-transparent', 'text-slate-500');
+                }
             } else {
                 assignedList.classList.add('hidden');
                 authoredList.classList.remove('hidden');
-                btnAuthored.classList.add('border-primary-600', 'text-primary-600');
-                btnAuthored.classList.remove('border-transparent', 'text-slate-500');
-                btnAssigned.classList.remove('border-primary-600', 'text-primary-600');
-                btnAssigned.classList.add('border-transparent', 'text-slate-500');
+                if(btnAuthored) {
+                    btnAuthored.classList.add('border-primary-600', 'text-primary-600');
+                    btnAuthored.classList.remove('border-transparent', 'text-slate-500');
+                }
+                if(btnAssigned) {
+                    btnAssigned.classList.remove('border-primary-600', 'text-primary-600');
+                    btnAssigned.classList.add('border-transparent', 'text-slate-500');
+                }
             }
         };
+
+        // NEW: Toggle Favorite Handler
+        window.toggleDetailFavorite = async (id) => {
+            const res = await API.toggleContactFavorite(id);
+            this.updateStarButton(res.is_favorite);
+        };
+    },
+
+    updateStarButton(isFavorite) {
+        const btn = document.getElementById('c-detail-star-btn');
+        if (!btn) return; // Защита от отсутствия кнопки
+        
+        const icon = btn.querySelector('i');
+        
+        if (isFavorite) {
+            btn.classList.add('text-yellow-500');
+            btn.classList.remove('text-slate-400', 'hover:text-yellow-500');
+            if(icon) icon.setAttribute('fill', 'currentColor');
+        } else {
+            btn.classList.remove('text-yellow-500');
+            btn.classList.add('text-slate-400', 'hover:text-yellow-500');
+            if(icon) icon.setAttribute('fill', 'none');
+        }
+        if (window.lucide) lucide.createIcons();
     },
 
     async loadAll() {
@@ -63,86 +97,126 @@ export const ContactController = {
     },
 
     async openContactDetail(id) {
-        const response = await fetch(`/api/contacts/${id}`);
-        if (!response.ok) return;
-        const c = await response.json();
+        try {
+            const response = await fetch(`/api/contacts/${id}`);
+            if (!response.ok) {
+                console.error("Failed to load contact detail:", response.status);
+                alert("Ошибка загрузки контакта. Возможно, требуется обновление базы данных.");
+                return;
+            }
+            const c = await response.json();
 
-        const fullName = [c.last_name, c.first_name, c.middle_name].filter(Boolean).join(' ');
-        document.getElementById('c-detail-name').innerText = fullName;
-        document.getElementById('c-detail-role').innerText = `${c.role || 'Нет должности'} • ${c.department || 'Нет отдела'}`;
-        
-        const initial = c.last_name ? c.last_name.charAt(0).toUpperCase() : '?';
-        const avatarEl = document.getElementById('c-detail-avatar');
-        avatarEl.innerText = initial;
-        
-        const typeColor = c.type ? c.type.render_color : '#cbd5e1';
-        document.getElementById('c-detail-header-bg').style.backgroundColor = typeColor + '40';
-        avatarEl.style.backgroundColor = typeColor;
-        avatarEl.style.color = '#fff';
+            // Helper to safe set text
+            const setText = (id, text) => {
+                const el = document.getElementById(id);
+                if (el) el.innerText = text;
+            };
 
-        const badgesContainer = document.getElementById('c-detail-badges');
-        let badgesHtml = '';
-        if (c.type) {
-            badgesHtml += `<span class="px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900">${c.type.name_type}</span>`;
+            const fullName = [c.last_name, c.first_name, c.middle_name].filter(Boolean).join(' ');
+            setText('c-detail-name', fullName);
+            setText('c-detail-role', `${c.role || 'Нет должности'} • ${c.department || 'Нет отдела'}`);
+            
+            const initial = c.last_name ? c.last_name.charAt(0).toUpperCase() : '?';
+            const avatarEl = document.getElementById('c-detail-avatar');
+            if (avatarEl) {
+                avatarEl.innerText = initial;
+                const typeColor = c.type ? c.type.render_color : '#cbd5e1';
+                avatarEl.style.backgroundColor = typeColor;
+                avatarEl.style.color = '#fff';
+                
+                const headerBg = document.getElementById('c-detail-header-bg');
+                if (headerBg) headerBg.style.backgroundColor = typeColor + '40';
+            }
+
+            const badgesContainer = document.getElementById('c-detail-badges');
+            if (badgesContainer) {
+                let badgesHtml = '';
+                if (c.type) {
+                    badgesHtml += `<span class="px-2 py-0.5 text-xs font-bold uppercase tracking-wider rounded bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900">${c.type.name_type}</span>`;
+                }
+                if (c.tags && c.tags.length > 0) {
+                    badgesHtml += c.tags.map(t => `<span class="px-2 py-0.5 text-xs rounded border border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-400">#${t.name}</span>`).join('');
+                }
+                badgesContainer.innerHTML = badgesHtml;
+            }
+
+            const editBtn = document.getElementById('c-detail-edit-btn');
+            if (editBtn) editBtn.onclick = () => this.editContact(c.id);
+
+            // NEW: Star Button with safety check
+            const starBtn = document.getElementById('c-detail-star-btn');
+            if (starBtn) {
+                starBtn.onclick = () => window.toggleDetailFavorite(c.id);
+                this.updateStarButton(c.is_favorite);
+            }
+
+            setText('c-detail-email', c.email || '-');
+            setText('c-detail-phone', c.phone || '-');
+            
+            const linkContainer = document.getElementById('c-detail-link');
+            if (linkContainer) {
+                if (c.link) {
+                    linkContainer.innerHTML = `<a href="${c.link}" target="_blank" class="flex items-center gap-1"><i data-lucide="external-link" class="w-3 h-3"></i> Открыть</a>`;
+                } else {
+                    linkContainer.innerText = '-';
+                }
+            }
+
+            const notesBlock = document.getElementById('c-detail-notes-block');
+            const notesContent = document.getElementById('c-detail-notes');
+            if (notesBlock && notesContent) {
+                if (c.notes) {
+                    notesContent.innerText = c.notes;
+                    notesBlock.classList.remove('hidden');
+                } else {
+                    notesBlock.classList.add('hidden');
+                }
+            }
+
+            const projectsContainer = document.getElementById('c-detail-projects');
+            if (projectsContainer) {
+                if (c.projects && c.projects.length > 0) {
+                    projectsContainer.innerHTML = c.projects.map(p => `
+                        <div onclick="openProjectDetail(${p.id})" class="cursor-pointer group bg-white border border-slate-200 rounded-lg p-3 hover:border-primary-500 transition-colors dark:bg-slate-800 dark:border-slate-700">
+                            <div class="flex justify-between items-start">
+                                <div class="font-bold text-sm text-slate-800 group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400 truncate">${p.title}</div>
+                                <span class="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 dark:bg-slate-700 dark:text-slate-400">${p.status}</span>
+                            </div>
+                            <div class="mt-2 text-xs text-slate-500 flex items-center dark:text-slate-400">
+                                <i data-lucide="user" class="w-3 h-3 mr-1"></i>
+                                Роль: <span class="font-medium text-slate-700 ml-1 dark:text-slate-300">${p.role_in_project || 'Участник'}</span>
+                            </div>
+                        </div>
+                    `).join('');
+                } else {
+                    projectsContainer.innerHTML = `<div class="col-span-full text-center text-sm text-slate-400 italic py-4">Не участвует в проектах</div>`;
+                }
+            }
+
+            this.renderTaskTab(c.tasks_assigned, 'c-detail-tasks-assigned', 'Назначено задач нет');
+            this.renderTaskTab(c.tasks_authored, 'c-detail-tasks-authored', 'Поручений нет');
+            
+            setText('count-assigned', c.tasks_assigned ? c.tasks_assigned.length : 0);
+            setText('count-authored', c.tasks_authored ? c.tasks_authored.length : 0);
+
+            if (typeof window.switchContactTaskTab === 'function') {
+                window.switchContactTaskTab('assigned');
+            }
+
+            if (window.lucide) lucide.createIcons();
+            
+            // Наконец, переключаем вид
+            switchView('contact-detail', true, `/contacts/${id}`);
+            
+        } catch (e) {
+            console.error("Error in openContactDetail:", e);
         }
-        if (c.tags && c.tags.length > 0) {
-            badgesHtml += c.tags.map(t => `<span class="px-2 py-0.5 text-xs rounded border border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-400">#${t.name}</span>`).join('');
-        }
-        badgesContainer.innerHTML = badgesHtml;
-
-        document.getElementById('c-detail-edit-btn').onclick = () => this.editContact(c.id);
-
-        document.getElementById('c-detail-email').innerText = c.email || '-';
-        document.getElementById('c-detail-phone').innerText = c.phone || '-';
-        
-        const linkContainer = document.getElementById('c-detail-link');
-        if (c.link) {
-            linkContainer.innerHTML = `<a href="${c.link}" target="_blank" class="flex items-center gap-1"><i data-lucide="external-link" class="w-3 h-3"></i> Открыть</a>`;
-        } else {
-            linkContainer.innerText = '-';
-        }
-
-        const notesBlock = document.getElementById('c-detail-notes-block');
-        const notesContent = document.getElementById('c-detail-notes');
-        if (c.notes) {
-            notesContent.innerText = c.notes;
-            notesBlock.classList.remove('hidden');
-        } else {
-            notesBlock.classList.add('hidden');
-        }
-
-        const projectsContainer = document.getElementById('c-detail-projects');
-        if (c.projects && c.projects.length > 0) {
-            projectsContainer.innerHTML = c.projects.map(p => `
-                <div onclick="openProjectDetail(${p.id})" class="cursor-pointer group bg-white border border-slate-200 rounded-lg p-3 hover:border-primary-500 transition-colors dark:bg-slate-800 dark:border-slate-700">
-                    <div class="flex justify-between items-start">
-                        <div class="font-bold text-sm text-slate-800 group-hover:text-primary-600 dark:text-white dark:group-hover:text-primary-400 truncate">${p.title}</div>
-                        <span class="text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 dark:bg-slate-700 dark:text-slate-400">${p.status}</span>
-                    </div>
-                    <div class="mt-2 text-xs text-slate-500 flex items-center dark:text-slate-400">
-                        <i data-lucide="user" class="w-3 h-3 mr-1"></i>
-                        Роль: <span class="font-medium text-slate-700 ml-1 dark:text-slate-300">${p.role_in_project || 'Участник'}</span>
-                    </div>
-                </div>
-            `).join('');
-        } else {
-            projectsContainer.innerHTML = `<div class="col-span-full text-center text-sm text-slate-400 italic py-4">Не участвует в проектах</div>`;
-        }
-
-        this.renderTaskTab(c.tasks_assigned, 'c-detail-tasks-assigned', 'Назначено задач нет');
-        this.renderTaskTab(c.tasks_authored, 'c-detail-tasks-authored', 'Поручений нет');
-        
-        document.getElementById('count-assigned').innerText = c.tasks_assigned ? c.tasks_assigned.length : 0;
-        document.getElementById('count-authored').innerText = c.tasks_authored ? c.tasks_authored.length : 0;
-
-        window.switchContactTaskTab('assigned');
-
-        if (window.lucide) lucide.createIcons();
-        switchView('contact-detail', true, `/contacts/${id}`);
     },
 
     renderTaskTab(tasks, containerId, emptyMsg) {
         const container = document.getElementById(containerId);
+        if (!container) return; // Защита
+        
         if (!tasks || tasks.length === 0) {
             container.innerHTML = `<div class="text-center text-sm text-slate-400 italic py-4">${emptyMsg}</div>`;
             return;
@@ -191,6 +265,8 @@ export const ContactController = {
     populateModal(contact) {
         this.openModal();
         const form = document.getElementById('contact-form');
+        if (!form) return;
+        
         form.querySelector('[name="id"]').value = contact.id;
         form.querySelector('[name="last_name"]').value = contact.last_name || '';
         form.querySelector('[name="first_name"]').value = contact.first_name || '';

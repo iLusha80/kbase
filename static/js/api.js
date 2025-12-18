@@ -1,5 +1,5 @@
 const API = {
-    // --- DASHBOARD & SEARCH (NEW) ---
+    // --- DASHBOARD & SEARCH ---
     async getDashboard() {
         try {
             const response = await fetch('/api/dashboard');
@@ -22,7 +22,6 @@ const API = {
             return response.ok;
         } catch (err) { console.error(err); return false; }
     },
-    // NEW
     async updateQuickLink(id, data) {
         try {
             const response = await fetch(`/api/quick-links/${id}`, {
@@ -31,7 +30,6 @@ const API = {
             return response.ok;
         } catch (err) { console.error(err); return false; }
     },
-
     async deleteQuickLink(id) {
         try {
             const response = await fetch(`/api/quick-links/${id}`, { method: 'DELETE' });
@@ -74,6 +72,13 @@ const API = {
             return response.ok;
         } catch (err) { console.error(err); return false; }
     },
+    // NEW: Toggle Favorite
+    async toggleContactFavorite(id) {
+        try {
+            const response = await fetch(`/api/contacts/${id}/favorite`, { method: 'POST' });
+            return await response.json();
+        } catch (err) { console.error(err); return { is_favorite: false }; }
+    },
 
     // --- TASKS ---
     async getTaskStatuses() {
@@ -111,7 +116,7 @@ const API = {
         } catch (err) { console.error(err); return false; }
     },
 
-    // --- PROJECTS (NEW) ---
+    // --- PROJECTS ---
     async getProjects() {
         try {
             const response = await fetch('/api/projects');

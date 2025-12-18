@@ -3,10 +3,11 @@ from services.dashboard_service import (
     get_priority_tasks, 
     get_waiting_tasks, 
     get_top_active_projects,
+    get_favorite_contacts_list,
     global_search
 )
-from models import QuickLink # NEW IMPORT
-from database import db # NEW IMPORT
+from models import QuickLink
+from database import db
 
 dashboard_bp = Blueprint('dashboard', __name__)
 
@@ -17,7 +18,7 @@ def get_dashboard_data():
     priority = get_priority_tasks()
     waiting = get_waiting_tasks()
     projects = get_top_active_projects()
-    # NEW: Fetch links
+    favorites = get_favorite_contacts_list()
     links = QuickLink.query.order_by(QuickLink.created_at).all()
     
     projects_data = []
@@ -31,7 +32,8 @@ def get_dashboard_data():
         'priority_tasks': [t.to_dict() for t in priority],
         'waiting_tasks': [t.to_dict() for t in waiting],
         'top_projects': projects_data,
-        'quick_links': [l.to_dict() for l in links] # NEW
+        'favorite_contacts': favorites,
+        'quick_links': [l.to_dict() for l in links]
     })
 
 @dashboard_bp.route('/search', methods=['GET'])
@@ -40,7 +42,7 @@ def search_route():
     results = global_search(query)
     return jsonify(results)
 
-# --- NEW: QUICK LINKS CRUD ---
+# --- QUICK LINKS CRUD ---
 
 @dashboard_bp.route('/quick-links', methods=['POST'])
 def add_quick_link():
@@ -57,8 +59,6 @@ def add_quick_link():
     db.session.commit()
     return jsonify(link.to_dict()), 201
 
-
-# --- NEW: UPDATE ROUTE ---
 @dashboard_bp.route('/quick-links/<int:link_id>', methods=['PUT'])
 def update_quick_link(link_id):
     link = QuickLink.query.get(link_id)
