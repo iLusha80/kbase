@@ -13,10 +13,7 @@ export const ProjectController = {
             form.addEventListener('submit', this.handleFormSubmit.bind(this));
         }
 
-        // Инициализация менеджера команды
         window.projectContactManager = new ProjectContactManager('project-team-container', contactsData);
-
-        // Экспорт
         window.openProjectModal = this.openModal.bind(this);
         window.closeProjectModal = () => closeModal('project-modal');
         window.editProject = this.editProject.bind(this);
@@ -67,13 +64,11 @@ export const ProjectController = {
         document.getElementById('p-detail-title').innerText = p.title;
         document.getElementById('p-detail-desc').innerText = p.description || '';
         
-        // Кнопки управления в хедере
         const editBtn = document.getElementById('p-detail-edit-btn');
         const delBtn = document.getElementById('p-detail-delete-btn');
         if(editBtn) editBtn.onclick = () => this.editProject(p.id);
         if(delBtn) delBtn.onclick = () => this.deleteProject(p.id);
         
-        // Ссылка
         const linkContainer = document.getElementById('p-detail-link-container');
         if (linkContainer) {
             if (p.link) {
@@ -83,17 +78,16 @@ export const ProjectController = {
             }
         }
 
-        // Команда
         const teamContainer = document.getElementById('p-detail-team');
         if (p.team && p.team.length > 0) {
             teamContainer.innerHTML = p.team.map(m => `
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between cursor-pointer group" onclick="openContactDetail(${m.contact_id})">
                     <div class="flex items-center">
                         <div class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600 mr-3 dark:bg-slate-700 dark:text-slate-300">
                             ${m.name.charAt(0)}
                         </div>
                         <div>
-                            <div class="text-sm font-medium text-slate-900 dark:text-white">${m.name}</div>
+                            <div class="text-sm font-medium text-slate-900 group-hover:text-primary-600 transition-colors dark:text-white dark:group-hover:text-primary-400">${m.name}</div>
                             <div class="text-xs text-slate-500 dark:text-slate-400">${m.role}</div>
                         </div>
                     </div>
@@ -103,20 +97,19 @@ export const ProjectController = {
             teamContainer.innerHTML = '<div class="text-sm text-slate-400 italic">Нет участников</div>';
         }
 
-        // Задачи
         const tasksContainer = document.getElementById('p-detail-tasks');
         if (p.tasks_list && p.tasks_list.length > 0) {
             tasksContainer.innerHTML = p.tasks_list.map(t => `
-                <div class="bg-white border border-slate-200 rounded p-3 flex justify-between items-center hover:shadow-sm dark:bg-slate-800 dark:border-slate-700">
+                <div onclick="openTaskDetail(${t.id})" class="cursor-pointer bg-white border border-slate-200 rounded p-3 flex justify-between items-center hover:shadow-sm hover:border-primary-400 transition-all dark:bg-slate-800 dark:border-slate-700 group">
                     <div class="flex items-center gap-3">
                         <div class="w-2 h-2 rounded-full" style="background-color: ${t.status.color}"></div>
                         <div>
-                            <div class="font-medium text-sm text-slate-900 dark:text-white">${t.title}</div>
-                            <div class="text-xs text-slate-500 dark:text-slate-400">${t.due_date || ''}</div>
+                            <div class="font-medium text-sm text-slate-900 group-hover:text-primary-600 transition-colors dark:text-white dark:group-hover:text-primary-400">${t.title}</div>
+                            <div class="text-xs text-slate-500 dark:text-slate-400">${t.due_date || 'Без срока'}</div>
                         </div>
                     </div>
                     <div class="flex gap-2">
-                         <button onclick="editTask(${t.id})" class="text-slate-400 hover:text-primary-600"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                         <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-primary-500 transition-colors"></i>
                     </div>
                 </div>
             `).join('');
@@ -141,23 +134,15 @@ export const ProjectController = {
     },
 
     async editProject(id) {
-        const p = projectsData.find(x => x.id === id) || await API.getProject(id);
-        if(!p) return;
-        
-        // Если данные из списка, может не быть полного списка команды, так что лучше загрузить свежие
         const fullProject = await API.getProject(id);
-        
         this.openModal();
         const form = document.getElementById('project-form');
-        
         form.querySelector('[name="id"]').value = fullProject.id;
         form.querySelector('[name="title"]').value = fullProject.title;
         form.querySelector('[name="description"]').value = fullProject.description || '';
-        
         const statusSelect = form.querySelector('select[name="status"]');
         if (statusSelect) statusSelect.value = fullProject.status || 'Active';
         form.querySelector('[name="link"]').value = fullProject.link || '';
-        
         if(window.projectContactManager) {
             window.projectContactManager.setTeam(fullProject.team || []);
         }
@@ -177,26 +162,17 @@ export const ProjectController = {
         e.preventDefault();
         const formData = new FormData(e.target);
         const data = Object.fromEntries(formData.entries());
-        
-        if(window.projectContactManager) {
-            data.team = window.projectContactManager.getTeam();
-        }
-
+        if(window.projectContactManager) data.team = window.projectContactManager.getTeam();
         const id = data.id;
         let success = id ? await API.updateProject(id, data) : await API.createProject(data);
         if (success) { 
             closeModal('project-modal'); 
             e.target.reset(); 
             await this.loadAll(); 
-            
-            // Если мы смотрели детали этого проекта, обновим их
             if (id && !document.getElementById('view-project-detail').classList.contains('hidden')) {
                 this.openProjectDetail(id);
             }
             Dashboard.init();
-        } 
-        else { 
-            alert('Ошибка при сохранении проекта'); 
-        }
+        } else { alert('Ошибка при сохранении проекта'); }
     }
 };

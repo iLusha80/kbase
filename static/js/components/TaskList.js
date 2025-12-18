@@ -18,24 +18,20 @@ function renderTasks(tasksData) {
         const statusColor = t.status ? t.status.color : '#cbd5e1';
         let contactsHtml = '';
         
-        // Блок с людьми (Исполнитель / Автор)
         if (t.assignee || t.author) {
             contactsHtml += '<div class="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-1 dark:border-slate-700">';
-            
             if (t.assignee) {
                 contactsHtml += `<div class="flex items-center text-xs text-slate-600 dark:text-slate-400">
                     <i data-lucide="user" class="w-3 h-3 mr-2 text-primary-600 dark:text-primary-400"></i>
                     ${t.assignee.last_name} ${t.assignee.first_name || ''}
                 </div>`;
             }
-            
             if (t.author) {
                 contactsHtml += `<div class="flex items-center text-xs text-slate-600 dark:text-slate-400">
                     <i data-lucide="crown" class="w-3 h-3 mr-2 text-amber-500"></i>
                     ${t.author.last_name} ${t.author.first_name || ''}
                 </div>`;
             }
-            
             contactsHtml += '</div>';
         }
 
@@ -44,14 +40,21 @@ function renderTasks(tasksData) {
             <div class="flex justify-between items-start mb-2">
                 <span class="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase text-white tracking-wider" style="background-color: ${statusColor}">${t.status ? t.status.name : ''}</span>
                 <div class="opacity-0 group-hover:opacity-100 transition-opacity flex gap-1">
+                    <!-- Карандаш на главной странице задач открывает МОДАЛКУ -->
                     <button onclick="editTask(${t.id})" class="text-slate-400 hover:text-primary-600 dark:hover:text-primary-400"><i data-lucide="edit-2" class="w-3 h-3"></i></button>
                     <button onclick="deleteTask(${t.id})" class="text-slate-400 hover:text-red-600 dark:hover:text-red-400"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
                 </div>
             </div>
-            <h3 class="font-semibold text-slate-800 text-sm leading-tight mb-1 dark:text-slate-100">${t.title}</h3>
+            <!-- Заголовок ведет на СТРАНИЦУ детализации -->
+            <h3 onclick="openTaskDetail(${t.id})" class="cursor-pointer font-semibold text-slate-800 text-sm leading-tight mb-1 dark:text-slate-100 hover:text-primary-600 transition-colors">${t.title}</h3>
             ${renderTagsHtml(t.tags)} 
             ${t.description ? `<p class="text-xs text-slate-500 line-clamp-2 mt-2 dark:text-slate-400">${t.description}</p>` : ''}
-            ${t.due_date ? `<div class="flex items-center text-xs text-slate-500 mt-2 dark:text-slate-400"><i data-lucide="calendar" class="w-3 h-3 mr-1"></i> ${t.due_date}</div>` : ''}
+            
+            <div class="flex items-center justify-between mt-2">
+                ${t.due_date ? `<div class="flex items-center text-xs text-slate-500 dark:text-slate-400"><i data-lucide="calendar" class="w-3 h-3 mr-1"></i> ${t.due_date}</div>` : '<div></div>'}
+                ${t.project_id ? `<div onclick="event.stopPropagation(); openProjectDetail(${t.project_id})" class="cursor-pointer text-[10px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500 hover:bg-primary-50 hover:text-primary-600 dark:bg-slate-700 dark:text-slate-400 transition-colors">${t.project_title}</div>` : ''}
+            </div>
+
             ${contactsHtml}
         </div>`;
     }).join('');
