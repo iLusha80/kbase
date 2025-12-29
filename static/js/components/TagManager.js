@@ -1,10 +1,17 @@
 class TagManager {
     constructor(containerId) {
         this.container = document.getElementById(containerId);
-        this.tags = []; // Массив строк
+        this.tags = []; // Массив строк текущих тегов
         if (this.container) {
             this.input = this.container.querySelector('input');
             this.renderArea = this.container.querySelector('.tags-render-area');
+            
+            // Создаем контейнер для выпадающего списка
+            this.dropdown = document.createElement('div');
+            this.dropdown.className = 'hidden absolute z-[60] mt-1 w-full bg-white border border-slate-200 rounded-md shadow-lg max-h-40 overflow-y-auto dark:bg-slate-800 dark:border-slate-700';
+            this.container.classList.add('relative');
+            this.container.appendChild(this.dropdown);
+
             this.initEvents();
         }
     }
@@ -12,34 +19,79 @@ class TagManager {
     initEvents() {
         if (!this.input) return;
         
-        // Обработка ввода
+        this.input.addEventListener('input', (e) => {
+            const val = e.target.value.trim().toLowerCase();
+            if (val.length >= 2) {
+                this.showSuggestions(val);
+            } else {
+                this.hideSuggestions();
+            }
+        });
+
         this.input.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') {
                 e.preventDefault();
+                // Если есть активная подсказка (первая в списке), можно было бы выбрать её,
+                // но для простоты просто добавляем то, что введено
                 this.addTagFromInput();
+                this.hideSuggestions();
+            }
+            if (e.key === 'Escape') {
+                this.hideSuggestions();
             }
         });
-        
-        // Добавление по потере фокуса (опционально)
-        this.input.addEventListener('blur', () => {
-            this.addTagFromInput();
+
+        // Закрытие при клике вне
+        document.addEventListener('click', (e) => {
+            if (!this.container.contains(e.target)) {
+                this.hideSuggestions();
+            }
         });
+    }
+
+    showSuggestions(query) {
+        // Берем все теги из глобального хранилища, исключая уже добавленные
+        const allSystemTags = window.allTags || [];
+        const filtered = allSystemTags
+            .filter(t => t.name.includes(query) && !this.tags.includes(t.name.toLowerCase()))
+            .slice(0, 10); // Ограничим список
+
+        if (filtered.length === 0) {
+            this.hideSuggestions();
+            return;
+        }
+
+        this.dropdown.innerHTML = filtered.map(t => `
+            <div class="suggestion-item px-3 py-2 cursor-pointer hover:bg-primary-50 text-sm text-slate-700 dark:text-slate-200 dark:hover:bg-slate-700 transition-colors"
+                 onclick="window.selectTagSuggestion('${this.container.id}', '${t.name}')">
+                #${t.name}
+            </div>
+        `).join('');
+        
+        this.dropdown.classList.remove('hidden');
+    }
+
+    hideSuggestions() {
+        this.dropdown.classList.add('hidden');
     }
 
     addTagFromInput() {
         const val = this.input.value.trim();
         if (val) {
-            // Не добавляем дубликаты
-            if (!this.tags.includes(val.toLowerCase())) {
-                this.tags.push(val.toLowerCase());
-                this.render();
-            }
+            this.addSingleTag(val);
             this.input.value = '';
         }
     }
 
+    addSingleTag(tagName) {
+        const cleanName = tagName.toLowerCase();
+        if (!this.tags.includes(cleanName)) {
+            this.tags.push(cleanName);
+            this.render();
+        }
+    }
+
     addTags(tagsArray) {
-        // Принимает массив строк
         this.tags = tagsArray.map(t => t.toLowerCase());
         this.render();
     }
@@ -51,7 +103,6 @@ class TagManager {
     }
     
     getTags() {
-        // Если что-то осталось в инпуте, тоже считаем тегом
         this.addTagFromInput();
         return this.tags;
     }
@@ -74,5 +125,20 @@ class TagManager {
         if (window.lucide) lucide.createIcons();
     }
 }
+
+// Глобальные хелперы
+window.removeTag = function(containerId, index) {
+    if (containerId === 'contact-tags-container') window.contactTagManager.removeTag(index);
+    if (containerId === 'task-tags-container') window.taskTagManager.removeTag(index);
+};
+
+window.selectTagSuggestion = function(containerId, tagName) {
+    let manager = (containerId === 'contact-tags-container') ? window.contactTagManager : window.taskTagManager;
+    if (manager) {
+        manager.addSingleTag(tagName);
+        manager.input.value = '';
+        manager.hideSuggestions();
+    }
+};
 
 export default TagManager;
