@@ -88,17 +88,27 @@ def get_contact_full_details(contact_id):
             })
     data['projects'] = projects_list
     
-    # 2. Задачи (Назначенные ему)
-    assigned_tasks = []
-    for t in c.tasks_assigned:
-        assigned_tasks.append(t.to_dict())
+    # 2. Задачи (Назначенные ему) - РАЗДЕЛЕНИЕ НА АКТИВНЫЕ И ГОТОВЫЕ
+    assigned_active = []
+    assigned_done = []
     
-    # 3. Задачи (Автор он)
+    for t in c.tasks_assigned:
+        t_dict = t.to_dict()
+        if t.status and t.status.name == 'Готово':
+            assigned_done.append(t_dict)
+        else:
+            assigned_active.append(t_dict)
+    
+    # 3. Задачи (Автор он) - без изменений
     authored_tasks = []
     for t in c.tasks_authored:
         authored_tasks.append(t.to_dict())
         
-    data['tasks_assigned'] = sorted(assigned_tasks, key=lambda x: x['due_date'] or '9999-99-99')
+    # Сортировка: Активные и Готовые по due_date (сначала срочные/просроченные)
+    data['tasks_assigned_active'] = sorted(assigned_active, key=lambda x: x['due_date'] or '9999-99-99')
+    data['tasks_assigned_done'] = sorted(assigned_done, key=lambda x: x['due_date'] or '9999-99-99')
+    
+    # Авторские сортируем по дате создания (новые сверху)
     data['tasks_authored'] = sorted(authored_tasks, key=lambda x: x['created_at'] if 'created_at' in x else '2000-01-01', reverse=True)
     
     return data

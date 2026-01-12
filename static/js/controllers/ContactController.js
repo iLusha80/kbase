@@ -25,37 +25,32 @@ export const ContactController = {
         window.openModal = this.openModal.bind(this); 
         window.openContactDetail = this.openContactDetail.bind(this);
         
+        // --- UPDATED TAB SWITCHER ---
         window.switchContactTaskTab = function(tabName) {
-            const assignedList = document.getElementById('c-detail-tasks-assigned');
-            const authoredList = document.getElementById('c-detail-tasks-authored');
-            const btnAssigned = document.getElementById('tab-btn-assigned');
-            const btnAuthored = document.getElementById('tab-btn-authored');
+            const tabs = ['active', 'done', 'authored'];
+            
+            tabs.forEach(t => {
+                const container = document.getElementById(`c-detail-tasks-${t}`);
+                const btn = document.getElementById(`tab-btn-${t}`);
+                
+                if (container) {
+                    if (t === tabName) {
+                        container.classList.remove('hidden');
+                    } else {
+                        container.classList.add('hidden');
+                    }
+                }
 
-            if (!assignedList || !authoredList) return;
-
-            if (tabName === 'assigned') {
-                assignedList.classList.remove('hidden');
-                authoredList.classList.add('hidden');
-                if(btnAssigned) {
-                    btnAssigned.classList.add('border-primary-600', 'text-primary-600');
-                    btnAssigned.classList.remove('border-transparent', 'text-slate-500');
+                if (btn) {
+                    if (t === tabName) {
+                        btn.classList.add('border-primary-600', 'text-primary-600');
+                        btn.classList.remove('border-transparent', 'text-slate-500');
+                    } else {
+                        btn.classList.remove('border-primary-600', 'text-primary-600');
+                        btn.classList.add('border-transparent', 'text-slate-500');
+                    }
                 }
-                if(btnAuthored) {
-                    btnAuthored.classList.remove('border-primary-600', 'text-primary-600');
-                    btnAuthored.classList.add('border-transparent', 'text-slate-500');
-                }
-            } else {
-                assignedList.classList.add('hidden');
-                authoredList.classList.remove('hidden');
-                if(btnAuthored) {
-                    btnAuthored.classList.add('border-primary-600', 'text-primary-600');
-                    btnAuthored.classList.remove('border-transparent', 'text-slate-500');
-                }
-                if(btnAssigned) {
-                    btnAssigned.classList.remove('border-primary-600', 'text-primary-600');
-                    btnAssigned.classList.add('border-transparent', 'text-slate-500');
-                }
-            }
+            });
         };
 
         // NEW: Toggle Favorite Handler
@@ -193,14 +188,17 @@ export const ContactController = {
                 }
             }
 
-            this.renderTaskTab(c.tasks_assigned, 'c-detail-tasks-assigned', 'Назначено задач нет');
+            // --- UPDATED TASK RENDERING ---
+            this.renderTaskTab(c.tasks_assigned_active, 'c-detail-tasks-active', 'Нет активных задач');
+            this.renderTaskTab(c.tasks_assigned_done, 'c-detail-tasks-done', 'Нет завершенных задач');
             this.renderTaskTab(c.tasks_authored, 'c-detail-tasks-authored', 'Поручений нет');
             
-            setText('count-assigned', c.tasks_assigned ? c.tasks_assigned.length : 0);
+            setText('count-active', c.tasks_assigned_active ? c.tasks_assigned_active.length : 0);
+            setText('count-done', c.tasks_assigned_done ? c.tasks_assigned_done.length : 0);
             setText('count-authored', c.tasks_authored ? c.tasks_authored.length : 0);
 
             if (typeof window.switchContactTaskTab === 'function') {
-                window.switchContactTaskTab('assigned');
+                window.switchContactTaskTab('active');
             }
 
             if (window.lucide) lucide.createIcons();
@@ -221,21 +219,27 @@ export const ContactController = {
             container.innerHTML = `<div class="text-center text-sm text-slate-400 italic py-4">${emptyMsg}</div>`;
             return;
         }
-        container.innerHTML = tasks.map(t => `
-            <div onclick="openTaskDetail(${t.id})" class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700/50 transition-colors group cursor-pointer">
+        container.innerHTML = tasks.map(t => {
+            const isDone = t.status && t.status.name === 'Готово';
+            const opacityClass = isDone ? 'opacity-60 grayscale' : '';
+            const statusColor = t.status ? t.status.color : '#ccc';
+            
+            return `
+            <div onclick="openTaskDetail(${t.id})" class="flex items-center justify-between p-3 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:hover:bg-slate-700/50 transition-colors group cursor-pointer ${opacityClass}">
                 <div class="flex items-center gap-3 overflow-hidden">
-                    <div class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${t.status ? t.status.color : '#ccc'}"></div>
+                    <div class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${statusColor}"></div>
                     <div class="min-w-0">
                         <div class="text-sm font-medium text-slate-800 truncate dark:text-white group-hover:text-primary-600 transition-colors">${t.title}</div>
                         <div class="text-xs text-slate-500 flex gap-2 dark:text-slate-400">
                             ${t.due_date ? `<span><i data-lucide="calendar" class="w-3 h-3 inline"></i> ${t.due_date}</span>` : ''}
                             ${t.project_title ? `<span onclick="event.stopPropagation(); openProjectDetail(${t.project_id})" class="bg-slate-100 px-1 rounded dark:bg-slate-700 hover:bg-primary-50 hover:text-primary-600 transition-colors">${t.project_title}</span>` : ''}
+                            ${isDone ? '<span class="text-green-600 font-bold dark:text-green-400">Завершено</span>' : ''}
                         </div>
                     </div>
                 </div>
                 <button class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-primary-600"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
             </div>
-        `).join('');
+        `}).join('');
     },
 
     openModal() {
