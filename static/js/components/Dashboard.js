@@ -69,29 +69,91 @@ const Dashboard = {
     renderPriorityTasks(tasks) {
         const container = document.getElementById('dash-priority-tasks');
         if (!container) return;
+        
         if (!tasks || tasks.length === 0) {
-            container.innerHTML = `<div class="p-4 text-center text-slate-400 text-sm bg-white rounded-lg border border-slate-200 border-dashed dark:bg-slate-800 dark:border-slate-700">Нет срочных задач. Отличная работа!</div>`;
+            container.innerHTML = `<div class="col-span-full p-4 text-center text-slate-400 text-sm bg-white rounded-lg border border-slate-200 border-dashed dark:bg-slate-800 dark:border-slate-700">Нет срочных задач. Отличная работа!</div>`;
             return;
         }
+
         container.innerHTML = tasks.map(t => {
             const isOverdue = t.due_date && new Date(t.due_date) < new Date().setHours(0,0,0,0);
-            const dateColorClass = isOverdue ? 'text-red-500 font-bold' : 'text-slate-500 dark:text-slate-400';
-            const dateIcon = isOverdue ? 'alert-circle' : 'calendar';
+            const statusName = t.status ? t.status.name : '';
+            const statusColor = t.status ? t.status.color : '#94a3b8';
+            
+            // --- Icon Logic ---
+            let iconName = 'circle';
+            let spinClass = '';
+            
+            if (statusName === 'В работе') {
+                iconName = 'loader-2'; // Спиннер
+                spinClass = 'animate-spin'; // Вращение (стандартный Tailwind класс, если нет - можно custom)
+                // Если нет animate-spin, добавим inline style
+            } else if (statusName === 'К выполнению') {
+                iconName = 'circle';
+            } else if (statusName === 'Жду ответа') {
+                iconName = 'clock';
+            } else if (statusName === 'Готово') {
+                iconName = 'check-circle-2';
+            }
+            // Переопределение для анимации, если стандартного класса нет в вашей версии
+            const spinStyle = (statusName === 'В работе') ? 'animation: spin 3s linear infinite;' : '';
+
+            // --- Date Logic ---
+            const dateIcon = isOverdue ? 'alert-triangle' : 'calendar';
+            const dateTextClass = isOverdue ? 'text-red-500 font-bold' : 'text-slate-500 dark:text-slate-400';
+            const dateDisplay = t.due_date ? t.due_date.split('-').reverse().slice(0, 2).join('.') : 'Нет срока'; // ДД.ММ
+
+            // --- Avatar Logic ---
+            let avatarHtml = `<div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-[10px] text-slate-400 dark:bg-slate-700"><i data-lucide="user" class="w-3 h-3"></i></div>`;
+            if (t.assignee) {
+                const initial = t.assignee.last_name ? t.assignee.last_name.charAt(0) : '?';
+                avatarHtml = `<div title="Исполнитель: ${t.assignee.last_name}" class="w-6 h-6 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-[10px] font-bold border border-white shadow-sm dark:bg-primary-900 dark:text-primary-200 dark:border-slate-700">${initial}</div>`;
+            }
+
+            // --- Project Badge ---
+            const projectBadge = t.project_title 
+                ? `<span class="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-medium text-slate-600 truncate max-w-[100px] border border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600">${t.project_title}</span>`
+                : '';
+
             return `
-            <div class="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm border border-slate-200 hover:border-primary-400 transition-colors group dark:bg-slate-800 dark:border-slate-700">
-                <div class="flex items-center gap-3 overflow-hidden">
-                    <div class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background-color: ${t.status ? t.status.color : '#ccc'}"></div>
-                    <div class="min-w-0">
-                        <div class="text-sm font-medium text-slate-800 truncate dark:text-white cursor-pointer hover:text-primary-600" onclick="openTaskDetail(${t.id})">${t.title}</div>
-                        <div class="text-xs text-slate-500 flex items-center gap-2 mt-0.5 dark:text-slate-400">
-                            ${t.project_title ? `<span class="bg-slate-100 px-1.5 py-0.5 rounded text-[10px] dark:bg-slate-700">${t.project_title}</span>` : ''}
-                            <span class="${dateColorClass} flex items-center gap-1"><i data-lucide="${dateIcon}" class="w-3 h-3"></i> ${t.due_date || 'Без срока'}</span>
-                        </div>
+            <div onclick="openTaskDetail(${t.id})" class="relative flex flex-col p-4 bg-white rounded-xl border border-slate-200 hover:border-primary-400 hover:shadow-md transition-all cursor-pointer group dark:bg-slate-800 dark:border-slate-700 dark:hover:border-primary-500 h-full">
+                <!-- Header: Status Icon & Project -->
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center gap-1.5" style="color: ${statusColor}">
+                        <i data-lucide="${iconName}" class="w-4 h-4" style="${spinStyle}"></i>
+                        <span class="text-[10px] font-bold uppercase tracking-wider opacity-90">${statusName}</span>
+                    </div>
+                    ${projectBadge}
+                </div>
+
+                <!-- Title -->
+                <div class="font-bold text-slate-800 dark:text-white mb-4 line-clamp-2 text-sm leading-snug group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                    ${t.title}
+                </div>
+
+                <!-- Footer: Date & User -->
+                <div class="mt-auto flex items-center justify-between border-t border-slate-100 dark:border-slate-700 pt-3">
+                    <!-- Date -->
+                    <div class="text-xs ${dateTextClass} flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded dark:bg-slate-700/50">
+                        <i data-lucide="${dateIcon}" class="w-3.5 h-3.5"></i>
+                        <span>${isOverdue ? 'Просрочено' : dateDisplay}</span>
+                    </div>
+
+                    <!-- Avatar -->
+                    <div class="flex items-center">
+                        ${avatarHtml}
                     </div>
                 </div>
-                <button onclick="openTaskDetail(${t.id})" class="opacity-0 group-hover:opacity-100 p-1 text-slate-400 hover:text-primary-600 transition-opacity dark:hover:text-primary-400"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
             </div>`;
         }).join('');
+        
+        // Инлайн стили для анимации спиннера (если нет в CSS)
+        if (!document.getElementById('spin-style')) {
+            const style = document.createElement('style');
+            style.id = 'spin-style';
+            style.innerHTML = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+            document.head.appendChild(style);
+        }
     },
 
     renderWaitingTasks(tasks) {
