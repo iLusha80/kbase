@@ -1,10 +1,9 @@
 import os
-import sqlite3 # New import
+import sqlite3 
 from flask import Flask
-from sqlalchemy import event # New import
-from sqlalchemy.engine import Engine # New import
+from sqlalchemy import event 
+from sqlalchemy.engine import Engine 
 from database import db
-# Импортируем новую модель FavoriteContact, чтобы db.create_all() её увидел
 from models import ContactType, TaskStatus, FavoriteContact
 from config import Config
 
@@ -21,21 +20,17 @@ app.config.from_object(Config)
 
 db.init_app(app)
 
-# --- NEW: FIX FOR SQLITE CYRILLIC SEARCH ---
+
 @event.listens_for(Engine, "connect")
 def set_sqlite_pragma(dbapi_connection, connection_record):
-    # Проверяем, что это действительно SQLite
     if isinstance(dbapi_connection, sqlite3.Connection):
         cursor = dbapi_connection.cursor()
-        # 1. Включаем поддержку внешних ключей (полезно для целостности)
         cursor.execute("PRAGMA foreign_keys=ON")
         cursor.close()
-        
-        # 2. ВАЖНО: Переопределяем функцию lower SQL-движка на Python-функцию
-        # Теперь SQLite будет использовать str.lower() из питона, который знает про 'А'->'а'
+
         dbapi_connection.create_function("lower", 1, lambda x: x.lower() if x else None)
 
-# --- INITIALIZATION ---
+
 def init_db():
     db.create_all()
     # Init Contact Types
