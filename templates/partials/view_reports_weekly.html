@@ -1,0 +1,46 @@
+<div id="view-reports-weekly" class="view-section hidden">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <i data-lucide="calendar-check" class="w-7 h-7 text-primary-600"></i>
+                Еженедельный отчет
+            </h2>
+            <p class="text-slate-500 text-sm mt-1 dark:text-slate-400">
+                Период: <span id="report-date-range" class="font-medium text-slate-800 dark:text-slate-300">Загрузка...</span>
+            </p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="copyReportToClipboard()" class="bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium text-sm px-4 py-2 rounded-md flex items-center gap-2 transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">
+                <i data-lucide="copy" class="w-4 h-4"></i> <span>Копировать</span>
+            </button>
+            <button onclick="window.print()" class="bg-primary-600 hover:bg-primary-700 text-white font-medium text-sm px-4 py-2 rounded-md flex items-center gap-2 transition-colors dark:bg-primary-600 dark:hover:bg-primary-500">
+                <i data-lucide="printer" class="w-4 h-4"></i> <span>Печать</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Content Area -->
+    <div id="report-weekly-content" class="min-h-[400px]">
+        <!-- JS fills this -->
+    </div>
+    
+    <!-- Print Styles -->
+    <style>
+        @media print {
+            header, footer, .view-section:not(#view-reports-weekly), button {
+                display: none !important;
+            }
+            #view-reports-weekly {
+                display: block !important;
+            }
+            body {
+                background-color: white !important;
+                color: black !important;
+            }
+            .dark {
+                color-scheme: light;
+            }
+        }
+    </style>
+</div>

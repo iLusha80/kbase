@@ -9,13 +9,15 @@ import GlobalSearch from './components/GlobalSearch.js';
 import { TaskController } from './controllers/TaskController.js';
 import { ContactController } from './controllers/ContactController.js';
 import { ProjectController } from './controllers/ProjectController.js';
+import { ReportController } from './controllers/ReportController.js'; // NEW
 
 const viewPaths = {
     'dashboard': '/',
     'contacts': '/contacts',
     'tasks': '/tasks',
     'projects': '/projects',
-    'kb': '/kb'
+    'kb': '/kb',
+    'reports-weekly': '/reports/weekly' // NEW
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -39,8 +41,28 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     ContactController.init();
     TaskController.init();
+    ReportController.init(); // NEW
     
-    // Инициализация дашборда (здесь назначаются window.deleteQuickLink и др.)
+    // Dropdown toggle for Reports
+    const reportsToggle = document.getElementById('nav-reports-toggle');
+    const reportsMenu = document.getElementById('reports-menu');
+    const reportsDropdown = document.getElementById('reports-dropdown');
+
+    if (reportsToggle && reportsMenu) {
+        reportsToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            reportsMenu.classList.toggle('hidden');
+        });
+
+        // Close when clicking outside
+        document.addEventListener('click', (e) => {
+            if (reportsDropdown && !reportsDropdown.contains(e.target)) {
+                reportsMenu.classList.add('hidden');
+            }
+        });
+    }
+
+    // Инициализация дашборда
     Dashboard.setup();
 
     // --- HOTKEYS & UI HINTS ---
@@ -49,6 +71,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.querySelectorAll('[data-view]').forEach(button => {
         button.addEventListener('click', (e) => {
             e.preventDefault();
+            // Ищем ближайший элемент с data-view, так как клик может быть по иконке внутри
             const target = e.target.closest('[data-view]'); 
             if (target) {
                 const viewName = target.dataset.view;
@@ -56,6 +79,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 if (viewName === 'dashboard') {
                     Dashboard.init(); 
+                }
+                
+                // NEW: Load Report Data if switching to report view
+                if (viewName === 'reports-weekly') {
+                    ReportController.loadWeeklyReport();
+                    // Закрываем меню, если кликнули
+                    if (reportsMenu) reportsMenu.classList.add('hidden');
                 }
                 
                 switchView(viewName, true, path);
@@ -67,12 +97,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         handleUrlRouting(false);
     });
 
-    // Убрана дублирующая логика window.openQuickLinkModal и deleteQuickLink,
-    // так как они теперь внутри Dashboard.setup()
-
     await loadInitialData();
     
-    Dashboard.init();
+    // Check initial routing before loading dashboard default
     handleUrlRouting(false);
 });
 
@@ -96,12 +123,9 @@ function setupHotkeysAndHints() {
     // 3. Update Button Hints (Visible text)
     const newTaskBtns = document.querySelectorAll('[onclick="openTaskModal()"]');
     newTaskBtns.forEach(btn => {
-        btn.title = `Новая задача (${modKeySymbol}J)`; // Tooltip fallback
-        
-        // Пытаемся найти текстовый span внутри кнопки
+        btn.title = `Новая задача (${modKeySymbol}J)`; 
         const textSpan = btn.querySelector('span');
         if (textSpan) {
-            // Добавляем красивую полупрозрачную подпись
             const hintSpan = document.createElement('span');
             hintSpan.className = 'ml-1.5 opacity-60 text-[10px] font-normal';
             hintSpan.innerText = `(${modKeySymbol}J)`;
@@ -173,6 +197,10 @@ function handleUrlRouting(addToHistory = false) {
     else if (path === '/tasks') initialView = 'tasks';
     else if (path === '/projects') initialView = 'projects';
     else if (path === '/kb') initialView = 'kb';
+    else if (path === '/reports/weekly') { // NEW
+        initialView = 'reports-weekly';
+        ReportController.loadWeeklyReport();
+    }
     
     // Project Detail
     const projectMatch = path.match(/^\/projects\/(\d+)$/);

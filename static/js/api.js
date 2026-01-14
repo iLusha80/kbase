@@ -37,6 +37,14 @@ const API = {
         } catch (err) { console.error(err); return false; }
     },
 
+    // --- NEW: REPORTS ---
+    async getWeeklyReport() {
+        try {
+            const response = await fetch('/api/reports/weekly');
+            return await response.json();
+        } catch (err) { console.error(err); return null; }
+    },
+
     // --- CONTACTS ---
     async getContacts() {
         try {
