@@ -48,13 +48,16 @@ class Project(db.Model):
     contact_associations = db.relationship("ProjectContact", back_populates="project", cascade="all, delete-orphan")
 
     def to_dict(self):
+        completed_count = sum(1 for t in self.tasks if t.status and t.status.name == 'Done')
         return {
             'id': self.id,
             'title': self.title,
             'description': self.description,
             'status': self.status,
             'link': self.link,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
             'tasks_count': len(self.tasks),
+            'completed_tasks_count': completed_count,
             'team': [{
                 'contact_id': pc.contact.id,
                 'name': f"{pc.contact.last_name} {pc.contact.first_name or ''}".strip(),

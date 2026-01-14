@@ -11,3 +11,34 @@
 .custom-scrollbar::-webkit-scrollbar { width: 6px; }
 .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+/* Projects status tabs */
+.projects-status-tab {
+    background-color: #f1f5f9;
+    color: #64748b;
+    border: 1px solid transparent;
+}
+.projects-status-tab:hover {
+    background-color: #e2e8f0;
+    color: #475569;
+}
+.projects-status-tab.active {
+    background-color: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
+
+/* Dark mode for tabs */
+.dark .projects-status-tab {
+    background-color: #334155;
+    color: #94a3b8;
+}
+.dark .projects-status-tab:hover {
+    background-color: #475569;
+    color: #cbd5e1;
+}
+.dark .projects-status-tab.active {
+    background-color: #2563eb;
+    color: white;
+    border-color: #2563eb;
+}
