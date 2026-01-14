@@ -1,6 +1,6 @@
 import os
 import sqlite3 
-from flask import Flask
+from flask import Flask, request
 from sqlalchemy import event 
 from sqlalchemy.engine import Engine 
 from database import db
@@ -13,7 +13,7 @@ from routes.contacts import contacts_bp
 from routes.tags import tags_bp
 from routes.projects import projects_bp
 from routes.dashboard import dashboard_bp
-from routes.reports import reports_bp  # <--- NEW IMPORT
+from routes.reports import reports_bp
 
 
 app = Flask(__name__)
@@ -65,7 +65,12 @@ app.register_blueprint(contacts_bp, url_prefix='/api')
 app.register_blueprint(tags_bp, url_prefix='/api')
 app.register_blueprint(projects_bp, url_prefix='/api')
 app.register_blueprint(dashboard_bp, url_prefix='/api')
-app.register_blueprint(reports_bp, url_prefix='/api') # <--- REGISTER
+app.register_blueprint(reports_bp, url_prefix='/api')
+
+@app.errorhandler(404)
+def page_not_found(e):
+    print(f"DEBUG: 404 error for path: {request.path}")
+    return e
 
 if __name__ == '__main__':
     with app.app_context():
