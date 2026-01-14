@@ -8,9 +8,10 @@ from datetime import datetime, timedelta, timezone
 
 from sqlalchemy.sql import sqltypes
 
-from app import app, db
-from models import (
-    ContactType, TaskStatus, Tag, Contact, Project, ProjectContact, 
+from app import app
+from core.database import db
+from core.models import (
+    ContactType, TaskStatus, Tag, Contact, Project, ProjectContact,
     Task, QuickLink, contact_tags, task_tags, TaskComment, ActivityLog,
     FavoriteContact
 )

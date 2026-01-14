@@ -1,7 +1,7 @@
 from sqlalchemy import or_, func, desc
 from datetime import date
-from database import db
-from models import Task, Project, Contact, TaskStatus, ContactType, FavoriteContact, QuickLink
+from core.database import db
+from core.models import Task, Project, Contact, TaskStatus, ContactType, FavoriteContact, QuickLink
 
 
 def get_priority_tasks(limit=7):

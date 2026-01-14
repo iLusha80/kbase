@@ -3,9 +3,9 @@ import sqlite3
 from flask import Flask, request
 from sqlalchemy import event 
 from sqlalchemy.engine import Engine 
-from database import db
-from models import ContactType, TaskStatus, FavoriteContact
-from config import Config
+from core.database import db
+from core.models import ContactType, TaskStatus, FavoriteContact
+from core.config import Config
 
 from routes.main import main_bp
 from routes.tasks import tasks_bp

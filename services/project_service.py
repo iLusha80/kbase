@@ -1,5 +1,5 @@
-from database import db
-from models import Project, ProjectContact, Contact, Task
+from core.database import db
+from core.models import Project, ProjectContact, Contact, Task
 
 def get_all_projects():
     return Project.query.order_by(Project.created_at.desc()).all()

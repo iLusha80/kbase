@@ -1,5 +1,5 @@
-from database import db
-from models import ActivityLog
+from core.database import db
+from core.models import ActivityLog
 
 def log_change(entity_type, entity_id, field_name, old_val, new_val):
     """

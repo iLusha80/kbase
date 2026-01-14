@@ -6,8 +6,8 @@ from services.dashboard_service import (
     get_favorite_contacts_list,
     global_search
 )
-from models import QuickLink
-from database import db
+from core.models import QuickLink
+from core.database import db
 
 dashboard_bp = Blueprint('dashboard', __name__)
 

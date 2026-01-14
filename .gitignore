@@ -1,16 +1,24 @@
+# IDE
 .idea
+
+# Virtual environment
 .venv
 
+# OS
 .DS_Store
 
-# PyCashe
+# Python cache
 __pycache__
+*.pyc
 
-# My local
+# Database
+/instance
+
+# Local files (not for repo)
 all_project_code.txt
 pref_vers_all_project_code.txt
-collect_code.py
-/instance
-ideas.md
+scripts/collect_code.py
+docs/ideas.md
 
-CLAUDE.md
+
+*.md

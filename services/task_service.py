@@ -1,5 +1,5 @@
-from database import db
-from models import Task, TaskStatus, TaskComment, Contact, Project
+from core.database import db
+from core.models import Task, TaskStatus, TaskComment, Contact, Project
 from datetime import datetime
 from services.tag_service import process_tags
 from services.activity_service import log_change, get_activity_log

@@ -1,5 +1,5 @@
-from database import db
-from models import Contact, ContactType, FavoriteContact
+from core.database import db
+from core.models import Contact, ContactType, FavoriteContact
 from services.tag_service import process_tags
 
 def get_contact_types():

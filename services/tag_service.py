@@ -1,5 +1,5 @@
-from database import db
-from models import Tag
+from core.database import db
+from core.models import Tag
 
 def process_tags(tag_names):
     """Принимает список строк тегов, возвращает список объектов Tag"""

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, date
-from database import db
-from models import Task, ActivityLog, TaskStatus, Project, Contact
+from core.database import db
+from core.models import Task, ActivityLog, TaskStatus, Project, Contact
 
 
 def get_blockers_and_risks():
