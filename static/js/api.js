@@ -38,9 +38,14 @@ const API = {
     },
 
     // --- NEW: REPORTS ---
-    async getWeeklyReport() {
+    async getWeeklyReport(dateFrom = null, dateTo = null) {
         try {
-            const response = await fetch('/api/reports/weekly');
+            let url = '/api/reports/weekly';
+            const params = new URLSearchParams();
+            if (dateFrom) params.append('from', dateFrom);
+            if (dateTo) params.append('to', dateTo);
+            if (params.toString()) url += '?' + params.toString();
+            const response = await fetch(url);
             return await response.json();
         } catch (err) { console.error(err); return null; }
     },

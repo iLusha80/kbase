@@ -2,17 +2,46 @@ import API from '../api.js';
 
 export const ReportController = {
     init() {
-        // Инициализация событий, если нужно (например, кнопки экспорта)
+        // Инициализация событий
         window.copyReportToClipboard = this.copyReportToClipboard.bind(this);
+        window.applyReportDateFilter = this.applyReportDateFilter.bind(this);
+
+        // Устанавливаем даты по умолчанию (последние 7 дней)
+        this.initDateFilters();
     },
 
-    async loadWeeklyReport() {
+    initDateFilters() {
+        const dateFromInput = document.getElementById('report-date-from');
+        const dateToInput = document.getElementById('report-date-to');
+
+        if (dateFromInput && dateToInput) {
+            const today = new Date();
+            const weekAgo = new Date();
+            weekAgo.setDate(today.getDate() - 7);
+
+            // Форматируем даты для input type="date" (YYYY-MM-DD)
+            dateToInput.value = today.toISOString().split('T')[0];
+            dateFromInput.value = weekAgo.toISOString().split('T')[0];
+        }
+    },
+
+    async applyReportDateFilter() {
+        const dateFrom = document.getElementById('report-date-from')?.value;
+        const dateTo = document.getElementById('report-date-to')?.value;
+        await this.loadWeeklyReport(dateFrom, dateTo);
+    },
+
+    async loadWeeklyReport(dateFrom = null, dateTo = null) {
         const container = document.getElementById('report-weekly-content');
         if (!container) return;
 
+        // Если даты не переданы, берем из инпутов
+        if (!dateFrom) dateFrom = document.getElementById('report-date-from')?.value;
+        if (!dateTo) dateTo = document.getElementById('report-date-to')?.value;
+
         container.innerHTML = `<div class="text-center py-10 text-slate-400">Загрузка отчета...</div>`;
 
-        const data = await API.getWeeklyReport();
+        const data = await API.getWeeklyReport(dateFrom, dateTo);
         if (!data) {
             container.innerHTML = `<div class="text-center py-10 text-red-500">Ошибка загрузки отчета</div>`;
             return;
