@@ -6,6 +6,9 @@ import sqlite3
 import random
 from datetime import datetime, timedelta, timezone
 
+# Добавляем корень проекта в sys.path для корректных импортов
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from sqlalchemy.sql import sqltypes
 
 from app import app
