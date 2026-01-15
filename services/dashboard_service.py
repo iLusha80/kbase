@@ -1,7 +1,7 @@
 from sqlalchemy import or_, func, desc
 from datetime import date
 from core.database import db
-from core.models import Task, Project, Contact, TaskStatus, ContactType, FavoriteContact, QuickLink
+from core.models import Task, Project, Contact, TaskStatus, ContactType, FavoriteContact, QuickLink, Tag
 
 
 def get_priority_tasks(limit=7):
@@ -89,15 +89,73 @@ def global_search(query_str: str):
     if not query_str or len(query_str) < 2:
         return {}
 
+    # Поиск по тегам: если запрос начинается с #
+    if query_str.startswith('#'):
+        return search_by_tag(query_str[1:])  # Убираем # из запроса
+
     term = f"%{query_str}%"
-    
+
     tasks = Task.query.filter(Task.title.ilike(term)).limit(5).all()
-    projects = Project.query.filter(Project.title.ilike(term)).limit(5).all() 
+    projects = Project.query.filter(Project.title.ilike(term)).limit(5).all()
     contacts = Contact.query.filter(
         or_(Contact.last_name.ilike(term), Contact.first_name.ilike(term))
     ).limit(5).all()
 
     return {
+        'tasks': [t.to_dict() for t in tasks],
+        'projects': [p.to_dict() for p in projects],
+        'contacts': [c.to_dict() for c in contacts]
+    }
+
+
+def search_by_tag(tag_query: str):
+    """
+    Поиск сущностей по тегам.
+    Возвращает задачи, контакты и проекты (через связанные задачи) с указанными тегами.
+    """
+    if not tag_query:
+        # Если ввели только #, показываем список всех тегов для автодополнения
+        tags = Tag.query.order_by(Tag.name).limit(10).all()
+        return {
+            'tag_suggestions': [t.to_dict() for t in tags],
+            'tasks': [],
+            'projects': [],
+            'contacts': []
+        }
+
+    term = f"%{tag_query}%"
+
+    # Находим теги, соответствующие запросу
+    matching_tags = Tag.query.filter(Tag.name.ilike(term)).all()
+
+    if not matching_tags:
+        return {
+            'tag_suggestions': [],
+            'tasks': [],
+            'projects': [],
+            'contacts': []
+        }
+
+    tag_ids = [t.id for t in matching_tags]
+
+    # Задачи с этими тегами
+    tasks = Task.query.filter(Task.tags.any(Tag.id.in_(tag_ids))).limit(10).all()
+
+    # Контакты с этими тегами
+    contacts = Contact.query.filter(Contact.tags.any(Tag.id.in_(tag_ids))).limit(10).all()
+
+    # Проекты: находим через задачи с этими тегами
+    project_ids = db.session.query(Task.project_id)\
+        .filter(Task.tags.any(Tag.id.in_(tag_ids)))\
+        .filter(Task.project_id.isnot(None))\
+        .distinct()\
+        .limit(10)\
+        .all()
+    project_ids = [p[0] for p in project_ids]
+    projects = Project.query.filter(Project.id.in_(project_ids)).all() if project_ids else []
+
+    return {
+        'tag_suggestions': [t.to_dict() for t in matching_tags],
         'tasks': [t.to_dict() for t in tasks],
         'projects': [p.to_dict() for p in projects],
         'contacts': [c.to_dict() for c in contacts]
