@@ -79,6 +79,7 @@ export const TaskController = {
         }
 
         document.getElementById('t-detail-edit-btn').onclick = () => this.editTask(t.id);
+        document.getElementById('t-detail-copy-btn').onclick = () => this.copyTask(t.id);
         document.getElementById('t-detail-delete-btn').onclick = async () => {
             if (await this.deleteTask(t.id)) {
                 switchView('tasks');
@@ -225,10 +226,36 @@ export const TaskController = {
         if (!task) { this.fetchAndEdit(id); return; }
         this.populateModal(task);
     },
-    
+
     async fetchAndEdit(id) {
          const response = await fetch(`/api/tasks/${id}`);
          if(response.ok) { const t = await response.json(); this.populateModal(t); }
+    },
+
+    copyTask(id) {
+        const task = tasksData.find(t => t.id === id);
+        if (!task) { this.fetchAndCopy(id); return; }
+        this.populateModalForCopy(task);
+    },
+
+    async fetchAndCopy(id) {
+        const response = await fetch(`/api/tasks/${id}`);
+        if (response.ok) { const t = await response.json(); this.populateModalForCopy(t); }
+    },
+
+    populateModalForCopy(task) {
+        const form = document.getElementById('task-form');
+        this.openModal();
+        // НЕ устанавливаем id — создаётся новая задача
+        form.querySelector('[name="id"]').value = '';
+        form.querySelector('[name="title"]').value = task.title;
+        form.querySelector('[name="due_date"]').value = task.due_date || '';
+        form.querySelector('[name="description"]').value = task.description || '';
+        if (task.status_id) form.querySelector('select[name="status_id"]').value = task.status_id;
+        form.querySelector('select[name="assignee_id"]').value = task.assignee_id || '';
+        form.querySelector('select[name="author_id"]').value = task.author_id || '';
+        if (task.project_id) form.querySelector('select[name="project_id"]').value = task.project_id;
+        if (task.tags && window.taskTagManager) { window.taskTagManager.addTags(task.tags.map(t => t.name)); }
     },
 
     populateModal(task) {
