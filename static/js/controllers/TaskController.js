@@ -14,10 +14,18 @@ export const TaskController = {
             form.addEventListener('submit', this.handleFormSubmit.bind(this));
         }
 
+        // Quick Task form
+        const quickForm = document.getElementById('quick-task-form');
+        if (quickForm) {
+            quickForm.addEventListener('submit', this.handleQuickFormSubmit.bind(this));
+        }
+
         window.editTask = this.editTask.bind(this);
         window.deleteTask = this.deleteTask.bind(this);
         window.openTaskModal = this.openModal.bind(this);
         window.closeTaskModal = () => closeModal('task-modal');
+        window.openQuickTaskModal = this.openQuickModal.bind(this);
+        window.closeQuickTaskModal = () => closeModal('quick-task-modal');
         window.openTaskDetail = this.openTaskDetail.bind(this);
 
         const commentBtn = document.getElementById('comment-submit-btn');
@@ -219,6 +227,37 @@ export const TaskController = {
         if (form) { form.reset(); form.querySelector('[name="id"]').value = ""; }
         if (window.taskTagManager) window.taskTagManager.clear();
         document.getElementById('task-modal').classList.remove('hidden');
+    },
+
+    openQuickModal() {
+        const modal = document.getElementById('quick-task-modal');
+        const input = document.getElementById('quick-task-input');
+        if (modal) {
+            modal.classList.remove('hidden');
+            if (input) {
+                input.value = '';
+                setTimeout(() => input.focus(), 50);
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+    },
+
+    async handleQuickFormSubmit(e) {
+        e.preventDefault();
+        const input = document.getElementById('quick-task-input');
+        const title = input.value.trim();
+        if (!title) return;
+
+        // Создаём задачу только с названием (статус по умолчанию "К выполнению")
+        const success = await API.createTask({ title });
+        if (success) {
+            closeModal('quick-task-modal');
+            input.value = '';
+            await this.loadAll();
+            Dashboard.init();
+        } else {
+            alert('Ошибка при создании задачи');
+        }
     },
 
     editTask(id) {

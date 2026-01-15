@@ -109,8 +109,18 @@ function setupHotkeysAndHints() {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
     const modKeySymbol = isMac ? '⌘' : 'Ctrl';
 
-    // 2. Global Hotkey Listener (Cmd+J for New Task)
+    // 2. Global Hotkey Listener (Cmd+J for New Task, Cmd+Shift+J for Quick Capture)
     document.addEventListener('keydown', (e) => {
+        // Cmd+Shift+J → Quick Capture (проверяем первым, т.к. включает Shift)
+        if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.code === 'KeyJ') {
+            e.preventDefault();
+            const modal = document.getElementById('quick-task-modal');
+            if (modal && modal.classList.contains('hidden')) {
+                window.openQuickTaskModal();
+            }
+            return;
+        }
+        // Cmd+J → Полная форма новой задачи
         if ((e.metaKey || e.ctrlKey) && e.code === 'KeyJ') {
             e.preventDefault();
             const modal = document.getElementById('task-modal');
