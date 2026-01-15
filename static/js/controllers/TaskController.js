@@ -27,6 +27,12 @@ export const TaskController = {
         
         window.deleteTaskComment = this.deleteTaskComment.bind(this);
         window.toggleTaskStatus = this.toggleTaskStatus.bind(this);
+        window.openTagSearch = (tagName) => {
+            if (window.setTaskFilter) {
+                window.setTaskFilter('tag', tagName);
+            }
+            switchView('tasks');
+        };
     },
 
     async loadAll() {
@@ -106,11 +112,13 @@ export const TaskController = {
 
         const tagsContainer = document.getElementById('t-detail-tags');
         if (t.tags && t.tags.length > 0) {
-            tagsContainer.innerHTML = t.tags.map(tag => 
-                `<span class="inline-block px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600 border border-slate-200 dark:bg-slate-700 dark:text-slate-300 dark:border-slate-600">#${tag.name}</span>`
+            tagsContainer.innerHTML = t.tags.map(tag =>
+                `<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-primary-50 text-primary-700 border border-primary-200 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors cursor-pointer" onclick="openTagSearch('${tag.name}')">
+                    <i data-lucide="tag" class="w-3 h-3"></i>${tag.name}
+                </span>`
             ).join('');
         } else {
-            tagsContainer.innerHTML = '<span class="text-slate-400 text-xs">-</span>';
+            tagsContainer.innerHTML = '<span class="text-slate-400 text-xs italic">Нет тегов</span>';
         }
 
         this.renderTimeline(t.comments, t.history);
