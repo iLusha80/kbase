@@ -4,7 +4,8 @@ import { initModals, openModal, closeModal } from './components/Modal.js';
 import TagManager from './components/TagManager.js';
 import ThemeManager from './components/ThemeManager.js';
 import Dashboard from './components/Dashboard.js';
-import GlobalSearch from './components/GlobalSearch.js'; 
+import GlobalSearch from './components/GlobalSearch.js';
+import Inbox from './components/Inbox.js';
 
 import { TaskController } from './controllers/TaskController.js';
 import { ContactController } from './controllers/ContactController.js';
@@ -13,6 +14,7 @@ import { ReportController } from './controllers/ReportController.js'; // NEW
 
 const viewPaths = {
     'dashboard': '/',
+    'inbox': '/inbox',
     'contacts': '/contacts',
     'tasks': '/tasks',
     'projects': '/projects',
@@ -72,22 +74,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         button.addEventListener('click', (e) => {
             e.preventDefault();
             // Ищем ближайший элемент с data-view, так как клик может быть по иконке внутри
-            const target = e.target.closest('[data-view]'); 
+            const target = e.target.closest('[data-view]');
             if (target) {
                 const viewName = target.dataset.view;
                 const path = viewPaths[viewName] || '/';
-                
+
                 if (viewName === 'dashboard') {
-                    Dashboard.init(); 
+                    Dashboard.init();
                 }
-                
+
+                // Load Inbox data when switching to inbox view
+                if (viewName === 'inbox') {
+                    Inbox.init();
+                }
+
                 // NEW: Load Report Data if switching to report view
                 if (viewName === 'reports-weekly') {
                     ReportController.loadWeeklyReport();
                     // Закрываем меню, если кликнули
                     if (reportsMenu) reportsMenu.classList.add('hidden');
                 }
-                
+
                 switchView(viewName, true, path);
             }
         });
@@ -152,14 +159,37 @@ async function loadInitialData() {
     ]);
 
     const contacts = await ContactController.loadAll();
-    
+
     ProjectController.init(contacts);
     await ProjectController.loadAll();
-    
+
     await TaskController.loadAll();
-    
+
     updateTaskSelects(contacts, ProjectController.getData());
+
+    // Обновляем счётчик inbox
+    await updateInboxBadge();
 }
+
+async function updateInboxBadge() {
+    const tasks = await API.getTasks();
+    const inboxCount = (tasks || []).filter(t => {
+        const isDone = t.status && t.status.name === 'Готово';
+        return !isDone && (!t.assignee_id || !t.due_date);
+    }).length;
+
+    const badge = document.getElementById('inbox-badge');
+    if (badge) {
+        if (inboxCount > 0) {
+            badge.textContent = inboxCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+}
+
+window.updateInboxBadge = updateInboxBadge;
 
 async function loadContactTypes() {
     const contactTypes = await window.api.getContactTypes();
@@ -203,7 +233,11 @@ function handleUrlRouting(addToHistory = false) {
     const path = window.location.pathname;
     let initialView = 'dashboard';
 
-    if (path === '/contacts') initialView = 'contacts';
+    if (path === '/inbox') {
+        initialView = 'inbox';
+        Inbox.init();
+    }
+    else if (path === '/contacts') initialView = 'contacts';
     else if (path === '/tasks') initialView = 'tasks';
     else if (path === '/projects') initialView = 'projects';
     else if (path === '/kb') initialView = 'kb';

@@ -255,6 +255,8 @@ export const TaskController = {
             input.value = '';
             await this.loadAll();
             Dashboard.init();
+            // Обновляем бейдж inbox (новая задача без исполнителя/срока)
+            if (window.updateInboxBadge) window.updateInboxBadge();
         } else {
             alert('Ошибка при создании задачи');
         }
@@ -329,11 +331,13 @@ export const TaskController = {
         if (window.taskTagManager) { data.tags = window.taskTagManager.getTags(); }
         const id = data.id;
         let success = id ? await API.updateTask(id, data) : await API.createTask(data);
-        if (success) { 
-            closeModal('task-modal'); e.target.reset(); await this.loadAll(); 
-            if (id && !document.getElementById('view-task-detail').classList.contains('hidden')) { this.openTaskDetail(id); } 
+        if (success) {
+            closeModal('task-modal'); e.target.reset(); await this.loadAll();
+            if (id && !document.getElementById('view-task-detail').classList.contains('hidden')) { this.openTaskDetail(id); }
             else if (data.project_id && !document.getElementById('view-project-detail').classList.contains('hidden')) { if (window.openProjectDetail) window.openProjectDetail(data.project_id); }
             Dashboard.init();
+            // Обновляем бейдж inbox
+            if (window.updateInboxBadge) window.updateInboxBadge();
         } else { alert('Ошибка при сохранении задачи'); }
     }
 };

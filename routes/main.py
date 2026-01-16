@@ -29,6 +29,10 @@ def projects_page():
 def kb_page():
     return render_template('index.html')
 
+@main_bp.route('/inbox')
+def inbox_page():
+    return render_template('index.html')
+
 # Ловушка для детальных страниц
 @main_bp.route('/projects/<path:subpath>')
 def projects_detail_page(subpath):

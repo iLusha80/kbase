@@ -26,6 +26,10 @@
         <!-- 3. Навигация и Кнопки -->
         <div class="flex items-center gap-2 flex-shrink-0">
             <nav class="md:flex items-center space-x-1">
+                <a href="/inbox" id="nav-inbox" data-view="inbox" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors relative">
+                    <i data-lucide="inbox" class="w-4 h-4 mr-2"></i> <span>Входящие</span>
+                    <span id="inbox-badge" class="hidden absolute -top-1 -right-1 min-w-[18px] h-[18px] rounded-full bg-amber-500 text-white text-[10px] font-bold flex items-center justify-center px-1">0</span>
+                </a>
                 <a href="/projects" id="nav-projects" data-view="projects" class="nav-btn flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors">
                     <i data-lucide="briefcase" class="w-4 h-4 mr-2"></i> <span>Проекты</span>
                 </a>
