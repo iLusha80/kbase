@@ -98,19 +98,23 @@ def global_search(query_str: str):
     if query_str.startswith('#'):
         return search_by_tag(query_str[1:])  # Убираем # из запроса
 
-    term = f"%{query_str}%"
-
-    tasks = Task.query.filter(Task.title.ilike(term)).limit(5).all()
-    projects = Project.query.filter(Project.title.ilike(term)).limit(5).all()
-    contacts = Contact.query.filter(
-        or_(Contact.last_name.ilike(term), Contact.first_name.ilike(term))
-    ).limit(5).all()
-
-    return {
-        'tasks': [t.to_dict() for t in tasks],
-        'projects': [p.to_dict() for p in projects],
-        'contacts': [c.to_dict() for c in contacts]
-    }
+    # FTS5 полнотекстовый поиск с fallback на ILIKE
+    try:
+        from services.search_service import fts_search
+        return fts_search(query_str, limit=10)
+    except Exception:
+        # Fallback на ILIKE если FTS-таблицы отсутствуют
+        term = f"%{query_str}%"
+        tasks = Task.query.filter(Task.title.ilike(term)).limit(5).all()
+        projects = Project.query.filter(Project.title.ilike(term)).limit(5).all()
+        contacts = Contact.query.filter(
+            or_(Contact.last_name.ilike(term), Contact.first_name.ilike(term))
+        ).limit(5).all()
+        return {
+            'tasks': [t.to_dict() for t in tasks],
+            'projects': [p.to_dict() for p in projects],
+            'contacts': [c.to_dict() for c in contacts]
+        }
 
 
 def search_by_tag(tag_query: str):

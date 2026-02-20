@@ -16,8 +16,7 @@ export const ContactController = {
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
             searchInput.addEventListener('input', (e) => {
-                const searchValue = e.target.value.toLowerCase();
-                renderContacts(contactsData, searchValue);
+                window.filterContactsLocal(e.target.value.toLowerCase());
             });
         }
 

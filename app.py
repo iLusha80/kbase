@@ -46,6 +46,11 @@ def init_db():
         db.session.execute(db.text("ALTER TABLE contacts ADD COLUMN is_team BOOLEAN NOT NULL DEFAULT 0"))
     db.session.commit()
 
+    # FTS5 полнотекстовый поиск
+    from services.search_service import init_fts_tables, rebuild_fts_index
+    init_fts_tables()
+    rebuild_fts_index()
+
     # Init Contact Types
     if not ContactType.query.first():
         defaults = [

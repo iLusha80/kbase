@@ -1,11 +1,14 @@
+import API from '../api.js';
+
 // Global State for Task View
 const state = {
-    allTasks: [],     
-    filteredTasks: [], 
+    allTasks: [],
+    filteredTasks: [],
+    selfContactId: null,
     filter: {
-        type: 'active', // <--- ИЗМЕНЕНО: По умолчанию показываем только "В работе"
-        value: null,  
-        search: ''    
+        type: 'active',
+        value: null,
+        search: ''
     },
     sort: {
         field: 'due_date',
@@ -13,9 +16,47 @@ const state = {
     }
 };
 
+// --- localStorage ---
+const STORAGE_KEY = 'taskListState';
+
+function saveStateToStorage() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+            filter: { type: state.filter.type, value: state.filter.value },
+            sort: { field: state.sort.field, direction: state.sort.direction }
+        }));
+    } catch (e) { /* silent */ }
+}
+
+function restoreStateFromStorage() {
+    try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (saved) {
+            if (saved.filter) {
+                state.filter.type = saved.filter.type || 'active';
+                state.filter.value = saved.filter.value ?? null;
+            }
+            if (saved.sort) {
+                state.sort.field = saved.sort.field || 'due_date';
+                state.sort.direction = saved.sort.direction || 'asc';
+            }
+        }
+    } catch (e) { /* silent */ }
+}
+
 // --- 1. ENTRY POINT ---
-function renderTasks(tasksData) {
+async function renderTasks(tasksData) {
     state.allTasks = tasksData;
+    restoreStateFromStorage();
+
+    // Загружаем self-контакт для фильтров my/authored
+    try {
+        const self = await API.getSelfContact();
+        state.selfContactId = self ? self.id : null;
+    } catch (e) {
+        state.selfContactId = null;
+    }
+
     renderSidebarFilters();
     applyFiltersAndSort();
 }
@@ -23,26 +64,32 @@ function renderTasks(tasksData) {
 // --- 2. LOGIC ---
 function applyFiltersAndSort() {
     let result = [...state.allTasks];
-    
+
     // Фильтр по типу
     if (state.filter.type === 'active') {
-        // НОВОЕ: Все, кроме статуса "Готово"
         result = result.filter(t => !t.status || t.status.name !== 'Готово');
-    } 
+    }
     else if (state.filter.type === 'my') {
-        // Заглушка: берем тех, у кого есть исполнитель (для демо)
-        result = result.filter(t => t.assignee_id !== null); 
-    } 
+        if (state.selfContactId) {
+            result = result.filter(t => t.assignee_id === state.selfContactId);
+        } else {
+            result = [];
+        }
+    }
     else if (state.filter.type === 'authored') {
-        result = result.filter(t => t.author_id !== null);
-    } 
+        if (state.selfContactId) {
+            result = result.filter(t => t.author_id === state.selfContactId);
+        } else {
+            result = [];
+        }
+    }
     else if (state.filter.type === 'overdue') {
         const today = new Date().setHours(0,0,0,0);
         result = result.filter(t => t.due_date && new Date(t.due_date) < today && (!t.status || t.status.name !== 'Готово'));
-    } 
+    }
     else if (state.filter.type === 'project') {
         result = result.filter(t => t.project_id === state.filter.value);
-    } 
+    }
     else if (state.filter.type === 'tag') {
         result = result.filter(t => t.tags && t.tags.some(tag => tag.name === state.filter.value));
     }
@@ -59,17 +106,17 @@ function applyFiltersAndSort() {
         let valA, valB;
 
         switch (state.sort.field) {
-            case 'status': 
+            case 'status':
                 valA = a.status ? a.status.name : ''; valB = b.status ? b.status.name : ''; break;
-            case 'title': 
+            case 'title':
                 valA = a.title.toLowerCase(); valB = b.title.toLowerCase(); break;
-            case 'project': 
+            case 'project':
                 valA = a.project_title || ''; valB = b.project_title || ''; break;
-            case 'assignee': 
+            case 'assignee':
                 valA = a.assignee ? a.assignee.last_name : ''; valB = b.assignee ? b.assignee.last_name : ''; break;
             case 'due_date':
-                valA = a.due_date ? new Date(a.due_date).getTime() : 9999999999999; 
-                valB = b.due_date ? new Date(b.due_date).getTime() : 9999999999999; 
+                valA = a.due_date ? new Date(a.due_date).getTime() : 9999999999999;
+                valB = b.due_date ? new Date(b.due_date).getTime() : 9999999999999;
                 break;
             default: return 0;
         }
@@ -107,12 +154,12 @@ function renderTable() {
     tbody.innerHTML = state.filteredTasks.map(t => {
         const isDone = t.status && t.status.name === 'Готово';
         const isOverdue = !isDone && t.due_date && new Date(t.due_date) < new Date().setHours(0,0,0,0);
-        
+
         // VISUAL: Тусклость для завершенных
         const rowClass = isDone ? 'opacity-60 grayscale-[0.5]' : 'opacity-100';
 
         // Status Dot (Soft style)
-        const statusHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border whitespace-nowrap" 
+        const statusHtml = `<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium border whitespace-nowrap"
             style="background-color: ${t.status?.color}15; color: ${t.status?.color}; border-color: ${t.status?.color}30">
             ${t.status?.name}
         </span>`;
@@ -121,17 +168,17 @@ function renderTable() {
         let dateClass = 'text-slate-600 dark:text-slate-300';
         if (isOverdue) dateClass = 'text-red-600 font-bold';
         if (isDone) dateClass = 'text-slate-400 line-through';
-        
+
         // Tags
-        const tagsHtml = t.tags && t.tags.length 
-            ? `<div class="flex gap-1 mt-1 flex-wrap">${t.tags.map(tag => `<span class="px-1.5 py-0.5 rounded-sm bg-slate-100 text-[9px] text-slate-500 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400">#${tag.name}</span>`).join('')}</div>` 
+        const tagsHtml = t.tags && t.tags.length
+            ? `<div class="flex gap-1 mt-1 flex-wrap">${t.tags.map(tag => `<span class="px-1.5 py-0.5 rounded-sm bg-slate-100 text-[9px] text-slate-500 border border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400">#${tag.name}</span>`).join('')}</div>`
             : '';
 
         return `
         <tr class="group hover:bg-slate-50 border-b border-slate-50 last:border-0 transition-colors dark:hover:bg-slate-800/50 dark:border-slate-800 ${rowClass}">
             <!-- Checkbox -->
             <td class="px-4 py-3 text-center align-top pt-3.5">
-                 <button onclick="event.stopPropagation(); toggleTaskStatus(${t.id}, ${t.status_id})" 
+                 <button onclick="event.stopPropagation(); toggleTaskStatus(${t.id}, ${t.status_id})"
                     class="w-4 h-4 rounded border flex items-center justify-center transition-all hover:scale-110"
                     style="border-color: ${t.status?.color}; ${isDone ? `background-color: ${t.status?.color}` : ''}">
                     ${isDone ? `<i data-lucide="check" class="w-3 h-3 text-white"></i>` : ''}
@@ -151,23 +198,23 @@ function renderTable() {
 
             <!-- Project -->
             <td class="px-4 py-3 whitespace-nowrap align-top pt-3.5">
-                ${t.project_id ? 
+                ${t.project_id ?
                     `<div onclick="openProjectDetail(${t.project_id})" class="cursor-pointer flex items-center gap-1.5 text-xs text-slate-500 hover:text-primary-600 dark:text-slate-400 transition-colors max-w-[140px]">
                         <i data-lucide="briefcase" class="w-3 h-3 flex-shrink-0 opacity-50"></i>
                         <span class="truncate">${t.project_title}</span>
-                     </div>` 
+                     </div>`
                     : '<span class="text-xs text-slate-300 dark:text-slate-600 pl-4">-</span>'}
             </td>
 
             <!-- Assignee -->
             <td class="px-4 py-3 whitespace-nowrap align-top pt-3">
-                ${t.assignee ? 
+                ${t.assignee ?
                     `<div class="flex items-center text-xs text-slate-600 dark:text-slate-300 group/u" title="${t.assignee.last_name} ${t.assignee.first_name}">
                         <div class="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-[9px] font-bold mr-2 dark:bg-slate-700 ring-2 ring-white dark:ring-slate-800 group-hover/u:ring-primary-100 dark:group-hover/u:ring-primary-900 transition-all">
                             ${t.assignee.last_name.charAt(0)}
                         </div>
                         <span class="truncate max-w-[80px]">${t.assignee.last_name}</span>
-                     </div>` 
+                     </div>`
                     : '<span class="text-xs text-slate-300 dark:text-slate-600 pl-4">-</span>'}
             </td>
 
@@ -199,15 +246,15 @@ function renderSidebarFilters() {
             projectsMap.get(t.project_id).count++;
         }
     });
-    
+
     const projectsList = Array.from(projectsMap.values()).sort((a,b) => b.count - a.count);
     const projContainer = document.getElementById('task-filter-projects');
-    
+
     if (projContainer) {
         projContainer.innerHTML = projectsList.map(p => `
             <li>
-                <button onclick="window.setTaskFilter('project', ${p.id})" 
-                    class="task-filter-btn w-full text-left px-2 py-1.5 rounded text-xs font-medium text-slate-600 hover:bg-slate-100 flex justify-between group dark:text-slate-300 dark:hover:bg-slate-700" 
+                <button onclick="window.setTaskFilter('project', ${p.id})"
+                    class="task-filter-btn w-full text-left px-2 py-1.5 rounded text-xs font-medium text-slate-600 hover:bg-slate-100 flex justify-between group dark:text-slate-300 dark:hover:bg-slate-700"
                     data-filter="project-${p.id}">
                     <span class="truncate pr-2">${p.title}</span>
                     <span class="text-[10px] py-0.5 px-1.5 rounded-full bg-slate-100 text-slate-500 group-hover:bg-white group-hover:text-primary-600 dark:bg-slate-800 dark:text-slate-500 dark:group-hover:text-primary-400">${p.count}</span>
@@ -229,7 +276,7 @@ function renderSidebarFilters() {
     const tagsContainer = document.getElementById('task-filter-tags');
     if (tagsContainer) {
         tagsContainer.innerHTML = Array.from(tagsMap.entries()).map(([name, count]) => `
-            <button onclick="window.setTaskFilter('tag', '${name}')" 
+            <button onclick="window.setTaskFilter('tag', '${name}')"
                 class="task-filter-btn px-2 py-1 rounded text-[10px] bg-white border border-slate-200 text-slate-600 hover:border-primary-400 hover:text-primary-600 transition-colors dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
                 data-filter="tag-${name}">
                 #${name} <span class="opacity-50 ml-0.5">${count}</span>
@@ -242,7 +289,7 @@ function updateSidebarActiveState() {
     document.querySelectorAll('.task-filter-btn').forEach(btn => {
         // Reset
         btn.classList.remove('bg-primary-50', 'text-primary-700', 'font-bold', 'dark:bg-primary-900/20', 'dark:text-primary-400');
-        
+
         // Restore defaults based on type (simple check)
         if (btn.dataset.filter === 'overdue') btn.classList.add('text-red-600', 'dark:text-red-400');
         else btn.classList.add('text-slate-600', 'dark:text-slate-300');
@@ -250,7 +297,7 @@ function updateSidebarActiveState() {
         // Check active
         let isActive = false;
         const dataFilter = btn.dataset.filter;
-        
+
         if (state.filter.type === 'active' && dataFilter === 'active') isActive = true;
         else if (state.filter.type === 'all' && dataFilter === 'all') isActive = true;
         else if (state.filter.type === 'my' && dataFilter === 'my') isActive = true;
@@ -273,6 +320,7 @@ window.setTaskFilter = function(type, value = null) {
     state.filter.search = '';
     const searchInput = document.getElementById('taskLocalSearch');
     if(searchInput) searchInput.value = '';
+    saveStateToStorage();
     applyFiltersAndSort();
 };
 
@@ -288,6 +336,7 @@ window.sortTasks = function(field) {
         state.sort.field = field;
         state.sort.direction = 'asc';
     }
+    saveStateToStorage();
     applyFiltersAndSort();
 };
 
