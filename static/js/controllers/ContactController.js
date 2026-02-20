@@ -3,6 +3,7 @@ import { renderContacts } from '../components/ContactList.js';
 import { closeModal } from '../components/Modal.js';
 import { switchView, navigateBack } from '../utils/router.js';
 
+
 let contactsData = [];
 
 export const ContactController = {
@@ -78,6 +79,30 @@ export const ContactController = {
         if (window.lucide) lucide.createIcons();
     },
 
+    updateSelfButton(isSelf) {
+        const btn = document.getElementById('c-detail-self-btn');
+        if (!btn) return;
+        if (isSelf) {
+            btn.classList.remove('border-slate-200', 'text-slate-500', 'dark:border-slate-600', 'dark:text-slate-400');
+            btn.classList.add('border-blue-500', 'bg-blue-50', 'text-blue-600', 'dark:border-blue-500', 'dark:bg-blue-900/30', 'dark:text-blue-400');
+        } else {
+            btn.classList.remove('border-blue-500', 'bg-blue-50', 'text-blue-600', 'dark:border-blue-500', 'dark:bg-blue-900/30', 'dark:text-blue-400');
+            btn.classList.add('border-slate-200', 'text-slate-500', 'dark:border-slate-600', 'dark:text-slate-400');
+        }
+    },
+
+    updateTeamButton(isTeam) {
+        const btn = document.getElementById('c-detail-team-btn');
+        if (!btn) return;
+        if (isTeam) {
+            btn.classList.remove('border-slate-200', 'text-slate-500', 'dark:border-slate-600', 'dark:text-slate-400');
+            btn.classList.add('border-green-500', 'bg-green-50', 'text-green-600', 'dark:border-green-500', 'dark:bg-green-900/30', 'dark:text-green-400');
+        } else {
+            btn.classList.remove('border-green-500', 'bg-green-50', 'text-green-600', 'dark:border-green-500', 'dark:bg-green-900/30', 'dark:text-green-400');
+            btn.classList.add('border-slate-200', 'text-slate-500', 'dark:border-slate-600', 'dark:text-slate-400');
+        }
+    },
+
     async loadAll() {
         contactsData = await API.getContacts();
         renderContacts(contactsData);
@@ -149,6 +174,30 @@ export const ContactController = {
             if (starBtn) {
                 starBtn.onclick = () => window.toggleDetailFavorite(c.id);
                 this.updateStarButton(c.is_favorite);
+            }
+
+            // Self / Team buttons
+            const selfBtn = document.getElementById('c-detail-self-btn');
+            if (selfBtn) {
+                selfBtn.onclick = async () => {
+                    if (c.is_self) {
+                        await fetch(`/api/contacts/${c.id}/unset-self`, { method: 'POST' });
+                    } else {
+                        await fetch(`/api/contacts/${c.id}/set-self`, { method: 'POST' });
+                    }
+                    API.invalidateSelfCache();
+                    this.openContactDetail(c.id);
+                };
+                this.updateSelfButton(c.is_self);
+            }
+
+            const teamBtn = document.getElementById('c-detail-team-btn');
+            if (teamBtn) {
+                teamBtn.onclick = async () => {
+                    await fetch(`/api/contacts/${c.id}/toggle-team`, { method: 'POST' });
+                    this.openContactDetail(c.id);
+                };
+                this.updateTeamButton(c.is_team);
             }
 
             setText('c-detail-email', c.email || '-');

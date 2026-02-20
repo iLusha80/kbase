@@ -1,6 +1,7 @@
 import API from '../api.js';
 
 let standupData = null;
+let viewMode = 'team'; // 'flat' (старый вид) или 'team' (группировка по команде)
 
 const DailyStandup = {
     async init() {
@@ -16,11 +17,16 @@ const DailyStandup = {
         if (!data) return;
         standupData = data;
 
-        this.renderCompleted(data.completed);
-        this.renderInProgress(data.in_progress);
-        this.renderDueToday(data.due_today);
-        this.renderOverdue(data.overdue);
-        this.renderWaiting(data.waiting);
+        // Определяем режим: если есть self или team — показываем группировку
+        const hasTeamData = data.self_contact || (data.team && data.team.length > 0);
+        viewMode = hasTeamData ? 'team' : 'flat';
+
+        if (viewMode === 'team') {
+            this.renderTeamView(data);
+        } else {
+            this.renderFlatView(data);
+        }
+
         this.renderMeetings(data.today_meetings);
         this.renderPreview(data);
         this.updateCounts(data);
@@ -29,6 +35,133 @@ const DailyStandup = {
         if (genAt) genAt.textContent = `Данные на ${data.generated_at}`;
 
         if (window.lucide) lucide.createIcons();
+    },
+
+    // ========= FLAT VIEW (старый вид без команды) =========
+    renderFlatView(data) {
+        const mainContainer = document.getElementById('standup-team-container');
+        if (mainContainer) mainContainer.innerHTML = '';
+
+        this.renderCompleted(data.completed);
+        this.renderInProgress(data.in_progress);
+        this.renderDueToday(data.due_today);
+        this.renderOverdue(data.overdue);
+        this.renderWaiting(data.waiting);
+    },
+
+    // ========= TEAM VIEW (группировка по людям) =========
+    renderTeamView(data) {
+        const container = document.getElementById('standup-team-container');
+        if (!container) {
+            // Fallback: если нет контейнера, рендерим flat
+            this.renderFlatView(data);
+            return;
+        }
+
+        let html = '';
+
+        // Секция «Я»
+        if (data.self_tasks && data.self_contact) {
+            const selfName = [data.self_contact.last_name, data.self_contact.first_name].filter(Boolean).join(' ');
+            const initial = data.self_contact.last_name ? data.self_contact.last_name.charAt(0).toUpperCase() : '?';
+            html += this._renderPersonSection(initial, selfName, data.self_tasks, 'blue', true);
+        }
+
+        // Секции по членам команды
+        if (data.team && data.team.length > 0) {
+            data.team.forEach(member => {
+                const name = [member.contact.last_name, member.contact.first_name].filter(Boolean).join(' ');
+                const initial = member.contact.last_name ? member.contact.last_name.charAt(0).toUpperCase() : '?';
+                const color = member.contact.type && member.contact.type.render_color ? member.contact.type.render_color : '#10b981';
+                html += this._renderPersonSection(initial, name, member.tasks, 'green', false, member.contact.id, color);
+            });
+        }
+
+        // Секция «Прочие»
+        if (data.other_tasks) {
+            const hasAny = Object.values(data.other_tasks).some(arr => arr.length > 0);
+            if (hasAny) {
+                html += this._renderPersonSection('...', 'Прочие', data.other_tasks, 'slate', false);
+            }
+        }
+
+        if (!html) {
+            html = this._emptyState('Нет данных для группировки. Отметьте контакт как «Я» и добавьте членов команды.');
+        }
+
+        container.innerHTML = html;
+
+        // Скрываем старые flat-контейнеры при team view
+        ['standup-completed', 'standup-in-progress', 'standup-due-today', 'standup-overdue', 'standup-waiting'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerHTML = '';
+        });
+    },
+
+    _renderPersonSection(initial, name, tasks, accentColor, isSelf = false, contactId = null, typeColor = null) {
+        const totalCount = Object.values(tasks).reduce((sum, arr) => sum + arr.length, 0);
+        if (totalCount === 0) return '';
+
+        const colorMap = {
+            blue: { bg: 'bg-blue-100 dark:bg-blue-900/30', text: 'text-blue-700 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800' },
+            green: { bg: 'bg-green-100 dark:bg-green-900/30', text: 'text-green-700 dark:text-green-400', border: 'border-green-200 dark:border-green-800' },
+            slate: { bg: 'bg-slate-100 dark:bg-slate-700', text: 'text-slate-600 dark:text-slate-400', border: 'border-slate-200 dark:border-slate-700' },
+        };
+        const colors = colorMap[accentColor] || colorMap.slate;
+        const avatarBg = typeColor ? `background-color: ${typeColor}30; color: ${typeColor}` : '';
+        const avatarClass = typeColor ? '' : `${colors.bg} ${colors.text}`;
+        const clickHandler = contactId ? `onclick="openContactDetail(${contactId})"` : '';
+        const cursorClass = contactId ? 'cursor-pointer hover:opacity-80' : '';
+
+        let tasksHtml = '';
+
+        // Завершённые
+        if (tasks.completed && tasks.completed.length > 0) {
+            tasksHtml += tasks.completed.map(t => this._taskRow(t, 'check-circle-2', 'text-green-500')).join('');
+        }
+
+        // В работе
+        if (tasks.in_progress && tasks.in_progress.length > 0) {
+            tasksHtml += tasks.in_progress.map(t => this._taskRow(t, 'loader-2', 'text-amber-500')).join('');
+        }
+
+        // Дедлайн сегодня
+        if (tasks.due_today && tasks.due_today.length > 0) {
+            tasksHtml += `<div class="text-[10px] uppercase tracking-wider font-bold text-blue-400 mt-1 mb-0.5 px-2.5">Дедлайн сегодня</div>`;
+            tasksHtml += tasks.due_today.map(t => this._taskRow(t, 'clock', 'text-blue-500')).join('');
+        }
+
+        // Просрочено
+        if (tasks.overdue && tasks.overdue.length > 0) {
+            tasksHtml += `<div class="text-[10px] uppercase tracking-wider font-bold text-red-400 mt-1 mb-0.5 px-2.5">Просрочено</div>`;
+            tasksHtml += tasks.overdue.map(t => this._taskRow(t, 'alert-triangle', 'text-red-500')).join('');
+        }
+
+        // Жду ответа
+        if (tasks.waiting && tasks.waiting.length > 0) {
+            tasksHtml += `<div class="text-[10px] uppercase tracking-wider font-bold text-purple-400 mt-1 mb-0.5 px-2.5">Жду ответа</div>`;
+            tasksHtml += tasks.waiting.map(t => {
+                const assignee = t.assignee ? `${t.assignee.last_name}` : '';
+                return this._taskRow(t, 'clock', 'text-purple-500', assignee);
+            }).join('');
+        }
+
+        const selfBadge = isSelf ? `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">Я</span>` : '';
+
+        return `
+        <div class="mb-4">
+            <div class="flex items-center gap-2 mb-2 ${cursorClass}" ${clickHandler}>
+                <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${avatarClass}" ${avatarBg ? `style="${avatarBg}"` : ''}>
+                    ${initial}
+                </div>
+                <span class="text-sm font-semibold text-slate-800 dark:text-slate-200">${name}</span>
+                ${selfBadge}
+                <span class="text-[11px] text-slate-400 ml-auto">${totalCount} задач</span>
+            </div>
+            <div class="ml-2 border-l-2 ${colors.border} pl-2">
+                ${tasksHtml}
+            </div>
+        </div>`;
     },
 
     updateCounts(data) {
@@ -92,7 +225,6 @@ const DailyStandup = {
         const container = document.getElementById('standup-waiting');
         if (!container) return;
         if (!tasks || tasks.length === 0) {
-            // Если и overdue пуст — покажем общее "нет блокеров"
             const overdue = document.getElementById('standup-overdue');
             if (overdue && overdue.innerHTML === '') {
                 container.innerHTML = this._emptyState('Нет блокеров. Все чисто!');
@@ -122,7 +254,6 @@ const DailyStandup = {
             const typeName = m.type ? m.type.name : '';
             const typeColor = m.type ? m.type.color : '#6366f1';
             const title = m.title || typeName || 'Без названия';
-            const notesCount = m.meeting_notes_count || 0;
             return `
             <div onclick="MeetingController.openMeetingDetail(${m.id})" class="flex items-center gap-3 p-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors group">
                 <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0" style="background-color: ${typeColor}20; color: ${typeColor}">
@@ -149,10 +280,19 @@ const DailyStandup = {
     _buildChatText(data) {
         const lines = [];
         const today = new Date().toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const hasTeam = data.self_contact || (data.team && data.team.length > 0);
+
+        if (hasTeam) {
+            return this._buildTeamChatText(data, today);
+        }
+        return this._buildFlatChatText(data, today);
+    },
+
+    _buildFlatChatText(data, today) {
+        const lines = [];
         lines.push(`Дейлик ${today}`);
         lines.push('');
 
-        // Что сделал
         lines.push('Что сделал:');
         if (data.completed.length > 0) {
             data.completed.forEach(t => {
@@ -164,7 +304,6 @@ const DailyStandup = {
         }
         lines.push('');
 
-        // Что планирую
         lines.push('Что планирую:');
         const planned = [...data.in_progress, ...data.due_today];
         if (planned.length > 0) {
@@ -177,7 +316,6 @@ const DailyStandup = {
         }
         lines.push('');
 
-        // Блокеры
         const blockers = [...data.overdue, ...data.waiting];
         lines.push('Блокеры:');
         if (blockers.length > 0) {
@@ -190,6 +328,74 @@ const DailyStandup = {
             });
         } else {
             lines.push('  - Нет');
+        }
+
+        return lines.join('\n');
+    },
+
+    _buildTeamChatText(data, today) {
+        const lines = [];
+        lines.push(`Дейлик ${today}`);
+        lines.push('');
+
+        const renderPersonTasks = (tasks, prefix) => {
+            if (tasks.completed && tasks.completed.length > 0) {
+                tasks.completed.forEach(t => {
+                    const proj = t.project_title ? ` [${t.project_title}]` : '';
+                    lines.push(`${prefix}done: ${t.title}${proj}`);
+                });
+            }
+            if (tasks.in_progress && tasks.in_progress.length > 0) {
+                tasks.in_progress.forEach(t => {
+                    const proj = t.project_title ? ` [${t.project_title}]` : '';
+                    lines.push(`${prefix}в работе: ${t.title}${proj}`);
+                });
+            }
+            if (tasks.due_today && tasks.due_today.length > 0) {
+                tasks.due_today.forEach(t => {
+                    const proj = t.project_title ? ` [${t.project_title}]` : '';
+                    lines.push(`${prefix}дедлайн сегодня: ${t.title}${proj}`);
+                });
+            }
+            if (tasks.overdue && tasks.overdue.length > 0) {
+                tasks.overdue.forEach(t => {
+                    lines.push(`${prefix}ПРОСРОЧЕНО: ${t.title} (${t.due_date || '?'})`);
+                });
+            }
+            if (tasks.waiting && tasks.waiting.length > 0) {
+                tasks.waiting.forEach(t => {
+                    const from = t.assignee ? ` (от: ${t.assignee.last_name})` : '';
+                    lines.push(`${prefix}жду ответа: ${t.title}${from}`);
+                });
+            }
+        };
+
+        // Я
+        if (data.self_tasks && data.self_contact) {
+            const selfName = [data.self_contact.last_name, data.self_contact.first_name].filter(Boolean).join(' ');
+            lines.push(`Я (${selfName}):`);
+            renderPersonTasks(data.self_tasks, '  - ');
+            lines.push('');
+        }
+
+        // Команда
+        if (data.team && data.team.length > 0) {
+            data.team.forEach(member => {
+                const name = [member.contact.last_name, member.contact.first_name].filter(Boolean).join(' ');
+                lines.push(`${name}:`);
+                renderPersonTasks(member.tasks, '  - ');
+                lines.push('');
+            });
+        }
+
+        // Прочие
+        if (data.other_tasks) {
+            const hasAny = Object.values(data.other_tasks).some(arr => arr.length > 0);
+            if (hasAny) {
+                lines.push('Прочие:');
+                renderPersonTasks(data.other_tasks, '  - ');
+                lines.push('');
+            }
         }
 
         return lines.join('\n');

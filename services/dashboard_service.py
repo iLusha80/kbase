@@ -346,6 +346,50 @@ def get_daily_standup_data():
     # 4. Встречи на сегодня
     today_meetings = Meeting.query.filter(Meeting.date == today).order_by(Meeting.time).all()
 
+    # --- Группировка по команде ---
+    self_contact = Contact.query.filter_by(is_self=True).first()
+    team_contacts = Contact.query.filter_by(is_team=True).order_by(Contact.last_name).all()
+
+    all_active_tasks = completed_tasks + in_progress_tasks + due_today_tasks + overdue_tasks + waiting_tasks
+    team_ids = {c.id for c in team_contacts}
+    self_id = self_contact.id if self_contact else None
+
+    def categorize_task(t):
+        """Определяет категорию задачи: completed/in_progress/due_today/overdue/waiting"""
+        if t in completed_tasks: return 'completed'
+        if t in overdue_tasks: return 'overdue'
+        if t in waiting_tasks: return 'waiting'
+        if t in due_today_tasks: return 'due_today'
+        if t in in_progress_tasks: return 'in_progress'
+        return 'in_progress'
+
+    def build_person_block(tasks_list):
+        """Группирует список задач по категориям"""
+        block = {'completed': [], 'in_progress': [], 'due_today': [], 'overdue': [], 'waiting': []}
+        for t in tasks_list:
+            cat = categorize_task(t)
+            block[cat].append(t.to_dict())
+        return block
+
+    # Задачи self
+    self_tasks = [t for t in all_active_tasks if t.assignee_id == self_id] if self_id else []
+
+    # Задачи каждого члена команды
+    team_data = []
+    for member in team_contacts:
+        if member.id == self_id:
+            continue  # self уже отдельно
+        member_tasks = [t for t in all_active_tasks if t.assignee_id == member.id]
+        if member_tasks:
+            team_data.append({
+                'contact': member.to_dict(),
+                'tasks': build_person_block(member_tasks),
+            })
+
+    # Прочие задачи (не self, не team)
+    excluded_ids = team_ids | ({self_id} if self_id else set())
+    other_tasks = [t for t in all_active_tasks if t.assignee_id not in excluded_ids]
+
     return {
         'completed': [t.to_dict() for t in completed_tasks],
         'in_progress': [t.to_dict() for t in in_progress_tasks],
@@ -353,5 +397,10 @@ def get_daily_standup_data():
         'overdue': [t.to_dict() for t in overdue_tasks],
         'waiting': [t.to_dict() for t in waiting_tasks],
         'today_meetings': [m.to_dict() for m in today_meetings],
-        'generated_at': now.strftime('%d.%m.%Y %H:%M')
+        'generated_at': now.strftime('%d.%m.%Y %H:%M'),
+        # Группировка по команде
+        'self_contact': self_contact.to_dict() if self_contact else None,
+        'self_tasks': build_person_block(self_tasks) if self_tasks else None,
+        'team': team_data,
+        'other_tasks': build_person_block(other_tasks) if other_tasks else None,
     }

@@ -99,6 +99,8 @@ class Contact(db.Model):
     link = db.Column(db.String(256))
     notes = db.Column(db.Text)
     type_id = db.Column(db.Integer, db.ForeignKey('contact_types.id'), nullable=True)
+    is_self = db.Column(db.Boolean, default=False, nullable=False, server_default='0')
+    is_team = db.Column(db.Boolean, default=False, nullable=False, server_default='0')
 
     # Relationship to Tags
     tags = db.relationship('Tag', secondary=contact_tags, lazy='subquery',
@@ -121,7 +123,9 @@ class Contact(db.Model):
             'notes': self.notes,
             'type': self.contact_type.to_dict() if self.contact_type else None,
             'type_id': self.type_id,
-            'tags': [tag.to_dict() for tag in self.tags]
+            'tags': [tag.to_dict() for tag in self.tags],
+            'is_self': self.is_self,
+            'is_team': self.is_team,
         }
 
 # --- TASK MODELS ---

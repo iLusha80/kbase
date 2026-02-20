@@ -28,8 +28,18 @@
                     <h2 id="c-detail-name" class="text-xl font-bold text-slate-900 dark:text-white">Загрузка...</h2>
                     <p id="c-detail-role" class="text-sm text-slate-500 mb-1 dark:text-slate-400">...</p>
                     
-                    <div id="c-detail-badges" class="flex flex-wrap gap-2 justify-center mt-2 mb-6">
+                    <div id="c-detail-badges" class="flex flex-wrap gap-2 justify-center mt-2 mb-3">
                         <!-- Badges via JS -->
+                    </div>
+
+                    <!-- Self / Team toggles -->
+                    <div class="flex gap-2 w-full mb-4">
+                        <button id="c-detail-self-btn" class="flex-1 py-1.5 text-xs font-medium border rounded flex items-center justify-center gap-1 transition-colors border-slate-200 text-slate-500 hover:border-blue-400 hover:text-blue-600 dark:border-slate-600 dark:text-slate-400 dark:hover:border-blue-500 dark:hover:text-blue-400">
+                            <i data-lucide="user-check" class="w-3.5 h-3.5"></i> <span>Это я</span>
+                        </button>
+                        <button id="c-detail-team-btn" class="flex-1 py-1.5 text-xs font-medium border rounded flex items-center justify-center gap-1 transition-colors border-slate-200 text-slate-500 hover:border-green-400 hover:text-green-600 dark:border-slate-600 dark:text-slate-400 dark:hover:border-green-500 dark:hover:text-green-400">
+                            <i data-lucide="users" class="w-3.5 h-3.5"></i> <span>Команда</span>
+                        </button>
                     </div>
 
                     <!-- Actions -->

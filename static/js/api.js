@@ -102,6 +102,18 @@ const API = {
             return response.ok;
         } catch (err) { console.error(err); return false; }
     },
+    // Self contact (cached)
+    _selfContact: undefined,
+    async getSelfContact(forceRefresh = false) {
+        if (this._selfContact !== undefined && !forceRefresh) return this._selfContact;
+        try {
+            const response = await fetch('/api/contacts/self');
+            this._selfContact = await response.json();
+            return this._selfContact;
+        } catch (err) { console.error(err); return null; }
+    },
+    invalidateSelfCache() { this._selfContact = undefined; },
+
     // NEW: Toggle Favorite
     async toggleContactFavorite(id) {
         try {

@@ -1,8 +1,8 @@
 import os
 import sqlite3 
 from flask import Flask, request
-from sqlalchemy import event 
-from sqlalchemy.engine import Engine 
+from sqlalchemy import event, inspect
+from sqlalchemy.engine import Engine
 from core.database import db
 from core.models import ContactType, TaskStatus, FavoriteContact, MeetingType, MeetingNote
 from core.config import Config
@@ -36,6 +36,16 @@ def set_sqlite_pragma(dbapi_connection, connection_record):
 
 def init_db():
     db.create_all()
+
+    # --- Миграция: добавление новых колонок в существующие таблицы ---
+    inspector = inspect(db.engine)
+    contacts_columns = [col['name'] for col in inspector.get_columns('contacts')]
+    if 'is_self' not in contacts_columns:
+        db.session.execute(db.text("ALTER TABLE contacts ADD COLUMN is_self BOOLEAN NOT NULL DEFAULT 0"))
+    if 'is_team' not in contacts_columns:
+        db.session.execute(db.text("ALTER TABLE contacts ADD COLUMN is_team BOOLEAN NOT NULL DEFAULT 0"))
+    db.session.commit()
+
     # Init Contact Types
     if not ContactType.query.first():
         defaults = [

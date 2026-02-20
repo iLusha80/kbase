@@ -18,7 +18,8 @@ def create_contact(data):
         last_name=data.get('last_name'), first_name=data.get('first_name'),
         middle_name=data.get('middle_name'), department=data.get('department'),
         role=data.get('role'), email=data.get('email'), phone=data.get('phone'),
-        link=data.get('link'), notes=data.get('notes'), type_id=type_id
+        link=data.get('link'), notes=data.get('notes'), type_id=type_id,
+        is_team=bool(data.get('is_team', False)),
     )
     
     if 'tags' in data:
@@ -44,9 +45,12 @@ def update_contact(contact_id, data):
     c.notes = data.get('notes', c.notes)
     if 'type_id' in data: c.type_id = data.get('type_id')
     
+    if 'is_team' in data:
+        c.is_team = bool(data['is_team'])
+
     if 'tags' in data:
         c.tags = process_tags(data['tags'])
-    
+
     db.session.commit()
     return c
 
@@ -125,3 +129,46 @@ def toggle_favorite_status(contact_id):
         db.session.add(new_fav)
         db.session.commit()
         return True # Added
+
+
+# --- SELF / TEAM METHODS ---
+def set_self(contact_id):
+    """Отметить контакт как «Я». Снимает is_self с предыдущего."""
+    c = Contact.query.get(contact_id)
+    if not c:
+        return None
+    # Снимаем is_self у всех
+    Contact.query.filter(Contact.is_self == True).update({'is_self': False})
+    c.is_self = True
+    db.session.commit()
+    return c
+
+
+def unset_self(contact_id):
+    """Снять признак «Я» с контакта."""
+    c = Contact.query.get(contact_id)
+    if not c:
+        return None
+    c.is_self = False
+    db.session.commit()
+    return c
+
+
+def get_self_contact():
+    """Вернуть контакт с is_self=True или None."""
+    return Contact.query.filter_by(is_self=True).first()
+
+
+def toggle_team(contact_id):
+    """Переключить is_team для контакта. Возвращает новое значение."""
+    c = Contact.query.get(contact_id)
+    if not c:
+        return None
+    c.is_team = not c.is_team
+    db.session.commit()
+    return c.is_team
+
+
+def get_team_contacts():
+    """Вернуть список контактов с is_team=True."""
+    return Contact.query.filter_by(is_team=True).order_by(Contact.last_name, Contact.first_name).all()

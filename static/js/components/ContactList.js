@@ -9,10 +9,19 @@ export function renderContacts(contactsData, search = '') {
     const tbody = document.getElementById('contacts-table-body');
     if (!tbody) return;
 
-    const filtered = contactsData.filter(c => {
+    let filtered = contactsData.filter(c => {
         const fullName = `${c.last_name} ${c.first_name} ${c.middle_name}`.toLowerCase();
         const tagsString = c.tags ? c.tags.map(t => t.name).join(' ') : '';
         return fullName.includes(search) || (c.department && c.department.toLowerCase().includes(search)) || tagsString.includes(search);
+    });
+
+    // Сортировка: self первым, потом команда, потом остальные
+    filtered.sort((a, b) => {
+        if (a.is_self && !b.is_self) return -1;
+        if (!a.is_self && b.is_self) return 1;
+        if (a.is_team && !b.is_team) return -1;
+        if (!a.is_team && b.is_team) return 1;
+        return 0;
     });
 
     if (filtered.length === 0) {
@@ -32,9 +41,11 @@ export function renderContacts(contactsData, search = '') {
                 <div class="flex items-center">
                     <div class="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold mr-3 text-slate-600 dark:bg-slate-700 dark:text-slate-300" style="background-color: ${typeColor}40; color: ${typeColor}">${initial}</div>
                     <div>
-                        <div class="text-sm font-medium text-slate-900 group-hover:text-primary-600 transition-colors dark:text-slate-100 dark:group-hover:text-primary-400">
-                            ${fullName} 
-                            ${c.link ? `<i data-lucide="external-link" class="w-3 h-3 inline text-slate-400 ml-1"></i>` : ''}
+                        <div class="text-sm font-medium text-slate-900 group-hover:text-primary-600 transition-colors dark:text-slate-100 dark:group-hover:text-primary-400 flex items-center gap-1.5 flex-wrap">
+                            ${fullName}
+                            ${c.is_self ? `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400">Я</span>` : ''}
+                            ${c.is_team ? `<span class="px-1.5 py-0.5 text-[10px] font-bold rounded bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400">Команда</span>` : ''}
+                            ${c.link ? `<i data-lucide="external-link" class="w-3 h-3 inline text-slate-400"></i>` : ''}
                         </div>
                         <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider dark:text-slate-500">${c.type ? c.type.name_type : ''}</div>
                     </div>
