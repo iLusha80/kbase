@@ -1,0 +1,71 @@
+<div id="meeting-modal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="closeMeetingModal()"></div>
+    <div class="flex min-h-screen items-center justify-center p-4">
+        <div class="relative bg-white rounded-xl shadow-xl max-w-lg w-full p-6 fade-in dark:bg-slate-800 dark:border dark:border-slate-700">
+            <h3 class="text-lg font-semibold mb-4 flex items-center text-slate-900 dark:text-white">
+                <i data-lucide="calendar" class="w-5 h-5 mr-2 text-primary-600 dark:text-primary-400"></i> <span id="meeting-modal-title-text">Новая встреча</span>
+            </h3>
+            <form id="meeting-form">
+                <input type="hidden" name="id" value="">
+
+                <div class="space-y-4">
+                    <input name="title" placeholder="Название встречи (опционально)" class="w-full border border-slate-300 p-2.5 rounded-lg text-sm font-medium focus:border-primary-600 focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500">
+
+                    <!-- Type -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Тип встречи</label>
+                        <select name="type_id" id="meeting-type-select" class="w-full border border-slate-300 p-2 rounded-lg text-sm bg-slate-50 focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+                            <option value="">-- Выберите тип --</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Дата</label>
+                            <input name="date" type="date" required class="w-full border border-slate-300 p-2 rounded-lg text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Время</label>
+                            <input name="time" type="time" class="w-full border border-slate-300 p-2 rounded-lg text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Длительность (мин.)</label>
+                            <input name="duration_minutes" type="number" min="5" step="5" placeholder="30" class="w-full border border-slate-300 p-2 rounded-lg text-sm focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Проект</label>
+                            <select name="project_id" class="w-full border border-slate-300 p-2 rounded-lg text-sm bg-slate-50 focus:outline-none dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+                                <option value="">-- Без проекта --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Participants (multi-select) -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Участники</label>
+                        <div id="meeting-participants-container" class="border border-slate-300 p-2 rounded-lg text-sm bg-slate-50 dark:bg-slate-900 dark:border-slate-600">
+                            <div id="meeting-participants-tags" class="flex flex-wrap gap-1 mb-1"></div>
+                            <select id="meeting-participants-select" class="w-full bg-transparent focus:outline-none text-slate-700 dark:text-white text-sm">
+                                <option value="">+ Добавить участника</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Agenda -->
+                    <div>
+                        <label class="block text-xs font-medium text-slate-500 mb-1 dark:text-slate-400">Повестка</label>
+                        <textarea name="agenda" id="meeting-agenda-textarea" placeholder="Повестка встречи..." class="w-full border border-slate-300 p-2 rounded-lg text-sm dark:bg-slate-900 dark:border-slate-600 dark:text-white dark:placeholder-slate-500" rows="3"></textarea>
+                    </div>
+                </div>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button type="button" onclick="closeMeetingModal()" class="px-4 py-2 text-slate-700 hover:bg-slate-100 rounded-lg text-sm font-medium dark:text-slate-300 dark:hover:bg-slate-700">Отмена</button>
+                    <button type="submit" class="px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg text-sm font-medium dark:bg-primary-600 dark:hover:bg-primary-500">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

@@ -47,6 +47,15 @@ def contacts_detail_page(subpath):
 def tasks_detail_page(subpath):
     return render_template('index.html')
 
+# Meetings routes
+@main_bp.route('/meetings')
+def meetings_page():
+    return render_template('index.html')
+
+@main_bp.route('/meetings/<path:subpath>')
+def meetings_detail_page(subpath):
+    return render_template('index.html')
+
 # Reports routes
 @main_bp.route('/reports/weekly')
 def reports_weekly_page():

@@ -1,12 +1,15 @@
 from flask import Blueprint, jsonify, request
 from services.dashboard_service import (
-    get_priority_tasks, 
-    get_waiting_tasks, 
+    get_priority_tasks,
+    get_waiting_tasks,
     get_top_active_projects,
     get_favorite_contacts_list,
-    global_search
+    global_search,
+    get_recent_viewed,
+    get_frequent_tags,
+    get_recent_activity
 )
-from core.models import QuickLink
+from core.models import QuickLink, ViewLog
 from core.database import db
 
 dashboard_bp = Blueprint('dashboard', __name__)
@@ -28,13 +31,38 @@ def get_dashboard_data():
         p_dict['active_work_count'] = active_count
         projects_data.append(p_dict)
 
+    recent_viewed = get_recent_viewed()
+    frequent_tags = get_frequent_tags()
+    recent_activity = get_recent_activity()
+
     return jsonify({
         'priority_tasks': [t.to_dict() for t in priority],
         'waiting_tasks': [t.to_dict() for t in waiting],
         'top_projects': projects_data,
         'favorite_contacts': favorites,
-        'quick_links': [l.to_dict() for l in links]
+        'quick_links': [l.to_dict() for l in links],
+        'recent_viewed': recent_viewed,
+        'frequent_tags': frequent_tags,
+        'recent_activity': recent_activity
     })
+
+@dashboard_bp.route('/views', methods=['POST'])
+def log_view():
+    """Логирование просмотра сущности (task, project, contact)"""
+    data = request.json
+    entity_type = data.get('entity_type')
+    entity_id = data.get('entity_id')
+
+    if not entity_type or not entity_id:
+        return jsonify({'error': 'entity_type and entity_id required'}), 400
+
+    if entity_type not in ('task', 'project', 'contact'):
+        return jsonify({'error': 'Invalid entity_type'}), 400
+
+    view = ViewLog(entity_type=entity_type, entity_id=int(entity_id))
+    db.session.add(view)
+    db.session.commit()
+    return jsonify({'ok': True}), 201
 
 @dashboard_bp.route('/search', methods=['GET'])
 def search_route():

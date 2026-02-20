@@ -2,7 +2,7 @@ import API from '../api.js';
 import { renderTasks } from '../components/TaskList.js';
 import { closeModal } from '../components/Modal.js';
 import Dashboard from '../components/Dashboard.js';
-import { switchView } from '../utils/router.js'; 
+import { switchView, navigateBack } from '../utils/router.js';
 
 let tasksData = [];
 let currentTaskId = null; 
@@ -39,7 +39,7 @@ export const TaskController = {
             if (window.setTaskFilter) {
                 window.setTaskFilter('tag', tagName);
             }
-            switchView('tasks');
+            navigateBack('tasks', '/tasks');
         };
     },
 
@@ -74,7 +74,8 @@ export const TaskController = {
 
     // --- Остальные методы без изменений (openTaskDetail, submitComment и т.д.) ---
     async openTaskDetail(id) {
-        currentTaskId = id; 
+        currentTaskId = id;
+        API.logView('task', id);
         const response = await fetch(`/api/tasks/${id}`);
         if (!response.ok) return;
         const t = await response.json();
@@ -90,7 +91,7 @@ export const TaskController = {
         document.getElementById('t-detail-copy-btn').onclick = () => this.copyTask(t.id);
         document.getElementById('t-detail-delete-btn').onclick = async () => {
             if (await this.deleteTask(t.id)) {
-                switchView('tasks');
+                navigateBack('tasks', '/tasks');
             }
         };
 

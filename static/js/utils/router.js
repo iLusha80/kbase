@@ -1,7 +1,7 @@
 function switchView(viewName, addToHistory = true, path) {
     // 1. Скрываем все секции
     document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
-    
+
     // 2. Показываем нужную
     const target = document.getElementById(`view-${viewName}`);
     if (target) target.classList.remove('hidden');
@@ -13,7 +13,7 @@ function switchView(viewName, addToHistory = true, path) {
         'dark:bg-slate-700',    // Темная тема: фон активной (исправляет белый квадрат)
         'dark:text-primary-400' // Темная тема: текст активной
     ];
-    
+
     const inactiveClasses = [
         'text-slate-600',       // Светлая тема: текст неактивной
         'hover:bg-slate-50',    // Светлая тема: ховер
@@ -40,4 +40,13 @@ function switchView(viewName, addToHistory = true, path) {
     }
 }
 
-export { switchView };
+/**
+ * Навигация «назад» к списку — использует replaceState,
+ * чтобы не засорять историю дублями (detail → список → detail → список).
+ */
+function navigateBack(viewName, path) {
+    switchView(viewName, false);
+    history.replaceState({ view: viewName }, '', path);
+}
+
+export { switchView, navigateBack };

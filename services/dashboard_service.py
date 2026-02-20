@@ -1,7 +1,11 @@
 from sqlalchemy import or_, func, desc
 from datetime import date
 from core.database import db
-from core.models import Task, Project, Contact, TaskStatus, ContactType, FavoriteContact, QuickLink, Tag
+from core.models import (
+    Task, Project, Contact, TaskStatus, ContactType,
+    FavoriteContact, QuickLink, Tag, ViewLog, ActivityLog,
+    task_tags, contact_tags
+)
 
 
 def get_priority_tasks(limit=7):
@@ -160,3 +164,124 @@ def search_by_tag(tag_query: str):
         'projects': [p.to_dict() for p in projects],
         'contacts': [c.to_dict() for c in contacts]
     }
+
+
+def get_recent_viewed(limit=8):
+    """
+    Недавно просмотренные сущности (задачи, проекты, контакты).
+    Возвращает уникальные сущности, отсортированные по последнему просмотру.
+    """
+    # Подзапрос: последний просмотр для каждой уникальной пары (entity_type, entity_id)
+    subq = db.session.query(
+        ViewLog.entity_type,
+        ViewLog.entity_id,
+        func.max(ViewLog.viewed_at).label('last_viewed')
+    ).group_by(ViewLog.entity_type, ViewLog.entity_id)\
+     .order_by(desc('last_viewed'))\
+     .limit(limit)\
+     .all()
+
+    result = []
+    for entity_type, entity_id, last_viewed in subq:
+        item = _resolve_entity(entity_type, entity_id)
+        if item:
+            item['last_viewed'] = last_viewed.strftime('%d.%m %H:%M')
+            result.append(item)
+
+    return result
+
+
+def _resolve_entity(entity_type, entity_id):
+    """Получает краткую информацию о сущности по типу и ID."""
+    if entity_type == 'task':
+        t = Task.query.get(entity_id)
+        if not t:
+            return None
+        return {
+            'entity_type': 'task',
+            'id': t.id,
+            'title': t.title,
+            'status_name': t.status.name if t.status else None,
+            'status_color': t.status.color if t.status else '#94a3b8',
+        }
+    elif entity_type == 'project':
+        p = Project.query.get(entity_id)
+        if not p:
+            return None
+        return {
+            'entity_type': 'project',
+            'id': p.id,
+            'title': p.title,
+            'status_name': p.status,
+        }
+    elif entity_type == 'contact':
+        c = Contact.query.get(entity_id)
+        if not c:
+            return None
+        return {
+            'entity_type': 'contact',
+            'id': c.id,
+            'title': f"{c.last_name} {c.first_name or ''}".strip(),
+            'role': c.role,
+            'type_color': c.contact_type.render_color if c.contact_type else '#cbd5e1',
+        }
+    return None
+
+
+def get_frequent_tags(limit=10):
+    """
+    Часто используемые теги — по количеству привязок к задачам и контактам.
+    """
+    # Считаем привязки тегов к задачам
+    task_tag_counts = db.session.query(
+        task_tags.c.tag_id,
+        func.count().label('cnt')
+    ).group_by(task_tags.c.tag_id).subquery()
+
+    # Считаем привязки тегов к контактам
+    contact_tag_counts = db.session.query(
+        contact_tags.c.tag_id,
+        func.count().label('cnt')
+    ).group_by(contact_tags.c.tag_id).subquery()
+
+    # Суммируем
+    tags = db.session.query(
+        Tag,
+        (func.coalesce(task_tag_counts.c.cnt, 0) + func.coalesce(contact_tag_counts.c.cnt, 0)).label('total_usage')
+    ).outerjoin(task_tag_counts, Tag.id == task_tag_counts.c.tag_id)\
+     .outerjoin(contact_tag_counts, Tag.id == contact_tag_counts.c.tag_id)\
+     .having(
+        (func.coalesce(task_tag_counts.c.cnt, 0) + func.coalesce(contact_tag_counts.c.cnt, 0)) > 0
+     )\
+     .group_by(Tag.id)\
+     .order_by(desc('total_usage'))\
+     .limit(limit)\
+     .all()
+
+    return [{'id': t.id, 'name': t.name, 'usage_count': usage} for t, usage in tags]
+
+
+def get_recent_activity(limit=15):
+    """
+    Последние действия (история изменений) из ActivityLog.
+    """
+    logs = ActivityLog.query.order_by(ActivityLog.created_at.desc()).limit(limit).all()
+
+    result = []
+    for log in logs:
+        item = {
+            'id': log.id,
+            'entity_type': log.entity_type,
+            'entity_id': log.entity_id,
+            'event_type': log.event_type,
+            'field_name': log.field_name,
+            'old_value': log.old_value,
+            'new_value': log.new_value,
+            'created_at': log.created_at.strftime('%d.%m %H:%M'),
+        }
+        # Подгружаем название сущности
+        entity = _resolve_entity(log.entity_type, log.entity_id)
+        item['entity_title'] = entity['title'] if entity else f'#{log.entity_id}'
+        result.append(item)
+
+    return result

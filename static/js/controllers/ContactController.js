@@ -1,7 +1,7 @@
 import API from '../api.js';
 import { renderContacts } from '../components/ContactList.js';
 import { closeModal } from '../components/Modal.js';
-import { switchView } from '../utils/router.js';
+import { switchView, navigateBack } from '../utils/router.js';
 
 let contactsData = [];
 
@@ -93,6 +93,7 @@ export const ContactController = {
 
     async openContactDetail(id) {
         try {
+            API.logView('contact', id);
             const response = await fetch(`/api/contacts/${id}`);
             if (!response.ok) {
                 console.error("Failed to load contact detail:", response.status);
@@ -288,10 +289,10 @@ export const ContactController = {
     },
 
     async deleteContact(id) {
-        if (confirm('Вы уверены?')) { 
+        if (confirm('Вы уверены?')) {
             if (await API.deleteContact(id)) {
-                await this.loadAll(); 
-                switchView('contacts');
+                await this.loadAll();
+                navigateBack('contacts', '/contacts');
             }
         }
     },

@@ -55,13 +55,18 @@ const Dashboard = {
         this.renderPriorityTasks(data.priority_tasks);
         this.renderWaitingTasks(data.waiting_tasks);
         this.renderTopProjects(data.top_projects);
-        
+
         // Избранные контакты
         this.renderFavorites(data.favorite_contacts);
 
         // Сохраняем и рендерим ссылки
         cachedLinks = data.quick_links || [];
         this.renderQuickLinks(cachedLinks);
+
+        // Новые секции
+        this.renderRecentViewed(data.recent_viewed);
+        this.renderFrequentTags(data.frequent_tags);
+        this.renderRecentActivity(data.recent_activity);
         
         if (window.lucide) lucide.createIcons();
     },
@@ -274,6 +279,100 @@ const Dashboard = {
                 </div>
             </div>
         `).join('');
+    },
+
+    renderRecentViewed(items) {
+        const container = document.getElementById('dash-recent-viewed');
+        if (!container) return;
+
+        if (!items || items.length === 0) {
+            container.innerHTML = `<div class="text-center text-xs text-slate-400 py-4 border border-dashed border-slate-200 rounded dark:border-slate-700">Пока нет просмотров</div>`;
+            return;
+        }
+
+        const typeIcons = { task: 'check-square', project: 'briefcase', contact: 'user' };
+        const typeLabels = { task: 'Задача', project: 'Проект', contact: 'Контакт' };
+        const typeColors = { task: 'text-blue-500', project: 'text-emerald-500', contact: 'text-violet-500' };
+        const openFns = { task: 'openTaskDetail', project: 'openProjectDetail', contact: 'openContactDetail' };
+
+        container.innerHTML = items.map(item => {
+            const icon = typeIcons[item.entity_type] || 'file';
+            const color = typeColors[item.entity_type] || 'text-slate-400';
+            const fn = openFns[item.entity_type];
+            const statusHtml = item.status_color
+                ? `<span class="w-2 h-2 rounded-full flex-shrink-0" style="background-color: ${item.status_color}"></span>`
+                : '';
+
+            return `
+            <div onclick="${fn}(${item.id})" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors group">
+                <div class="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="${icon}" class="w-3.5 h-3.5 ${color}"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="text-xs font-medium text-slate-700 dark:text-slate-200 truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">${item.title}</div>
+                    <div class="text-[10px] text-slate-400 flex items-center gap-1">${statusHtml}<span>${typeLabels[item.entity_type]}</span> · <span>${item.last_viewed}</span></div>
+                </div>
+            </div>`;
+        }).join('');
+    },
+
+    renderFrequentTags(tags) {
+        const container = document.getElementById('dash-frequent-tags');
+        if (!container) return;
+
+        if (!tags || tags.length === 0) {
+            container.innerHTML = `<div class="text-center text-xs text-slate-400 py-4 border border-dashed border-slate-200 rounded dark:border-slate-700">Нет тегов</div>`;
+            return;
+        }
+
+        container.innerHTML = tags.map(tag => `
+            <span onclick="if(window.setTaskFilter){window.setTaskFilter('tag','${tag.name}');} window.location.href='/tasks';"
+                  class="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium bg-primary-50 text-primary-700 border border-primary-200 dark:bg-primary-900/30 dark:text-primary-300 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-900/50 transition-colors cursor-pointer">
+                <i data-lucide="tag" class="w-3 h-3"></i>#${tag.name}
+                <span class="text-[10px] opacity-60 ml-0.5">${tag.usage_count}</span>
+            </span>
+        `).join('');
+    },
+
+    renderRecentActivity(activities) {
+        const container = document.getElementById('dash-recent-activity');
+        if (!container) return;
+
+        if (!activities || activities.length === 0) {
+            container.innerHTML = `<div class="text-center text-xs text-slate-400 py-4 border border-dashed border-slate-200 rounded dark:border-slate-700">Нет истории действий</div>`;
+            return;
+        }
+
+        const eventLabels = { update: 'Изменение', create: 'Создание', delete: 'Удаление' };
+        const typeIcons = { task: 'check-square', project: 'briefcase', contact: 'user' };
+        const openFns = { task: 'openTaskDetail', project: 'openProjectDetail', contact: 'openContactDetail' };
+
+        container.innerHTML = activities.map(a => {
+            const icon = typeIcons[a.entity_type] || 'activity';
+            const fn = openFns[a.entity_type];
+            const eventLabel = eventLabels[a.event_type] || a.event_type;
+
+            let changeHtml = '';
+            if (a.field_name) {
+                const oldVal = a.old_value || 'пусто';
+                const newVal = a.new_value || 'пусто';
+                changeHtml = `<span class="text-[10px] text-slate-400"><strong>${a.field_name}</strong>: <span class="line-through opacity-60">${oldVal}</span> → ${newVal}</span>`;
+            }
+
+            return `
+            <div class="flex gap-2.5 py-1.5">
+                <div class="w-5 h-5 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i data-lucide="${icon}" class="w-3 h-3 text-slate-400"></i>
+                </div>
+                <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-1.5">
+                        <span onclick="${fn}(${a.entity_id})" class="text-xs font-medium text-slate-700 dark:text-slate-200 truncate cursor-pointer hover:text-primary-600 dark:hover:text-primary-400 transition-colors">${a.entity_title}</span>
+                        <span class="text-[10px] text-slate-300 dark:text-slate-600 flex-shrink-0">${a.created_at}</span>
+                    </div>
+                    ${changeHtml}
+                </div>
+            </div>`;
+        }).join('');
     },
 
     openLinkModal(link) {

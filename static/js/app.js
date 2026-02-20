@@ -1,5 +1,5 @@
 import API from './api.js';
-import { switchView } from './utils/router.js';
+import { switchView, navigateBack } from './utils/router.js';
 import { initModals, openModal, closeModal } from './components/Modal.js';
 import TagManager from './components/TagManager.js';
 import ThemeManager from './components/ThemeManager.js';
@@ -10,7 +10,8 @@ import Inbox from './components/Inbox.js';
 import { TaskController } from './controllers/TaskController.js';
 import { ContactController } from './controllers/ContactController.js';
 import { ProjectController } from './controllers/ProjectController.js';
-import { ReportController } from './controllers/ReportController.js'; // NEW
+import { ReportController } from './controllers/ReportController.js';
+import { MeetingController } from './controllers/MeetingController.js';
 
 const viewPaths = {
     'dashboard': '/',
@@ -19,7 +20,8 @@ const viewPaths = {
     'tasks': '/tasks',
     'projects': '/projects',
     'kb': '/kb',
-    'reports-weekly': '/reports/weekly' // NEW
+    'meetings': '/meetings',
+    'reports-weekly': '/reports/weekly'
 };
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -35,6 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.closeModal = closeModal;
     window.openModal = openModal;
+    window.navigateBack = navigateBack;
 
     window.contactTagManager = new TagManager('contact-tags-container');
     window.taskTagManager = new TagManager('task-tags-container');
@@ -43,7 +46,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     ContactController.init();
     TaskController.init();
-    ReportController.init(); // NEW
+    MeetingController.init();
+    ReportController.init();
     
     // Dropdown toggle for Reports
     const reportsToggle = document.getElementById('nav-reports-toggle');
@@ -88,7 +92,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     Inbox.init();
                 }
 
-                // NEW: Load Report Data if switching to report view
+                // Load Meetings data when switching to meetings view
+                if (viewName === 'meetings') {
+                    MeetingController.loadAll();
+                }
+
+                // Load Report Data if switching to report view
                 if (viewName === 'reports-weekly') {
                     ReportController.loadWeeklyReport();
                     // Закрываем меню, если кликнули
@@ -165,7 +174,14 @@ async function loadInitialData() {
 
     await TaskController.loadAll();
 
+    await MeetingController.loadMeetingTypes();
+    await MeetingController.loadAll();
+
     updateTaskSelects(contacts, ProjectController.getData());
+    MeetingController.populateParticipantSelect(contacts);
+
+    // Populate project select in meeting modal
+    updateMeetingProjectSelect(ProjectController.getData());
 
     // Обновляем счётчик inbox
     await updateInboxBadge();
@@ -229,6 +245,17 @@ function updateTaskSelects(contacts, projects) {
     }
 }
 
+function updateMeetingProjectSelect(projects) {
+    const select = document.querySelector('#meeting-form select[name="project_id"]');
+    if (select) {
+        select.innerHTML = `<option value="">-- Без проекта --</option>` +
+            projects.map(p => `<option value="${p.id}">${p.title}</option>`).join('');
+    }
+}
+
+// Export MeetingController for cross-controller access
+window.MeetingController = MeetingController;
+
 function handleUrlRouting(addToHistory = false) {
     const path = window.location.pathname;
     let initialView = 'dashboard';
@@ -241,11 +268,24 @@ function handleUrlRouting(addToHistory = false) {
     else if (path === '/tasks') initialView = 'tasks';
     else if (path === '/projects') initialView = 'projects';
     else if (path === '/kb') initialView = 'kb';
-    else if (path === '/reports/weekly') { // NEW
+    else if (path === '/meetings') {
+        initialView = 'meetings';
+        MeetingController.loadAll();
+    }
+    else if (path === '/reports/weekly') {
         initialView = 'reports-weekly';
         ReportController.loadWeeklyReport();
     }
-    
+
+    // Meeting Detail
+    const meetingMatch = path.match(/^\/meetings\/(\d+)$/);
+    if (meetingMatch) {
+        const meetingId = meetingMatch[1];
+        switchView('meetings', false);
+        MeetingController.openMeetingDetail(parseInt(meetingId));
+        return;
+    }
+
     // Project Detail
     const projectMatch = path.match(/^\/projects\/(\d+)$/);
     if (projectMatch) {

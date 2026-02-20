@@ -1,5 +1,5 @@
 import API from '../api.js';
-import { switchView } from '../utils/router.js';
+import { switchView, navigateBack } from '../utils/router.js';
 import { closeModal } from '../components/Modal.js';
 import ProjectContactManager from '../components/ProjectContactManager.js';
 import Dashboard from '../components/Dashboard.js';
@@ -206,6 +206,7 @@ export const ProjectController = {
     },
 
     async openProjectDetail(id) {
+        API.logView('project', id);
         const p = await API.getProject(id);
         if (!p) return;
 
@@ -301,7 +302,7 @@ export const ProjectController = {
             if (await API.deleteProject(id)) {
                 await this.loadAll();
                 Dashboard.init();
-                switchView('projects');
+                navigateBack('projects', '/projects');
             }
         }
     },

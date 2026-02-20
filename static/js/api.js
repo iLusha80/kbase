@@ -37,6 +37,17 @@ const API = {
         } catch (err) { console.error(err); return false; }
     },
 
+    // View Logging
+    async logView(entityType, entityId) {
+        try {
+            await fetch('/api/views', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ entity_type: entityType, entity_id: entityId })
+            });
+        } catch (err) { /* silent */ }
+    },
+
     // --- NEW: REPORTS ---
     async getWeeklyReport(dateFrom = null, dateTo = null) {
         try {
@@ -171,6 +182,123 @@ const API = {
             const response = await fetch('/api/tags');
             return await response.json();
         } catch (err) { console.error(err); return []; }
+    },
+
+    // --- MEETINGS ---
+    async getMeetingTypes() {
+        try {
+            const response = await fetch('/api/meeting-types');
+            return await response.json();
+        } catch (err) { console.error(err); return []; }
+    },
+    async getMeetings() {
+        try {
+            const response = await fetch('/api/meetings');
+            return await response.json();
+        } catch (err) { console.error(err); return []; }
+    },
+    async getMeeting(id) {
+        try {
+            const response = await fetch(`/api/meetings/${id}`);
+            return await response.json();
+        } catch (err) { console.error(err); return null; }
+    },
+    async createMeeting(data) {
+        try {
+            const response = await fetch('/api/meetings', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
+            if (response.ok) return await response.json();
+            return null;
+        } catch (err) { console.error(err); return null; }
+    },
+    async updateMeeting(id, data) {
+        try {
+            const response = await fetch(`/api/meetings/${id}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
+            return response.ok;
+        } catch (err) { console.error(err); return false; }
+    },
+    async deleteMeeting(id) {
+        try {
+            const response = await fetch(`/api/meetings/${id}`, { method: 'DELETE' });
+            return response.ok;
+        } catch (err) { console.error(err); return false; }
+    },
+    async addMeetingActionItem(meetingId, data) {
+        try {
+            const response = await fetch(`/api/meetings/${meetingId}/action-items`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
+            if (response.ok) return await response.json();
+            return null;
+        } catch (err) { console.error(err); return null; }
+    },
+    async updateMeetingActionItem(meetingId, itemId, data) {
+        try {
+            const response = await fetch(`/api/meetings/${meetingId}/action-items/${itemId}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
+            if (response.ok) return await response.json();
+            return null;
+        } catch (err) { console.error(err); return null; }
+    },
+    async deleteMeetingActionItem(meetingId, itemId) {
+        try {
+            const response = await fetch(`/api/meetings/${meetingId}/action-items/${itemId}`, { method: 'DELETE' });
+            return response.ok;
+        } catch (err) { console.error(err); return false; }
+    },
+    async convertActionItemToTask(meetingId, itemId) {
+        try {
+            const response = await fetch(`/api/meetings/${meetingId}/action-items/${itemId}/convert`, {
+                method: 'POST'
+            });
+            if (response.ok) return await response.json();
+            return null;
+        } catch (err) { console.error(err); return null; }
+    },
+    async getUpcomingMeetings() {
+        try {
+            const response = await fetch('/api/meetings/upcoming');
+            return await response.json();
+        } catch (err) { console.error(err); return []; }
+    },
+
+    // --- MEETING NOTES ---
+    async addMeetingNote(meetingId, data) {
+        try {
+            const response = await fetch(`/api/meetings/${meetingId}/notes`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
+            if (response.ok) return await response.json();
+            return null;
+        } catch (err) { console.error(err); return null; }
+    },
+    async updateMeetingNote(meetingId, noteId, data) {
+        try {
+            const response = await fetch(`/api/meetings/${meetingId}/notes/${noteId}`, {
+                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
+            });
+            if (response.ok) return await response.json();
+            return null;
+        } catch (err) { console.error(err); return null; }
+    },
+    async deleteMeetingNote(meetingId, noteId) {
+        try {
+            const response = await fetch(`/api/meetings/${meetingId}/notes/${noteId}`, { method: 'DELETE' });
+            return response.ok;
+        } catch (err) { console.error(err); return false; }
+    },
+    async convertNoteToTask(meetingId, noteId) {
+        try {
+            const response = await fetch(`/api/meetings/${meetingId}/notes/${noteId}/convert`, {
+                method: 'POST'
+            });
+            if (response.ok) return await response.json();
+            return null;
+        } catch (err) { console.error(err); return null; }
     }
 };
 export default API;

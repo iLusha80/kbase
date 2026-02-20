@@ -8,11 +8,15 @@
     {% include 'partials/view_tasks.html' %}
     {% include 'partials/view_projects.html' %}
     
+    <!-- Meetings Views -->
+    {% include 'partials/view_meetings.html' %}
+
     <!-- Reports Views -->
-    {% include 'partials/view_reports_weekly.html' %} <!-- NEW -->
-    
+    {% include 'partials/view_reports_weekly.html' %}
+
     <!-- Detail Views -->
     {% include 'partials/view_project_detail.html' %}
+    {% include 'partials/view_meeting_detail.html' %}
     {% include 'partials/view_contact_detail.html' %}
     {% include 'partials/view_task_detail.html' %}
 
@@ -28,4 +32,5 @@
     {% include 'partials/modal_quick_task.html' %}
     {% include 'partials/modal_project.html' %}
     {% include 'partials/modal_quick_link.html' %}
+    {% include 'partials/modal_meeting.html' %}
 {% endblock %}
