@@ -129,6 +129,8 @@ function applyFiltersAndSort() {
     state.filteredTasks = result;
     renderTable();
     updateSidebarActiveState();
+    // Обновляем канбан если он существует
+    if (window._kanbanSync) window._kanbanSync(state.filteredTasks);
 }
 
 // --- 3. RENDER TABLE ---
@@ -340,4 +342,8 @@ window.sortTasks = function(field) {
     applyFiltersAndSort();
 };
 
-export { renderTasks };
+function getFilteredTasks() {
+    return state.filteredTasks;
+}
+
+export { renderTasks, getFilteredTasks };

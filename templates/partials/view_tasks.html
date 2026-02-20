@@ -67,9 +67,20 @@
         </nav>
     </aside>
 
-    <!-- RIGHT MAIN: TABLE -->
+    <!-- RIGHT MAIN: TABLE / KANBAN -->
     <main class="flex-1 flex flex-col min-w-0 bg-white dark:bg-slate-900 overflow-hidden shadow-inner">
-        <div class="flex-1 overflow-auto custom-scrollbar">
+        <!-- View toggle -->
+        <div class="flex items-center gap-1 px-4 py-2 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800">
+            <button onclick="window.setTaskView('list')" id="task-view-list-btn" class="task-view-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors bg-primary-50 text-primary-700 dark:bg-primary-900/20 dark:text-primary-400">
+                <i data-lucide="list" class="w-3.5 h-3.5"></i> Список
+            </button>
+            <button onclick="window.setTaskView('kanban')" id="task-view-kanban-btn" class="task-view-btn flex items-center gap-1.5 px-2.5 py-1.5 rounded text-xs font-medium transition-colors text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700">
+                <i data-lucide="columns-3" class="w-3.5 h-3.5"></i> Канбан
+            </button>
+        </div>
+
+        <!-- List view -->
+        <div id="task-list-view" class="flex-1 overflow-auto custom-scrollbar">
             <table class="w-full text-left border-collapse">
                 <thead class="bg-slate-50 sticky top-0 z-10 text-xs font-semibold text-slate-500 uppercase tracking-wider border-b border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400 shadow-sm">
                     <tr>
@@ -89,7 +100,14 @@
                 </tbody>
             </table>
         </div>
-        
+
+        <!-- Kanban view (hidden by default) -->
+        <div id="task-kanban-view" class="flex-1 overflow-auto custom-scrollbar hidden">
+            <div id="kanban-board" class="flex gap-4 p-4 h-full min-w-max">
+                <!-- Columns rendered by JS -->
+            </div>
+        </div>
+
         <!-- Footer / Status Bar -->
         <div class="h-9 border-t border-slate-200 bg-slate-50 flex items-center px-4 text-xs text-slate-500 justify-between dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400">
             <span id="task-table-count" class="font-medium">Загрузка...</span>

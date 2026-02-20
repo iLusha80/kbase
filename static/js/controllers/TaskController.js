@@ -1,11 +1,13 @@
 import API from '../api.js';
-import { renderTasks } from '../components/TaskList.js';
+import { renderTasks, getFilteredTasks } from '../components/TaskList.js';
+import KanbanBoard from '../components/KanbanBoard.js';
 import { closeModal } from '../components/Modal.js';
 import Dashboard from '../components/Dashboard.js';
 import { switchView, navigateBack } from '../utils/router.js';
 
 let tasksData = [];
-let currentTaskId = null; 
+let currentTaskId = null;
+let currentView = localStorage.getItem('taskViewMode') || 'list';
 
 export const TaskController = {
     init() {
@@ -35,6 +37,20 @@ export const TaskController = {
         
         window.deleteTaskComment = this.deleteTaskComment.bind(this);
         window.toggleTaskStatus = this.toggleTaskStatus.bind(this);
+        window.setTaskView = this.setTaskView.bind(this);
+
+        // Хук для синхронизации канбана при смене фильтров
+        window._kanbanSync = (filteredTasks) => {
+            if (currentView === 'kanban') {
+                KanbanBoard.updateTasks(filteredTasks);
+            }
+        };
+
+        // Восстанавливаем вид при инициализации
+        if (currentView === 'kanban') {
+            setTimeout(() => this.setTaskView('kanban'), 0);
+        }
+
         window.openTagSearch = (tagName) => {
             if (window.setTaskFilter) {
                 window.setTaskFilter('tag', tagName);
@@ -45,8 +61,45 @@ export const TaskController = {
 
     async loadAll() {
         tasksData = await API.getTasks();
-        renderTasks(tasksData);
+        await renderTasks(tasksData);
+        // Обновляем канбан если он активен
+        if (currentView === 'kanban') {
+            KanbanBoard.updateTasks(getFilteredTasks());
+        }
         return tasksData;
+    },
+
+    setTaskView(view) {
+        currentView = view;
+        localStorage.setItem('taskViewMode', view);
+
+        const listView = document.getElementById('task-list-view');
+        const kanbanView = document.getElementById('task-kanban-view');
+        const listBtn = document.getElementById('task-view-list-btn');
+        const kanbanBtn = document.getElementById('task-view-kanban-btn');
+
+        if (!listView || !kanbanView) return;
+
+        const activeClass = ['bg-primary-50', 'text-primary-700', 'dark:bg-primary-900/20', 'dark:text-primary-400'];
+        const inactiveClass = ['text-slate-500', 'hover:bg-slate-100', 'dark:text-slate-400', 'dark:hover:bg-slate-700'];
+
+        if (view === 'kanban') {
+            listView.classList.add('hidden');
+            kanbanView.classList.remove('hidden');
+            listBtn.classList.remove(...activeClass);
+            listBtn.classList.add(...inactiveClass);
+            kanbanBtn.classList.remove(...inactiveClass);
+            kanbanBtn.classList.add(...activeClass);
+            KanbanBoard.init(getFilteredTasks(), () => this.loadAll());
+        } else {
+            kanbanView.classList.add('hidden');
+            listView.classList.remove('hidden');
+            kanbanBtn.classList.remove(...activeClass);
+            kanbanBtn.classList.add(...inactiveClass);
+            listBtn.classList.remove(...inactiveClass);
+            listBtn.classList.add(...activeClass);
+        }
+        if (window.lucide) lucide.createIcons();
     },
 
     getData() {
