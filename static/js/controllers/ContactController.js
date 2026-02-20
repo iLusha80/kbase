@@ -139,6 +139,11 @@ export const ContactController = {
             const editBtn = document.getElementById('c-detail-edit-btn');
             if (editBtn) editBtn.onclick = () => this.editContact(c.id);
 
+            const assignTaskBtn = document.getElementById('c-detail-assign-task-btn');
+            if (assignTaskBtn) {
+                assignTaskBtn.onclick = () => window.openTaskModal({ assignee_id: c.id });
+            }
+
             // NEW: Star Button with safety check
             const starBtn = document.getElementById('c-detail-star-btn');
             if (starBtn) {

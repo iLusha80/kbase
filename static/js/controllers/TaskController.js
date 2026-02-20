@@ -223,11 +223,27 @@ export const TaskController = {
         container.innerHTML = `<div class="flex items-center gap-2 cursor-pointer hover:text-primary-600 transition-colors" onclick="openContactDetail(${user.id})"><div class="w-6 h-6 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-[10px] font-bold border border-primary-200 dark:bg-primary-900 dark:text-primary-300 dark:border-primary-800">${initial}</div><span class="truncate">${user.last_name} ${user.first_name || ''}</span></div>`;
     },
 
-    openModal() {
+    openModal(prefill) {
         const form = document.getElementById('task-form');
         if (form) { form.reset(); form.querySelector('[name="id"]').value = ""; }
         if (window.taskTagManager) window.taskTagManager.clear();
         document.getElementById('task-modal').classList.remove('hidden');
+
+        // Предзаполнение полей
+        if (prefill && form) {
+            if (prefill.assignee_id) {
+                const sel = form.querySelector('[name="assignee_id"]');
+                if (sel) sel.value = prefill.assignee_id;
+            }
+            if (prefill.author_id) {
+                const sel = form.querySelector('[name="author_id"]');
+                if (sel) sel.value = prefill.author_id;
+            }
+            if (prefill.project_id) {
+                const sel = form.querySelector('[name="project_id"]');
+                if (sel) sel.value = prefill.project_id;
+            }
+        }
     },
 
     openQuickModal() {
