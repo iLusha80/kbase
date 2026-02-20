@@ -1,57 +1,71 @@
 <div id="view-meeting-detail" class="view-section hidden h-[calc(100vh-6rem)] flex flex-col">
 
     <!-- HEADER: Back + Title + Status + Actions -->
-    <div class="flex-shrink-0 border-b border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-3">
-        <div class="flex items-center justify-between gap-4">
-            <!-- Left: Back + Title -->
-            <div class="flex items-center gap-3 min-w-0 flex-1">
-                <button onclick="navigateBack('meetings', '/meetings')" class="text-slate-400 hover:text-slate-700 dark:hover:text-white flex-shrink-0 transition-colors">
-                    <i data-lucide="arrow-left" class="w-5 h-5"></i>
-                </button>
-                <input id="m-detail-title-input" type="text" value="Загрузка..."
-                    class="text-lg font-bold text-slate-900 dark:text-white bg-transparent border-0 border-b-2 border-transparent hover:border-slate-200 focus:border-primary-500 focus:outline-none px-1 py-0.5 min-w-0 flex-1 transition-colors dark:hover:border-slate-600"
-                    onblur="window.saveMeetingTitle()" onkeydown="if(event.key==='Enter'){this.blur()}">
-                <span id="m-detail-status-badge" class="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold border whitespace-nowrap"></span>
+    <div id="m-detail-header" class="flex-shrink-0 bg-white dark:bg-slate-900 relative overflow-hidden">
+        <!-- Color accent bar at top -->
+        <div id="m-detail-color-bar" class="absolute top-0 left-0 right-0 h-1"></div>
+
+        <div class="px-6 py-3 border-b border-slate-200 dark:border-slate-700">
+            <div class="flex items-center justify-between gap-4">
+                <!-- Left: Back + Title + Status -->
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <button onclick="navigateBack('meetings', '/meetings')" class="text-slate-400 hover:text-slate-700 dark:hover:text-white flex-shrink-0 transition-colors p-1 -ml-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">
+                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    </button>
+                    <input id="m-detail-title-input" type="text" value="Загрузка..."
+                        class="text-lg font-bold text-slate-900 dark:text-white bg-transparent border-0 border-b-2 border-transparent hover:border-slate-200 focus:border-primary-500 focus:outline-none px-1 py-0.5 min-w-0 flex-1 transition-colors dark:hover:border-slate-600"
+                        onblur="window.saveMeetingTitle()" onkeydown="if(event.key==='Enter'){this.blur()}">
+                    <span id="m-detail-status-badge" class="flex-shrink-0 px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap"></span>
+                </div>
+
+                <!-- Right: Timer + Actions -->
+                <div class="flex items-center gap-2 flex-shrink-0">
+                    <!-- Timer (prominent for in_progress) -->
+                    <div id="m-detail-timer-wrap" class="hidden">
+                        <span id="m-detail-timer" class="text-lg font-mono font-bold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 flex items-center gap-2">
+                            <span id="m-timer-dot" class="hidden relative flex h-2.5 w-2.5">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+                            </span>
+                            <span id="m-timer-text">00:00</span>
+                        </span>
+                    </div>
+
+                    <!-- Start/End meeting -->
+                    <button id="m-detail-start-btn" onclick="window.startMeeting()" class="hidden px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-1.5 shadow-sm hover:shadow-md">
+                        <i data-lucide="play" class="w-4 h-4"></i> Начать
+                    </button>
+                    <button id="m-detail-end-btn" onclick="window.endMeeting()" class="hidden px-4 py-2 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors flex items-center gap-1.5 shadow-sm hover:shadow-md">
+                        <i data-lucide="square" class="w-4 h-4"></i> Завершить
+                    </button>
+
+                    <div class="w-px h-6 bg-slate-200 dark:bg-slate-700"></div>
+
+                    <button id="m-detail-edit-btn" class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Редактировать">
+                        <i data-lucide="settings" class="w-4 h-4"></i>
+                    </button>
+                    <button id="m-detail-delete-btn" class="p-1.5 text-slate-400 hover:text-red-500 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="Удалить">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
             </div>
 
-            <!-- Right: Actions -->
-            <div class="flex items-center gap-2 flex-shrink-0">
-                <!-- Start/End meeting -->
-                <button id="m-detail-start-btn" onclick="window.startMeeting()" class="hidden px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors flex items-center gap-1.5">
-                    <i data-lucide="play" class="w-4 h-4"></i> Начать
-                </button>
-                <button id="m-detail-end-btn" onclick="window.endMeeting()" class="hidden px-3 py-1.5 bg-amber-600 text-white rounded-lg text-sm font-medium hover:bg-amber-700 transition-colors flex items-center gap-1.5">
-                    <i data-lucide="square" class="w-4 h-4"></i> Завершить
-                </button>
-
-                <!-- Timer -->
-                <span id="m-detail-timer" class="hidden text-xs font-mono text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded"></span>
-
-                <div class="w-px h-6 bg-slate-200 dark:bg-slate-700"></div>
-
-                <button id="m-detail-edit-btn" class="p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white rounded transition-colors" title="Редактировать">
-                    <i data-lucide="settings" class="w-4 h-4"></i>
-                </button>
-                <button id="m-detail-delete-btn" class="p-1.5 text-slate-400 hover:text-red-500 rounded transition-colors" title="Удалить">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
+            <!-- Sub-header: date, type, project, participants count -->
+            <div class="flex items-center gap-4 mt-2 ml-8 text-xs text-slate-500 dark:text-slate-400">
+                <span id="m-detail-date" class="flex items-center gap-1.5">
+                    <i data-lucide="calendar" class="w-3.5 h-3.5"></i> -
+                </span>
+                <span id="m-detail-type-label" class="flex items-center gap-1.5">
+                    <span id="m-detail-type-dot" class="w-2 h-2 rounded-full bg-slate-300"></span>
+                    <span>-</span>
+                </span>
+                <span id="m-detail-project-label" class="flex items-center gap-1.5 cursor-pointer hover:text-primary-600 transition-colors">
+                    <i data-lucide="briefcase" class="w-3.5 h-3.5"></i> <span>-</span>
+                </span>
+                <span id="m-detail-participants-count" class="flex items-center gap-1.5">
+                    <i data-lucide="users" class="w-3.5 h-3.5"></i> <span>0</span>
+                </span>
             </div>
-        </div>
-
-        <!-- Sub-header: date, type, project, participants count -->
-        <div class="flex items-center gap-4 mt-1.5 ml-8 text-xs text-slate-500 dark:text-slate-400">
-            <span id="m-detail-date" class="flex items-center gap-1">
-                <i data-lucide="calendar" class="w-3 h-3"></i> -
-            </span>
-            <span id="m-detail-type-label" class="flex items-center gap-1">
-                <i data-lucide="tag" class="w-3 h-3"></i> -
-            </span>
-            <span id="m-detail-project-label" class="flex items-center gap-1 cursor-pointer hover:text-primary-600 transition-colors">
-                <i data-lucide="briefcase" class="w-3 h-3"></i> <span>-</span>
-            </span>
-            <span id="m-detail-participants-count" class="flex items-center gap-1">
-                <i data-lucide="users" class="w-3 h-3"></i> <span>0</span>
-            </span>
         </div>
     </div>
 
@@ -65,23 +79,29 @@
             <div id="m-detail-notes-list" class="flex-1 overflow-y-auto px-6 py-4 space-y-1 custom-scrollbar">
                 <!-- Notes rendered by JS -->
                 <div id="m-notes-empty" class="flex flex-col items-center justify-center h-full text-slate-400 dark:text-slate-600">
-                    <i data-lucide="message-square-plus" class="w-12 h-12 mb-3 opacity-30"></i>
-                    <p class="text-sm">Начните вводить заметки...</p>
-                    <p class="text-xs mt-1 opacity-60">Enter для добавления</p>
+                    <div class="w-16 h-16 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center mb-3">
+                        <i data-lucide="message-square-plus" class="w-8 h-8 opacity-30"></i>
+                    </div>
+                    <p class="text-sm font-medium mb-1">Начните вводить заметки</p>
+                    <p class="text-xs opacity-60 mb-3">Enter для добавления, микрофон для голосового ввода</p>
+                    <div class="flex items-center gap-3 text-[11px] opacity-50">
+                        <span class="flex items-center gap-1"><kbd class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-[10px] font-mono">Enter</kbd> отправить</span>
+                        <span class="flex items-center gap-1"><i data-lucide="mic" class="w-3 h-3"></i> голос</span>
+                    </div>
                 </div>
             </div>
 
             <!-- Note input (bottom, like chat) -->
             <div class="flex-shrink-0 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-6 py-3">
                 <div class="flex items-center gap-2">
-                    <!-- Mic button (placeholder for Speech API) -->
-                    <button id="m-mic-btn" onclick="window.toggleSpeechRecognition()" class="p-2.5 text-slate-400 hover:text-primary-600 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex-shrink-0" title="Голосовой ввод (Speech-to-Text)">
+                    <!-- Mic button -->
+                    <button id="m-mic-btn" onclick="window.toggleSpeechRecognition()" class="p-2.5 text-slate-400 hover:text-primary-600 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex-shrink-0" title="Голосовой ввод (Speech-to-Text)">
                         <i data-lucide="mic" class="w-5 h-5"></i>
                     </button>
                     <input type="text" id="m-note-input" placeholder="Заметка... (Enter для добавления)"
-                        class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 transition-all"
+                        class="flex-1 px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-primary-500 focus:ring-2 focus:ring-primary-500/10 bg-slate-50 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 transition-all"
                         onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();window.addMeetingNote()}">
-                    <button onclick="window.addMeetingNote()" class="px-4 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors flex-shrink-0 flex items-center gap-1.5">
+                    <button onclick="window.addMeetingNote()" class="px-4 py-2.5 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition-colors flex-shrink-0 flex items-center gap-1.5 shadow-sm hover:shadow-md">
                         <i data-lucide="send" class="w-4 h-4"></i>
                     </button>
                 </div>
@@ -100,7 +120,7 @@
                         class="w-full p-3 border border-slate-200 rounded-lg text-sm focus:outline-none focus:border-primary-500 dark:bg-slate-800 dark:border-slate-700 dark:text-white dark:placeholder-slate-500 resize-none"></textarea>
                     <div class="flex justify-end mt-2 gap-2">
                         <button id="m-ai-analyze-btn" onclick="window.analyzeMeetingAI()" class="px-3 py-1.5 text-xs font-medium text-purple-600 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800 dark:hover:bg-purple-900/40 flex items-center gap-1.5">
-                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Разобрать через AI
+                                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> Разобрать через AI
                         </button>
                         <button onclick="window.saveMeetingSummary()" class="px-3 py-1.5 bg-slate-800 text-white text-xs font-medium rounded-lg hover:bg-slate-700 dark:bg-primary-600 dark:hover:bg-primary-500 transition-colors">
                             Сохранить итог
@@ -110,60 +130,64 @@
             </div>
         </div>
 
-        <!-- RIGHT SIDEBAR -->
-        <aside id="m-detail-sidebar" class="w-72 flex-shrink-0 border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 overflow-y-auto custom-scrollbar hidden lg:block">
-            <div class="p-4 space-y-5">
+        <!-- RIGHT SIDEBAR (rich) -->
+        <aside id="m-detail-sidebar" class="w-80 flex-shrink-0 border-l border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-900/50 overflow-y-auto custom-scrollbar hidden lg:block">
+            <div class="p-4 space-y-3">
 
-                <!-- Info -->
-                <div>
-                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Информация</h4>
-                    <div class="space-y-2 text-sm">
-                        <div class="flex justify-between">
-                            <span class="text-slate-500 dark:text-slate-400">Дата</span>
-                            <span id="m-side-date" class="font-medium text-slate-800 dark:text-slate-200">-</span>
+                <!-- Info card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-3.5 border border-slate-100 dark:border-slate-700/50 shadow-sm">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                        <i data-lucide="info" class="w-3 h-3"></i> Информация
+                    </h4>
+                    <div class="space-y-2.5 text-sm">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500 dark:text-slate-400 text-xs">Дата</span>
+                            <span id="m-side-date" class="font-medium text-slate-800 dark:text-slate-200 text-xs">-</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500 dark:text-slate-400">Время</span>
-                            <span id="m-side-time" class="font-medium text-slate-800 dark:text-slate-200">-</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500 dark:text-slate-400 text-xs">Время</span>
+                            <span id="m-side-time" class="font-medium text-slate-800 dark:text-slate-200 text-xs">-</span>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-500 dark:text-slate-400">Длительность</span>
-                            <span id="m-side-duration" class="font-medium text-slate-800 dark:text-slate-200">-</span>
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-500 dark:text-slate-400 text-xs">Длительность</span>
+                            <span id="m-side-duration" class="font-medium text-slate-800 dark:text-slate-200 text-xs">-</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
-
-                <!-- Participants -->
-                <div>
-                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Участники</h4>
-                    <div id="m-side-participants" class="space-y-1.5">
+                <!-- Participants card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-3.5 border border-slate-100 dark:border-slate-700/50 shadow-sm">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                        <i data-lucide="users" class="w-3 h-3"></i> Участники
+                    </h4>
+                    <div id="m-side-participants" class="space-y-2">
                         <span class="text-xs text-slate-400 italic">Нет участников</span>
                     </div>
                 </div>
 
-                <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
-
-                <!-- Related Tasks -->
-                <div>
-                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Связанные задачи</h4>
+                <!-- Related Tasks card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-3.5 border border-slate-100 dark:border-slate-700/50 shadow-sm">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                        <i data-lucide="square-check" class="w-3 h-3"></i> Связанные задачи
+                    </h4>
                     <div id="m-side-tasks" class="space-y-1.5">
                         <span class="text-xs text-slate-400 italic">Нет задач</span>
                     </div>
                 </div>
 
-                <div class="h-px bg-slate-100 dark:bg-slate-800"></div>
-
-                <!-- Agenda (if any) -->
-                <div id="m-side-agenda-block" class="hidden">
-                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Повестка</h4>
-                    <div id="m-side-agenda" class="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg"></div>
+                <!-- Agenda card -->
+                <div id="m-side-agenda-block" class="hidden bg-white dark:bg-slate-800 rounded-xl p-3.5 border border-slate-100 dark:border-slate-700/50 shadow-sm">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                        <i data-lucide="list-ordered" class="w-3 h-3"></i> Повестка
+                    </h4>
+                    <div id="m-side-agenda" class="text-xs text-slate-600 dark:text-slate-400 whitespace-pre-wrap leading-relaxed"></div>
                 </div>
 
-                <!-- History -->
-                <div>
-                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">История</h4>
+                <!-- History card -->
+                <div class="bg-white dark:bg-slate-800 rounded-xl p-3.5 border border-slate-100 dark:border-slate-700/50 shadow-sm">
+                    <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                        <i data-lucide="clock" class="w-3 h-3"></i> История
+                    </h4>
                     <div id="m-side-history" class="space-y-1 text-[11px] text-slate-500 dark:text-slate-500 max-h-40 overflow-y-auto">
                         <span class="text-slate-400 italic">Нет истории</span>
                     </div>

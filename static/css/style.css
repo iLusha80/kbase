@@ -42,3 +42,17 @@
     color: white;
     border-color: #2563eb;
 }
+
+/* Meeting notes slide-in animation */
+.note-slide-in {
+    animation: noteSlideIn 0.3s ease-out;
+}
+
+@keyframes noteSlideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Dark mode scrollbar */
+.dark .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+.dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }

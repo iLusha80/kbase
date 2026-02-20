@@ -85,6 +85,9 @@ export const MeetingController = {
         window.applySummaryFromAI = this.applySummaryFromAI.bind(this);
         window.createTaskFromAI = this.createTaskFromAI.bind(this);
 
+        // Type button select in modal
+        window.selectMeetingType = this.selectMeetingType.bind(this);
+
         // Legacy compat
         window.addMeetingActionItem = this.addActionItem.bind(this);
         window.toggleMeetingActionItem = this.toggleActionItem.bind(this);
@@ -117,6 +120,60 @@ export const MeetingController = {
             select.innerHTML += `<option value="${t.id}">${t.name}</option>`;
         });
         if (current) select.value = current;
+
+        // Visual type buttons
+        this.renderTypeButtons();
+    },
+
+    renderTypeButtons() {
+        const container = document.getElementById('meeting-type-buttons');
+        if (!container || meetingTypesData.length === 0) return;
+
+        const typeIcons = { '1-1': 'user', 'Дейлик': 'sun', 'Еженедельник': 'calendar-days', 'Другое': 'more-horizontal' };
+
+        container.innerHTML = meetingTypesData.map(t => {
+            const icon = typeIcons[t.name] || 'calendar';
+            return `
+            <button type="button" data-type-id="${t.id}"
+                class="meeting-type-btn flex flex-col items-center gap-1.5 p-2.5 rounded-xl border-2 border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-slate-300 dark:hover:border-slate-500 transition-all text-center"
+                onclick="window.selectMeetingType(${t.id})">
+                <div class="w-8 h-8 rounded-lg flex items-center justify-center" style="background-color: ${t.color}15; color: ${t.color}">
+                    <i data-lucide="${icon}" class="w-4 h-4"></i>
+                </div>
+                <span class="text-[11px] font-medium leading-tight">${t.name}</span>
+            </button>`;
+        }).join('');
+
+        if (window.lucide) lucide.createIcons();
+    },
+
+    selectMeetingType(typeId) {
+        const select = document.getElementById('meeting-type-select');
+        if (select) select.value = typeId;
+
+        // Update button styles
+        document.querySelectorAll('.meeting-type-btn').forEach(btn => {
+            const btnTypeId = parseInt(btn.dataset.typeId);
+            if (btnTypeId === typeId) {
+                const type = meetingTypesData.find(t => t.id === typeId);
+                const color = type?.color || '#6366f1';
+                btn.style.borderColor = color;
+                btn.style.backgroundColor = color + '10';
+                btn.classList.add('ring-1');
+                btn.style.setProperty('--tw-ring-color', color + '40');
+            } else {
+                btn.style.borderColor = '';
+                btn.style.backgroundColor = '';
+                btn.classList.remove('ring-1');
+            }
+        });
+
+        // Auto-fill agenda
+        const type = meetingTypesData.find(t => t.id === typeId);
+        const agendaField = document.getElementById('meeting-agenda-textarea');
+        if (type && type.default_agenda && agendaField && !agendaField.value.trim()) {
+            agendaField.value = type.default_agenda;
+        }
     },
 
     populateParticipantSelect(contacts) {
@@ -156,6 +213,7 @@ export const MeetingController = {
         }
         selectedParticipantIds = [];
         this.renderParticipantTags();
+        this.renderTypeButtons();
         document.getElementById('meeting-modal-title-text').innerText = 'Новая встреча';
         const dateInput = form.querySelector('[name="date"]');
         if (dateInput && !dateInput.value) {
@@ -190,6 +248,11 @@ export const MeetingController = {
 
         selectedParticipantIds = meeting.participants ? meeting.participants.map(p => p.id) : [];
         this.renderParticipantTags();
+
+        // Highlight type button
+        if (meeting.type_id) {
+            this.selectMeetingType(meeting.type_id);
+        }
     },
 
     async handleFormSubmit(e) {
@@ -258,6 +321,12 @@ export const MeetingController = {
         if (!m) return;
         currentMeetingData = m;
 
+        const typeColor = m.type?.color || '#94a3b8';
+
+        // Color accent bar
+        const colorBar = document.getElementById('m-detail-color-bar');
+        if (colorBar) colorBar.style.background = `linear-gradient(90deg, ${typeColor}, ${typeColor}40)`;
+
         // Title (inline editable)
         const titleInput = document.getElementById('m-detail-title-input');
         titleInput.value = m.title || '';
@@ -267,7 +336,6 @@ export const MeetingController = {
         const statusInfo = STATUS_LABELS[m.status] || STATUS_LABELS['planned'];
         statusBadge.innerText = statusInfo.label;
         statusBadge.style.color = statusInfo.color;
-        statusBadge.style.borderColor = statusInfo.color + '40';
         statusBadge.style.backgroundColor = statusInfo.bg;
 
         // Start/End buttons
@@ -297,23 +365,25 @@ export const MeetingController = {
         const dateStr = m.date
             ? new Date(m.date + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
             : '-';
-        document.getElementById('m-detail-date').innerHTML = `<i data-lucide="calendar" class="w-3 h-3"></i> ${dateStr}`;
+        document.getElementById('m-detail-date').innerHTML = `<i data-lucide="calendar" class="w-3.5 h-3.5"></i> ${dateStr}`;
 
-        const typeLabel = m.type ? m.type.name : 'Без типа';
-        document.getElementById('m-detail-type-label').innerHTML = `<i data-lucide="tag" class="w-3 h-3"></i> ${typeLabel}`;
+        const typeDot = document.getElementById('m-detail-type-dot');
+        if (typeDot) typeDot.style.backgroundColor = typeColor;
+        const typeLabelEl = document.getElementById('m-detail-type-label');
+        typeLabelEl.querySelector('span:last-child').innerText = m.type ? m.type.name : 'Без типа';
 
         const projLabel = document.getElementById('m-detail-project-label');
         if (m.project_id) {
-            projLabel.innerHTML = `<i data-lucide="briefcase" class="w-3 h-3"></i> <span>${m.project_title}</span>`;
+            projLabel.innerHTML = `<i data-lucide="briefcase" class="w-3.5 h-3.5"></i> <span>${m.project_title}</span>`;
             projLabel.onclick = () => window.openProjectDetail && window.openProjectDetail(m.project_id);
         } else {
-            projLabel.innerHTML = `<i data-lucide="briefcase" class="w-3 h-3"></i> <span>Без проекта</span>`;
+            projLabel.innerHTML = `<i data-lucide="briefcase" class="w-3.5 h-3.5"></i> <span>Без проекта</span>`;
             projLabel.onclick = null;
         }
 
         const partCount = m.participants_count || 0;
         document.getElementById('m-detail-participants-count').innerHTML =
-            `<i data-lucide="users" class="w-3 h-3"></i> <span>${partCount}</span>`;
+            `<i data-lucide="users" class="w-3.5 h-3.5"></i> <span>${partCount}</span>`;
 
         // Notes list
         this.renderNotes(m.meeting_notes || []);
@@ -334,7 +404,7 @@ export const MeetingController = {
         }, 100);
     },
 
-    // --- Notes rendering (chat-like) ---
+    // --- Notes rendering (chat-like, polished) ---
     renderNotes(notes) {
         const list = document.getElementById('m-detail-notes-list');
         const empty = document.getElementById('m-notes-empty');
@@ -343,36 +413,50 @@ export const MeetingController = {
             list.innerHTML = '';
             list.appendChild(empty);
             empty.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
             return;
         }
 
         empty.classList.add('hidden');
 
-        list.innerHTML = notes.map(note => {
+        const sourceConfig = {
+            'voice': { icon: 'mic', color: 'text-red-400', bg: 'bg-red-50 dark:bg-red-900/20', label: 'Голос' },
+            'ai': { icon: 'sparkles', color: 'text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20', label: 'AI' },
+            'manual': { icon: 'pencil-line', color: 'text-slate-400', bg: 'bg-slate-50 dark:bg-slate-800', label: '' },
+        };
+
+        list.innerHTML = notes.map((note, idx) => {
             const time = note.created_at ? note.created_at.split(' ')[1] || '' : '';
             const isConverted = !!note.task_id;
-            const sourceIcon = note.source === 'voice' ? 'mic' : (note.source === 'ai' ? 'sparkles' : '');
+            const src = sourceConfig[note.source] || sourceConfig['manual'];
+            const isNew = idx === notes.length - 1;
 
             return `
-            <div class="group flex items-start gap-2 py-1.5 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors ${isConverted ? 'opacity-60' : ''}" data-note-id="${note.id}">
-                <div class="flex-1 min-w-0">
-                    <div class="flex items-baseline gap-2">
-                        ${sourceIcon ? `<i data-lucide="${sourceIcon}" class="w-3 h-3 text-slate-400 flex-shrink-0 relative top-0.5"></i>` : ''}
-                        <span id="note-text-${note.id}" class="text-sm text-slate-800 dark:text-slate-200 leading-relaxed ${isConverted ? 'line-through' : ''}">${this.escapeHtml(note.text)}</span>
-                    </div>
-                    <span class="text-[10px] text-slate-400 ml-0">${time}</span>
+            <div class="group flex items-start gap-2.5 py-2 px-3 rounded-xl transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${isConverted ? 'opacity-50' : ''} ${isNew ? 'note-slide-in' : ''}" data-note-id="${note.id}">
+                <!-- Source icon -->
+                <div class="w-7 h-7 rounded-lg ${src.bg} flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i data-lucide="${src.icon}" class="w-3.5 h-3.5 ${src.color}"></i>
                 </div>
-                <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                    ${isConverted
-                        ? `<span class="text-[10px] text-primary-500 cursor-pointer hover:underline whitespace-nowrap" onclick="window.openTaskDetail && window.openTaskDetail(${note.task_id})">задача #${note.task_id}</span>`
-                        : `<button onclick="window.convertNoteToTask(${note.id})" class="p-1 text-slate-400 hover:text-primary-600 transition-colors" title="Создать задачу">
-                            <i data-lucide="arrow-right-to-line" class="w-3.5 h-3.5"></i>
-                          </button>`
-                    }
-                    <button onclick="window.editMeetingNote(${note.id}, '${this.escapeAttr(note.text)}')" class="p-1 text-slate-400 hover:text-slate-600 transition-colors" title="Редактировать">
+
+                <!-- Content -->
+                <div class="flex-1 min-w-0">
+                    <span id="note-text-${note.id}" class="text-sm text-slate-800 dark:text-slate-200 leading-relaxed ${isConverted ? 'line-through text-slate-500' : ''}">${this.escapeHtml(note.text)}</span>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span class="text-[10px] text-slate-400">${time}</span>
+                        ${isConverted ? `<span class="text-[10px] text-primary-500 cursor-pointer hover:underline flex items-center gap-0.5" onclick="window.openTaskDetail && window.openTaskDetail(${note.task_id})"><i data-lucide="external-link" class="w-2.5 h-2.5"></i>задача</span>` : ''}
+                    </div>
+                </div>
+
+                <!-- Actions (hover only) -->
+                <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5">
+                    ${!isConverted ? `
+                        <button onclick="window.convertNoteToTask(${note.id})" class="p-1.5 text-slate-300 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-all" title="Создать задачу">
+                            <i data-lucide="square-check" class="w-3.5 h-3.5"></i>
+                        </button>` : ''}
+                    <button onclick="window.editMeetingNote(${note.id}, '${this.escapeAttr(note.text)}')" class="p-1.5 text-slate-300 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all" title="Редактировать">
                         <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button onclick="window.deleteMeetingNote(${note.id})" class="p-1 text-slate-400 hover:text-red-500 transition-colors" title="Удалить">
+                    <button onclick="window.deleteMeetingNote(${note.id})" class="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Удалить">
                         <i data-lucide="x" class="w-3.5 h-3.5"></i>
                     </button>
                 </div>
@@ -526,42 +610,67 @@ export const MeetingController = {
 
     // --- Timer ---
     updateTimer(m) {
-        const timerEl = document.getElementById('m-detail-timer');
+        const timerWrap = document.getElementById('m-detail-timer-wrap');
+        const timerText = document.getElementById('m-timer-text');
+        const timerDot = document.getElementById('m-timer-dot');
         if (meetingTimerInterval) {
             clearInterval(meetingTimerInterval);
             meetingTimerInterval = null;
         }
 
         if (m.status === 'in_progress' && m.started_at) {
-            timerEl.classList.remove('hidden');
+            timerWrap.classList.remove('hidden');
+            timerDot.classList.remove('hidden');
             const startTime = new Date(m.started_at).getTime();
 
             const update = () => {
                 const diff = Date.now() - startTime;
-                const mins = Math.floor(diff / 60000);
+                const hrs = Math.floor(diff / 3600000);
+                const mins = Math.floor((diff % 3600000) / 60000);
                 const secs = Math.floor((diff % 60000) / 1000);
-                timerEl.innerText = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                timerText.innerText = hrs > 0
+                    ? `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+                    : `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
             };
             update();
             meetingTimerInterval = setInterval(update, 1000);
         } else if (m.status === 'completed' && m.started_at && m.ended_at) {
-            timerEl.classList.remove('hidden');
+            timerWrap.classList.remove('hidden');
+            timerDot.classList.add('hidden');
             const diff = new Date(m.ended_at).getTime() - new Date(m.started_at).getTime();
             const mins = Math.floor(diff / 60000);
-            timerEl.innerText = `${mins} мин.`;
+            timerText.innerText = `${mins} мин.`;
         } else {
-            timerEl.classList.add('hidden');
+            timerWrap.classList.add('hidden');
         }
+    },
+
+    // Палитра цветов для аватаров
+    _avatarColors: [
+        { bg: '#dbeafe', text: '#1e40af' },
+        { bg: '#fce7f3', text: '#9d174d' },
+        { bg: '#d1fae5', text: '#065f46' },
+        { bg: '#fef3c7', text: '#92400e' },
+        { bg: '#e0e7ff', text: '#3730a3' },
+        { bg: '#fae8ff', text: '#86198f' },
+        { bg: '#ccfbf1', text: '#134e4a' },
+        { bg: '#fee2e2', text: '#991b1b' },
+    ],
+
+    _getAvatarColor(name) {
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+        return this._avatarColors[Math.abs(hash) % this._avatarColors.length];
     },
 
     // --- Sidebar ---
     renderSidebar(m) {
         // Date & Time
         const dateStr = m.date
-            ? new Date(m.date + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+            ? new Date(m.date + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
             : '-';
         document.getElementById('m-side-date').innerText = dateStr;
-        document.getElementById('m-side-time').innerText = m.time || '-';
+        document.getElementById('m-side-time').innerText = m.time ? m.time.slice(0, 5) : '-';
 
         if (m.started_at && m.ended_at) {
             const diff = new Date(m.ended_at).getTime() - new Date(m.started_at).getTime();
@@ -572,22 +681,28 @@ export const MeetingController = {
             document.getElementById('m-side-duration').innerText = '-';
         }
 
-        // Participants
+        // Participants (color avatars)
         const partEl = document.getElementById('m-side-participants');
         if (m.participants && m.participants.length > 0) {
-            partEl.innerHTML = m.participants.map(p => `
-                <div class="flex items-center gap-2 cursor-pointer hover:text-primary-600 transition-colors" onclick="window.openContactDetail && window.openContactDetail(${p.id})">
-                    <div class="w-5 h-5 rounded-full bg-primary-100 text-primary-700 flex items-center justify-center text-[9px] font-bold border border-primary-200 dark:bg-primary-900 dark:text-primary-300 dark:border-primary-800">
+            partEl.innerHTML = m.participants.map(p => {
+                const colors = this._getAvatarColor(p.last_name);
+                const role = p.role || p.department || '';
+                return `
+                <div class="flex items-center gap-2.5 py-1 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 -mx-1 px-1 rounded-lg transition-colors" onclick="window.openContactDetail && window.openContactDetail(${p.id})">
+                    <div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold flex-shrink-0" style="background-color:${colors.bg};color:${colors.text}">
                         ${p.last_name.charAt(0)}
                     </div>
-                    <span class="text-xs">${p.last_name} ${p.first_name || ''}</span>
-                </div>
-            `).join('');
+                    <div class="min-w-0">
+                        <div class="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">${p.last_name} ${p.first_name || ''}</div>
+                        ${role ? `<div class="text-[10px] text-slate-400 dark:text-slate-500 truncate">${role}</div>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
         } else {
             partEl.innerHTML = '<span class="text-xs text-slate-400 italic">Нет участников</span>';
         }
 
-        // Related tasks
+        // Related tasks (with status badges)
         this.renderSidebarTasks(m.related_tasks || []);
 
         // Agenda
@@ -604,13 +719,13 @@ export const MeetingController = {
         const historyEl = document.getElementById('m-side-history');
         if (m.history && m.history.length > 0) {
             historyEl.innerHTML = m.history.map(h => `
-                <div class="py-0.5">
-                    <span class="text-[10px] text-slate-400">${h.created_at}</span>
-                    <div><strong>${h.field_name}</strong>: ${h.old_value || 'пусто'} → ${h.new_value || 'пусто'}</div>
+                <div class="py-1 border-l-2 border-slate-200 dark:border-slate-700 pl-2.5 ml-1">
+                    <div class="text-[10px] text-slate-400">${h.created_at}</div>
+                    <div class="text-[11px]"><strong class="text-slate-600 dark:text-slate-300">${h.field_name}</strong>: ${h.old_value || 'пусто'} → ${h.new_value || 'пусто'}</div>
                 </div>
             `).join('');
         } else {
-            historyEl.innerHTML = '<span class="text-slate-400 italic">Нет истории</span>';
+            historyEl.innerHTML = '<span class="text-slate-400 italic text-[11px]">Нет истории</span>';
         }
     },
 
@@ -621,12 +736,20 @@ export const MeetingController = {
             return;
         }
 
+        const statusColors = {
+            'К выполнению': { bg: '#eff6ff', color: '#3b82f6', border: '#bfdbfe' },
+            'В работе': { bg: '#fffbeb', color: '#f59e0b', border: '#fde68a' },
+            'На проверке': { bg: '#f5f3ff', color: '#8b5cf6', border: '#ddd6fe' },
+            'Готово': { bg: '#f0fdf4', color: '#22c55e', border: '#bbf7d0' },
+        };
+
         container.innerHTML = tasks.map(t => {
             const isDone = t.status && t.status.name === 'Готово';
+            const sc = statusColors[t.status?.name] || { bg: '#f1f5f9', color: '#94a3b8', border: '#e2e8f0' };
             return `
-            <div class="flex items-center gap-2 py-1 cursor-pointer hover:text-primary-600 transition-colors ${isDone ? 'opacity-50' : ''}" onclick="window.openTaskDetail && window.openTaskDetail(${t.id})">
-                <span class="w-1.5 h-1.5 rounded-full flex-shrink-0" style="background-color: ${t.status?.color || '#94a3b8'}"></span>
-                <span class="text-xs truncate ${isDone ? 'line-through' : ''}">${t.title}</span>
+            <div class="flex items-center gap-2 py-1.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/50 -mx-1 px-1 rounded-lg transition-colors ${isDone ? 'opacity-50' : ''}" onclick="window.openTaskDetail && window.openTaskDetail(${t.id})">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-semibold flex-shrink-0 border" style="background-color:${sc.bg};color:${sc.color};border-color:${sc.border}">${t.status?.name || '?'}</span>
+                <span class="text-xs truncate text-slate-700 dark:text-slate-300 ${isDone ? 'line-through' : ''}">${t.title}</span>
             </div>`;
         }).join('');
     },
