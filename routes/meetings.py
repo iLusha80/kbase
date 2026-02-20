@@ -41,7 +41,7 @@ def get_meeting_detail(meeting_id):
 @meetings_bp.route('/meetings', methods=['POST'])
 def add_meeting():
     data = request.json
-    if not data:
+    if data is None:
         return jsonify({'error': 'No data provided'}), 400
 
     try:
