@@ -17,6 +17,10 @@ from core.models import (
 
 
 def seed():
+    # Убедимся что директория instance существует
+    instance_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'instance')
+    os.makedirs(instance_dir, exist_ok=True)
+
     with app.app_context():
         init_db()
 

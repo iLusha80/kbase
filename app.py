@@ -95,6 +95,7 @@ def page_not_found(e):
     return e
 
 if __name__ == '__main__':
+    os.makedirs(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance'), exist_ok=True)
     with app.app_context():
         init_db()
 
