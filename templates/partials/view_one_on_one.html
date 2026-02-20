@@ -1,0 +1,99 @@
+<div id="view-one-on-one" class="view-section hidden fade-in">
+    <!-- HEADER -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-6 justify-between items-start sm:items-center">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                <i data-lucide="message-circle" class="w-6 h-6 text-violet-500"></i> Подготовка к 1-1
+            </h2>
+            <p id="oo-generated-at" class="text-sm text-slate-500 dark:text-slate-400 mt-1"></p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="OneOnOnePrep.refresh()" class="bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 font-medium text-sm px-4 py-2 rounded-md flex items-center gap-2 transition-colors dark:bg-slate-800 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700">
+                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Обновить
+            </button>
+            <button onclick="OneOnOnePrep.copyForChat()" class="bg-primary-600 hover:bg-primary-700 text-white font-medium text-sm px-4 py-2 rounded-md flex items-center gap-2 transition-colors dark:bg-primary-600 dark:hover:bg-primary-500">
+                <i data-lucide="copy" class="w-4 h-4"></i> Копировать
+            </button>
+        </div>
+    </div>
+
+    <!-- Copy success toast -->
+    <div id="oo-copy-toast" class="hidden fixed bottom-6 right-6 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm font-medium z-50 flex items-center gap-2">
+        <i data-lucide="check" class="w-4 h-4"></i> Скопировано в буфер обмена
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Прогресс по проектам -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 dark:bg-slate-800 dark:border-slate-700">
+            <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-4">
+                <span class="w-7 h-7 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                    <i data-lucide="briefcase" class="w-4 h-4 text-blue-600 dark:text-blue-400"></i>
+                </span>
+                Прогресс по проектам
+            </h3>
+            <div id="oo-projects" class="space-y-3">
+                <div class="h-8 bg-slate-50 rounded animate-pulse dark:bg-slate-700/50"></div>
+            </div>
+        </section>
+
+        <!-- Достижения за неделю -->
+        <section class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 dark:bg-slate-800 dark:border-slate-700">
+            <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-4">
+                <span class="w-7 h-7 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                    <i data-lucide="trophy" class="w-4 h-4 text-green-600 dark:text-green-400"></i>
+                </span>
+                Достижения за неделю
+            </h3>
+            <div id="oo-completed" class="space-y-2">
+                <div class="h-8 bg-slate-50 rounded animate-pulse dark:bg-slate-700/50"></div>
+            </div>
+        </section>
+
+        <!-- Риски и блокеры -->
+        <section class="bg-white rounded-xl shadow-sm border border-red-200 p-5 dark:bg-slate-800 dark:border-red-900/50">
+            <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-4">
+                <span class="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 text-red-600 dark:text-red-400"></i>
+                </span>
+                Риски и блокеры
+            </h3>
+            <div id="oo-risks" class="space-y-2">
+                <div class="h-8 bg-slate-50 rounded animate-pulse dark:bg-slate-700/50"></div>
+            </div>
+        </section>
+
+        <!-- Вопросы к руководителю -->
+        <section class="bg-white rounded-xl shadow-sm border border-amber-200 p-5 dark:bg-slate-800 dark:border-amber-900/50">
+            <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-4">
+                <span class="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                    <i data-lucide="help-circle" class="w-4 h-4 text-amber-600 dark:text-amber-400"></i>
+                </span>
+                Вопросы к руководителю
+            </h3>
+            <div id="oo-questions" class="space-y-2">
+                <div class="h-8 bg-slate-50 rounded animate-pulse dark:bg-slate-700/50"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- История 1-1 -->
+    <section class="mt-6 bg-white rounded-xl shadow-sm border border-slate-200 p-5 dark:bg-slate-800 dark:border-slate-700">
+        <h3 class="text-base font-bold text-slate-800 dark:text-white flex items-center gap-2 mb-4">
+            <span class="w-7 h-7 rounded-lg bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center">
+                <i data-lucide="history" class="w-4 h-4 text-violet-600 dark:text-violet-400"></i>
+            </span>
+            История прошлых 1-1
+        </h3>
+        <div id="oo-history" class="space-y-2">
+            <div class="h-8 bg-slate-50 rounded animate-pulse dark:bg-slate-700/50"></div>
+        </div>
+    </section>
+
+    <!-- Preview -->
+    <section class="mt-6 bg-slate-50 rounded-xl border border-slate-200 p-5 dark:bg-slate-900 dark:border-slate-700">
+        <h3 class="text-sm font-bold text-slate-600 dark:text-slate-400 flex items-center gap-2 mb-3">
+            <i data-lucide="message-square" class="w-4 h-4"></i> Превью сообщения
+        </h3>
+        <pre id="oo-preview" class="text-sm text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-mono bg-white dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 max-h-96 overflow-y-auto"></pre>
+    </section>
+</div>

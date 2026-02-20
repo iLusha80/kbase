@@ -4,7 +4,7 @@ from core.database import db
 from core.models import (
     Task, Project, Contact, TaskStatus, ContactType,
     FavoriteContact, QuickLink, Tag, ViewLog, ActivityLog,
-    Meeting, MeetingNote,
+    Meeting, MeetingNote, MeetingType,
     task_tags, contact_tags
 )
 
@@ -407,4 +407,98 @@ def get_daily_standup_data():
         'self_tasks': build_person_block(self_tasks) if self_tasks else None,
         'team': team_data,
         'other_tasks': build_person_block(other_tasks) if other_tasks else None,
+    }
+
+
+def get_one_on_one_prep_data():
+    """
+    Собирает данные для подготовки к 1-1 с руководителем:
+    1. Прогресс по ключевым проектам (автосбор)
+    2. Риски и блокеры (просроченные, жду ответа)
+    3. Ключевые достижения за последнюю неделю
+    4. История прошлых 1-1 встреч
+    """
+    now = datetime.now()
+    today = date.today()
+    week_ago = now - timedelta(days=7)
+
+    done_status = TaskStatus.query.filter_by(name='Готово').first()
+    in_progress_status = TaskStatus.query.filter_by(name='В работе').first()
+    todo_status = TaskStatus.query.filter_by(name='К выполнению').first()
+    waiting_status = TaskStatus.query.filter_by(name='Жду ответа').first()
+
+    done_id = done_status.id if done_status else -1
+    active_status_ids = [s.id for s in [in_progress_status, todo_status] if s]
+
+    # --- 1. Прогресс по проектам ---
+    active_projects = Project.query.filter_by(status='Active').all()
+    projects_progress = []
+    for p in active_projects:
+        total = len(p.tasks)
+        if total == 0:
+            continue
+        done_count = sum(1 for t in p.tasks if t.status_id == done_id)
+        active_count = sum(1 for t in p.tasks if t.status_id in active_status_ids)
+        overdue_count = sum(
+            1 for t in p.tasks
+            if t.status_id in active_status_ids and t.due_date and t.due_date < today
+        )
+        projects_progress.append({
+            'id': p.id,
+            'title': p.title,
+            'total_tasks': total,
+            'done_tasks': done_count,
+            'active_tasks': active_count,
+            'overdue_tasks': overdue_count,
+            'progress_pct': round(done_count / total * 100) if total else 0,
+        })
+    projects_progress.sort(key=lambda x: x['active_tasks'], reverse=True)
+
+    # --- 2. Риски и блокеры ---
+    overdue_tasks = Task.query.filter(
+        Task.status_id.in_(active_status_ids),
+        Task.due_date < today
+    ).order_by(Task.due_date.asc()).all()
+
+    waiting_tasks = []
+    if waiting_status:
+        waiting_tasks = Task.query.filter_by(status_id=waiting_status.id).all()
+
+    # --- 3. Достижения за неделю (закрытые задачи) ---
+    completed_logs = ActivityLog.query.filter(
+        ActivityLog.entity_type == 'task',
+        ActivityLog.event_type == 'update',
+        ActivityLog.field_name == 'status',
+        ActivityLog.new_value == 'Готово',
+        ActivityLog.created_at >= week_ago
+    ).all()
+    completed_task_ids = list({log.entity_id for log in completed_logs})
+    completed_tasks = Task.query.filter(Task.id.in_(completed_task_ids)).all() if completed_task_ids else []
+
+    # --- 4. История 1-1 встреч ---
+    one_on_one_type = MeetingType.query.filter_by(name='1-1').first()
+    past_meetings = []
+    if one_on_one_type:
+        past_meetings = Meeting.query.filter(
+            Meeting.type_id == one_on_one_type.id,
+            Meeting.date <= today
+        ).order_by(Meeting.date.desc()).limit(5).all()
+
+    # --- 5. Запросы ресурсов / вопросы (задачи со статусом "Жду ответа" от автора = self) ---
+    self_contact = Contact.query.filter_by(is_self=True).first()
+    questions = []
+    if self_contact and waiting_status:
+        questions = Task.query.filter(
+            Task.author_id == self_contact.id,
+            Task.status_id == waiting_status.id
+        ).all()
+
+    return {
+        'projects_progress': projects_progress,
+        'overdue_tasks': [t.to_dict() for t in overdue_tasks],
+        'waiting_tasks': [t.to_dict() for t in waiting_tasks],
+        'completed_this_week': [t.to_dict() for t in completed_tasks],
+        'past_one_on_ones': [m.to_dict() for m in past_meetings],
+        'questions': [t.to_dict() for t in questions],
+        'generated_at': now.strftime('%d.%m.%Y %H:%M'),
     }

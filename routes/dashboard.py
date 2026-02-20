@@ -8,7 +8,8 @@ from services.dashboard_service import (
     get_recent_viewed,
     get_frequent_tags,
     get_recent_activity,
-    get_daily_standup_data
+    get_daily_standup_data,
+    get_one_on_one_prep_data
 )
 from core.models import QuickLink, ViewLog
 from core.database import db
@@ -68,6 +69,12 @@ def log_view():
 @dashboard_bp.route('/daily-standup', methods=['GET'])
 def daily_standup():
     data = get_daily_standup_data()
+    return jsonify(data)
+
+
+@dashboard_bp.route('/one-on-one-prep', methods=['GET'])
+def one_on_one_prep():
+    data = get_one_on_one_prep_data()
     return jsonify(data)
 
 

@@ -7,6 +7,7 @@ import Dashboard from './components/Dashboard.js';
 import GlobalSearch from './components/GlobalSearch.js';
 import Inbox from './components/Inbox.js';
 import DailyStandup from './components/DailyStandup.js';
+import OneOnOnePrep from './components/OneOnOnePrep.js';
 import DeadlineNotifier from './components/DeadlineNotifier.js';
 
 import { TaskController } from './controllers/TaskController.js';
@@ -24,6 +25,7 @@ const viewPaths = {
     'kb': '/kb',
     'meetings': '/meetings',
     'daily-standup': '/daily-standup',
+    'one-on-one': '/one-on-one',
     'menu': '/menu',
     'reports-weekly': '/reports/weekly'
 };
@@ -104,6 +106,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Load Daily Standup
                 if (viewName === 'daily-standup') {
                     DailyStandup.init();
+                }
+
+                // Load 1-1 Prep
+                if (viewName === 'one-on-one') {
+                    OneOnOnePrep.init();
                 }
 
                 // Load Report Data if switching to report view
@@ -269,6 +276,7 @@ function updateMeetingProjectSelect(projects) {
 // Export MeetingController for cross-controller access
 window.MeetingController = MeetingController;
 window.DailyStandup = DailyStandup;
+window.OneOnOnePrep = OneOnOnePrep;
 window.DeadlineNotifier = DeadlineNotifier;
 
 function handleUrlRouting(addToHistory = false) {
@@ -290,6 +298,10 @@ function handleUrlRouting(addToHistory = false) {
     else if (path === '/daily-standup') {
         initialView = 'daily-standup';
         DailyStandup.init();
+    }
+    else if (path === '/one-on-one') {
+        initialView = 'one-on-one';
+        OneOnOnePrep.init();
     }
     else if (path === '/menu') {
         initialView = 'menu';

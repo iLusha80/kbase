@@ -12,6 +12,12 @@ const API = {
             return await response.json();
         } catch (err) { console.error(err); return null; }
     },
+    async getOneOnOnePrep() {
+        try {
+            const response = await fetch('/api/one-on-one-prep');
+            return await response.json();
+        } catch (err) { console.error(err); return null; }
+    },
     async search(query) {
         try {
             const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
