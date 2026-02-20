@@ -15,6 +15,7 @@ from routes.projects import projects_bp
 from routes.dashboard import dashboard_bp
 from routes.reports import reports_bp
 from routes.meetings import meetings_bp
+from routes.export import export_bp
 
 
 app = Flask(__name__)
@@ -86,6 +87,7 @@ app.register_blueprint(projects_bp, url_prefix='/api')
 app.register_blueprint(dashboard_bp, url_prefix='/api')
 app.register_blueprint(reports_bp, url_prefix='/api')
 app.register_blueprint(meetings_bp, url_prefix='/api')
+app.register_blueprint(export_bp, url_prefix='/api')
 
 @app.errorhandler(404)
 def page_not_found(e):

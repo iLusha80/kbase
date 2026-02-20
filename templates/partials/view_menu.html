@@ -1,0 +1,181 @@
+<div id="view-menu" class="view-section hidden fade-in">
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-slate-800 dark:text-white">Все разделы</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Навигация по всем страницам KBase</p>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Дашборд -->
+        <a href="/" data-view="dashboard" class="group flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200 hover:border-primary-400 hover:shadow-md transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:hover:border-primary-500">
+            <div class="w-10 h-10 rounded-lg bg-slate-100 dark:bg-slate-700 flex items-center justify-center flex-shrink-0 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/30 transition-colors">
+                <i data-lucide="layout-dashboard" class="w-5 h-5 text-slate-500 group-hover:text-primary-600 dark:text-slate-400 dark:group-hover:text-primary-400"></i>
+            </div>
+            <div>
+                <div class="font-semibold text-slate-800 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">Обзор</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Сводка: задачи, проекты, избранное</div>
+            </div>
+        </a>
+
+        <!-- Входящие -->
+        <a href="/inbox" data-view="inbox" class="group flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:hover:border-amber-500">
+            <div class="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="inbox" class="w-5 h-5 text-amber-500"></i>
+            </div>
+            <div>
+                <div class="font-semibold text-slate-800 dark:text-white">Входящие</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Задачи без исполнителя или дедлайна</div>
+            </div>
+        </a>
+
+        <!-- Задачи -->
+        <a href="/tasks" data-view="tasks" class="group flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:hover:border-blue-500">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="check-square" class="w-5 h-5 text-blue-500"></i>
+            </div>
+            <div>
+                <div class="font-semibold text-slate-800 dark:text-white">Задачи</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Все задачи: создание, статусы, теги</div>
+            </div>
+        </a>
+
+        <!-- Встречи -->
+        <a href="/meetings" data-view="meetings" class="group flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200 hover:border-violet-400 hover:shadow-md transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:hover:border-violet-500">
+            <div class="w-10 h-10 rounded-lg bg-violet-50 dark:bg-violet-900/20 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="calendar" class="w-5 h-5 text-violet-500"></i>
+            </div>
+            <div>
+                <div class="font-semibold text-slate-800 dark:text-white">Встречи</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Дейлики, 1-1, еженедельники с заметками</div>
+            </div>
+        </a>
+
+        <!-- Проекты -->
+        <a href="/projects" data-view="projects" class="group flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200 hover:border-emerald-400 hover:shadow-md transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:hover:border-emerald-500">
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="briefcase" class="w-5 h-5 text-emerald-500"></i>
+            </div>
+            <div>
+                <div class="font-semibold text-slate-800 dark:text-white">Проекты</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Управление проектами и командами</div>
+            </div>
+        </a>
+
+        <!-- Контакты -->
+        <a href="/contacts" data-view="contacts" class="group flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200 hover:border-pink-400 hover:shadow-md transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:hover:border-pink-500">
+            <div class="w-10 h-10 rounded-lg bg-pink-50 dark:bg-pink-900/20 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="users" class="w-5 h-5 text-pink-500"></i>
+            </div>
+            <div>
+                <div class="font-semibold text-slate-800 dark:text-white">Контакты</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Коллеги, руководство, контрагенты</div>
+            </div>
+        </a>
+
+        <!-- Дейлик -->
+        <a href="/daily-standup" data-view="daily-standup" class="group flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200 hover:border-amber-400 hover:shadow-md transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:hover:border-amber-500">
+            <div class="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="sun" class="w-5 h-5 text-amber-500"></i>
+            </div>
+            <div>
+                <div class="font-semibold text-slate-800 dark:text-white">Дейлик</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Подготовка к дейлику, копирование в чат</div>
+            </div>
+        </a>
+
+        <!-- Отчёт за неделю -->
+        <a href="/reports/weekly" data-view="reports-weekly" class="group flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200 hover:border-emerald-400 hover:shadow-md transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:hover:border-emerald-500">
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-900/20 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="file-bar-chart" class="w-5 h-5 text-emerald-500"></i>
+            </div>
+            <div>
+                <div class="font-semibold text-slate-800 dark:text-white">Отчёт за неделю</div>
+                <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Еженедельная сводка по активности</div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Данные -->
+    <div class="mt-10">
+        <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">
+            <i data-lucide="hard-drive" class="w-5 h-5 text-slate-400"></i> Данные
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <!-- Экспорт JSON -->
+            <a href="/api/export/json" class="group flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200 hover:border-cyan-400 hover:shadow-md transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:hover:border-cyan-500">
+                <div class="w-10 h-10 rounded-lg bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="download" class="w-5 h-5 text-cyan-500"></i>
+                </div>
+                <div>
+                    <div class="font-semibold text-slate-800 dark:text-white">Экспорт JSON</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Все данные в формате JSON</div>
+                </div>
+            </a>
+
+            <!-- Экспорт задач CSV -->
+            <a href="/api/export/tasks-csv" class="group flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200 hover:border-green-400 hover:shadow-md transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:hover:border-green-500">
+                <div class="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="table" class="w-5 h-5 text-green-500"></i>
+                </div>
+                <div>
+                    <div class="font-semibold text-slate-800 dark:text-white">Задачи CSV</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Экспорт задач для Excel</div>
+                </div>
+            </a>
+
+            <!-- Экспорт контактов CSV -->
+            <a href="/api/export/contacts-csv" class="group flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200 hover:border-green-400 hover:shadow-md transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:hover:border-green-500">
+                <div class="w-10 h-10 rounded-lg bg-green-50 dark:bg-green-900/20 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="table" class="w-5 h-5 text-green-500"></i>
+                </div>
+                <div>
+                    <div class="font-semibold text-slate-800 dark:text-white">Контакты CSV</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Экспорт контактов для Excel</div>
+                </div>
+            </a>
+
+            <!-- Импорт JSON -->
+            <div onclick="document.getElementById('import-json-input').click()" class="group flex items-start gap-4 p-5 bg-white rounded-xl border border-slate-200 hover:border-orange-400 hover:shadow-md transition-all cursor-pointer dark:bg-slate-800 dark:border-slate-700 dark:hover:border-orange-500">
+                <div class="w-10 h-10 rounded-lg bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="upload" class="w-5 h-5 text-orange-500"></i>
+                </div>
+                <div>
+                    <div class="font-semibold text-slate-800 dark:text-white">Импорт JSON</div>
+                    <div class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Загрузить данные из файла</div>
+                </div>
+            </div>
+            <input type="file" id="import-json-input" accept=".json" class="hidden" onchange="handleImportJson(this)">
+        </div>
+    </div>
+
+    <!-- Import toast -->
+    <div id="import-toast" class="hidden fixed bottom-6 right-6 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg text-sm font-medium z-50">
+        <div id="import-toast-text"></div>
+    </div>
+
+    <script>
+        async function handleImportJson(input) {
+            if (!input.files || !input.files[0]) return;
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const resp = await fetch('/api/import/json', { method: 'POST', body: formData });
+                const result = await resp.json();
+                if (resp.ok) {
+                    const s = result.stats;
+                    const text = `Импорт завершён: ${s.tags} тегов, ${s.contacts} контактов, ${s.projects} проектов, ${s.tasks} задач`;
+                    const toast = document.getElementById('import-toast');
+                    document.getElementById('import-toast-text').textContent = text;
+                    toast.classList.remove('hidden');
+                    setTimeout(() => toast.classList.add('hidden'), 5000);
+                } else {
+                    alert('Ошибка импорта: ' + (result.error || 'Unknown'));
+                }
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+            }
+            input.value = '';
+        }
+    </script>
+</div>

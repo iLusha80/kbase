@@ -24,6 +24,7 @@ const viewPaths = {
     'kb': '/kb',
     'meetings': '/meetings',
     'daily-standup': '/daily-standup',
+    'menu': '/menu',
     'reports-weekly': '/reports/weekly'
 };
 
@@ -52,21 +53,21 @@ document.addEventListener('DOMContentLoaded', async () => {
     MeetingController.init();
     ReportController.init();
     
-    // Dropdown toggle for Reports
-    const reportsToggle = document.getElementById('nav-reports-toggle');
-    const reportsMenu = document.getElementById('reports-menu');
-    const reportsDropdown = document.getElementById('reports-dropdown');
+    // Dropdown toggle for «Ещё» menu
+    const moreToggle = document.getElementById('nav-more-toggle');
+    const moreMenu = document.getElementById('more-menu');
+    const moreDropdown = document.getElementById('more-dropdown');
 
-    if (reportsToggle && reportsMenu) {
-        reportsToggle.addEventListener('click', (e) => {
+    if (moreToggle && moreMenu) {
+        moreToggle.addEventListener('click', (e) => {
             e.stopPropagation();
-            reportsMenu.classList.toggle('hidden');
+            moreMenu.classList.toggle('hidden');
         });
 
         // Close when clicking outside
         document.addEventListener('click', (e) => {
-            if (reportsDropdown && !reportsDropdown.contains(e.target)) {
-                reportsMenu.classList.add('hidden');
+            if (moreDropdown && !moreDropdown.contains(e.target)) {
+                moreMenu.classList.add('hidden');
             }
         });
     }
@@ -103,15 +104,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Load Daily Standup
                 if (viewName === 'daily-standup') {
                     DailyStandup.init();
-                    if (reportsMenu) reportsMenu.classList.add('hidden');
                 }
 
                 // Load Report Data if switching to report view
                 if (viewName === 'reports-weekly') {
                     ReportController.loadWeeklyReport();
-                    // Закрываем меню, если кликнули
-                    if (reportsMenu) reportsMenu.classList.add('hidden');
                 }
+
+                // Закрываем меню «Ещё» при любом переходе
+                if (moreMenu) moreMenu.classList.add('hidden');
 
                 switchView(viewName, true, path);
             }
@@ -289,6 +290,9 @@ function handleUrlRouting(addToHistory = false) {
     else if (path === '/daily-standup') {
         initialView = 'daily-standup';
         DailyStandup.init();
+    }
+    else if (path === '/menu') {
+        initialView = 'menu';
     }
     else if (path === '/reports/weekly') {
         initialView = 'reports-weekly';
