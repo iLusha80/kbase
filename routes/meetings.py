@@ -7,6 +7,11 @@ from services.meeting_service import (
     add_note, update_note, delete_note, convert_note_to_task,
     get_meeting_by_id
 )
+from services.validators import (
+    validate, validation_error,
+    MEETING_CREATE_SCHEMA, MEETING_UPDATE_SCHEMA,
+    MEETING_NOTE_SCHEMA, MEETING_ACTION_ITEM_SCHEMA
+)
 
 meetings_bp = Blueprint('meetings', __name__)
 
@@ -41,8 +46,9 @@ def get_meeting_detail(meeting_id):
 @meetings_bp.route('/meetings', methods=['POST'])
 def add_meeting():
     data = request.json
-    if data is None:
-        return jsonify({'error': 'No data provided'}), 400
+    errors = validate(data, MEETING_CREATE_SCHEMA)
+    if errors:
+        return validation_error(errors)
 
     try:
         meeting = create_meeting(data)
@@ -54,6 +60,10 @@ def add_meeting():
 @meetings_bp.route('/meetings/<int:meeting_id>', methods=['PUT'])
 def update_meeting_route(meeting_id):
     data = request.json
+    errors = validate(data, MEETING_UPDATE_SCHEMA, partial=True)
+    if errors:
+        return validation_error(errors)
+
     meeting = update_meeting(meeting_id, data)
     if not meeting:
         return jsonify({'error': 'Meeting not found'}), 404
@@ -72,15 +82,23 @@ def delete_meeting_route(meeting_id):
 @meetings_bp.route('/meetings/<int:meeting_id>/notes', methods=['POST'])
 def add_meeting_note(meeting_id):
     data = request.json
+    errors = validate(data, MEETING_NOTE_SCHEMA)
+    if errors:
+        return validation_error(errors)
+
     note = add_note(meeting_id, data)
     if not note:
-        return jsonify({'error': 'Failed to add note'}), 400
+        return jsonify({'error': 'Встреча не найдена'}), 404
     return jsonify(note.to_dict()), 201
 
 
 @meetings_bp.route('/meetings/<int:meeting_id>/notes/<int:note_id>', methods=['PUT'])
 def update_meeting_note(meeting_id, note_id):
     data = request.json
+    errors = validate(data, MEETING_NOTE_SCHEMA, partial=True)
+    if errors:
+        return validation_error(errors)
+
     note = update_note(note_id, data)
     if not note:
         return jsonify({'error': 'Note not found'}), 404
@@ -102,7 +120,7 @@ def convert_note(meeting_id, note_id):
     return jsonify(task.to_dict()), 201
 
 
-# --- Action Items (backward compat) ---
+# --- Action Items ---
 
 @meetings_bp.route('/meetings/<int:meeting_id>/analyze', methods=['POST'])
 def analyze_meeting(meeting_id):
@@ -127,15 +145,23 @@ def analyze_meeting(meeting_id):
 @meetings_bp.route('/meetings/<int:meeting_id>/action-items', methods=['POST'])
 def add_meeting_action_item(meeting_id):
     data = request.json
+    errors = validate(data, MEETING_ACTION_ITEM_SCHEMA)
+    if errors:
+        return validation_error(errors)
+
     ai = add_action_item(meeting_id, data)
     if not ai:
-        return jsonify({'error': 'Failed to add action item'}), 400
+        return jsonify({'error': 'Встреча не найдена'}), 404
     return jsonify(ai.to_dict()), 201
 
 
 @meetings_bp.route('/meetings/<int:meeting_id>/action-items/<int:item_id>', methods=['PUT'])
 def update_meeting_action_item(meeting_id, item_id):
     data = request.json
+    errors = validate(data, MEETING_ACTION_ITEM_SCHEMA, partial=True)
+    if errors:
+        return validation_error(errors)
+
     ai = update_action_item(item_id, data)
     if not ai:
         return jsonify({'error': 'Action item not found'}), 404

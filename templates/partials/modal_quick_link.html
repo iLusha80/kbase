@@ -11,9 +11,9 @@
                 <input type="hidden" name="id" value="">
 
                 <div class="space-y-3">
-                    <input name="title" required placeholder="Название (Jira, Git...)" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none focus:border-primary-500 dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+                    <input name="title" required maxlength="100" placeholder="Название (Jira, Git...)" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none focus:border-primary-500 dark:bg-slate-900 dark:border-slate-600 dark:text-white">
                     
-                    <input name="url" type="url" required placeholder="URL (https://...)" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none focus:border-primary-500 dark:bg-slate-900 dark:border-slate-600 dark:text-white">
+                    <input name="url" type="url" required maxlength="500" placeholder="URL (https://...)" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none focus:border-primary-500 dark:bg-slate-900 dark:border-slate-600 dark:text-white">
                     
                     <input name="icon" placeholder="Иконка (lucide name: trello, git-branch...)" class="w-full border border-slate-300 p-2 rounded text-sm focus:outline-none focus:border-primary-500 dark:bg-slate-900 dark:border-slate-600 dark:text-white">
                     <p class="text-[10px] text-slate-400">По умолчанию 'link'. <a href="https://lucide.dev/" target="_blank" class="hover:text-primary-500 underline">См. lucide.dev для имен.</a></p>

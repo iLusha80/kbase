@@ -2,6 +2,7 @@ import API from '../api.js';
 import { renderMeetings, STATUS_LABELS } from '../components/MeetingList.js';
 import { closeModal } from '../components/Modal.js';
 import { switchView, navigateBack } from '../utils/router.js';
+import { validateForm, clearFormErrors, MEETING_RULES } from '../utils/formValidator.js';
 
 let meetingsData = [];
 let meetingTypesData = [];
@@ -193,7 +194,11 @@ export const MeetingController = {
 
     async handleFormSubmit(e) {
         e.preventDefault();
-        const formData = new FormData(e.target);
+        const form = e.target;
+
+        if (!validateForm(form, MEETING_RULES)) return;
+
+        const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
         data.participant_ids = selectedParticipantIds;
         data.duration_minutes = data.duration_minutes ? parseInt(data.duration_minutes) : null;

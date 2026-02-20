@@ -5,6 +5,10 @@ from services.contact_service import (
     toggle_favorite_status,
     set_self, unset_self, get_self_contact, toggle_team, get_team_contacts,
 )
+from services.validators import (
+    validate, validation_error,
+    CONTACT_CREATE_SCHEMA, CONTACT_UPDATE_SCHEMA
+)
 
 contacts_bp = Blueprint('contacts', __name__)
 
@@ -41,9 +45,10 @@ def get_contact_detail(contact_id):
 @contacts_bp.route('/contacts', methods=['POST'])
 def add_contact():
     data = request.json
-    if not data or not data.get('last_name'):
-        return jsonify({'error': 'Last name is required'}), 400
-    
+    errors = validate(data, CONTACT_CREATE_SCHEMA)
+    if errors:
+        return validation_error(errors)
+
     try:
         contact = create_contact(data)
         return jsonify(contact.to_dict()), 201
@@ -53,6 +58,10 @@ def add_contact():
 @contacts_bp.route('/contacts/<int:contact_id>', methods=['PUT'])
 def update_contact_route(contact_id):
     data = request.json
+    errors = validate(data, CONTACT_UPDATE_SCHEMA, partial=True)
+    if errors:
+        return validation_error(errors)
+
     contact = update_contact(contact_id, data)
     if not contact:
         return jsonify({'error': 'Contact not found'}), 404

@@ -4,6 +4,10 @@ from services.task_service import (
     update_task, delete_task, update_task_status, get_task_statuses,
     get_task_full_details, add_comment_to_task, delete_comment
 )
+from services.validators import (
+    validate, validation_error,
+    TASK_CREATE_SCHEMA, TASK_UPDATE_SCHEMA, TASK_COMMENT_SCHEMA
+)
 
 tasks_bp = Blueprint('tasks', __name__)
 
@@ -19,7 +23,6 @@ def list_tasks():
 
 @tasks_bp.route('/tasks/<int:task_id>', methods=['GET'])
 def get_task_detail(task_id):
-    # Используем расширенную функцию
     task = get_task_full_details(task_id)
     if not task:
         return jsonify({'error': 'Task not found'}), 404
@@ -28,9 +31,10 @@ def get_task_detail(task_id):
 @tasks_bp.route('/tasks', methods=['POST'])
 def add_task():
     data = request.json
-    if not data or not data.get('title'):
-        return jsonify({'error': 'Title is required'}), 400
-    
+    errors = validate(data, TASK_CREATE_SCHEMA)
+    if errors:
+        return validation_error(errors)
+
     try:
         task = create_task(data)
         return jsonify(task.to_dict()), 201
@@ -40,6 +44,10 @@ def add_task():
 @tasks_bp.route('/tasks/<int:task_id>', methods=['PUT'])
 def update_task_route(task_id):
     data = request.json
+    errors = validate(data, TASK_UPDATE_SCHEMA, partial=True)
+    if errors:
+        return validation_error(errors)
+
     task = update_task(task_id, data)
     if not task:
         return jsonify({'error': 'Task not found'}), 404
@@ -55,12 +63,14 @@ def delete_task_route(task_id):
 @tasks_bp.route('/tasks/<int:task_id>/comments', methods=['POST'])
 def add_task_comment(task_id):
     data = request.json
-    text = data.get('text')
-    
-    comment = add_comment_to_task(task_id, text)
+    errors = validate(data, TASK_COMMENT_SCHEMA)
+    if errors:
+        return validation_error(errors)
+
+    comment = add_comment_to_task(task_id, data.get('text'))
     if not comment:
-        return jsonify({'error': 'Failed to add comment'}), 400
-        
+        return jsonify({'error': 'Задача не найдена'}), 404
+
     return jsonify(comment.to_dict()), 201
 
 @tasks_bp.route('/comments/<int:comment_id>', methods=['DELETE'])

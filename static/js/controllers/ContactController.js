@@ -2,6 +2,7 @@ import API from '../api.js';
 import { renderContacts } from '../components/ContactList.js';
 import { closeModal } from '../components/Modal.js';
 import { switchView, navigateBack } from '../utils/router.js';
+import { validateForm, showServerErrors, clearFormErrors, CONTACT_RULES } from '../utils/formValidator.js';
 
 
 let contactsData = [];
@@ -352,19 +353,30 @@ export const ContactController = {
 
     async handleFormSubmit(e) {
         e.preventDefault();
-        const formData = new FormData(e.target);
+        const form = e.target;
+
+        if (!validateForm(form, CONTACT_RULES)) return;
+
+        const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
         if (window.contactTagManager) data.tags = window.contactTagManager.getTags();
         const id = data.id;
-        let success = id ? await API.updateContact(id, data) : await API.createContact(data);
-        if (success) { 
-            closeModal('contact-modal'); 
-            e.target.reset(); 
-            await this.loadAll(); 
+        let result = id ? await API.updateContact(id, data) : await API.createContact(data);
+
+        if (result && typeof result === 'object' && result.details) {
+            showServerErrors(form, result.details);
+            return;
+        }
+
+        if (result) {
+            clearFormErrors(form);
+            closeModal('contact-modal');
+            form.reset();
+            await this.loadAll();
             if (window.loadAllTags) window.loadAllTags();
             if (id && !document.getElementById('view-contact-detail').classList.contains('hidden')) {
                 this.openContactDetail(id);
             }
-        } else { alert('Ошибка при сохранении контактов'); }
+        } else { alert('Ошибка при сохранении контакта'); }
     }
 };

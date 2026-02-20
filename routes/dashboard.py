@@ -11,6 +11,10 @@ from services.dashboard_service import (
     get_daily_standup_data,
     get_one_on_one_prep_data
 )
+from services.validators import (
+    validate, validation_error,
+    VIEW_LOG_SCHEMA, QUICK_LINK_CREATE_SCHEMA, QUICK_LINK_UPDATE_SCHEMA
+)
 from core.models import QuickLink, ViewLog
 from core.database import db
 
@@ -19,13 +23,13 @@ dashboard_bp = Blueprint('dashboard', __name__)
 @dashboard_bp.route('/dashboard', methods=['GET'])
 def get_dashboard_data():
     """Сводные данные для главной страницы"""
-    
+
     priority = get_priority_tasks()
     waiting = get_waiting_tasks()
     projects = get_top_active_projects()
     favorites = get_favorite_contacts_list()
     links = QuickLink.query.order_by(QuickLink.created_at).all()
-    
+
     projects_data = []
     for p in projects:
         p_dict = p.to_dict()
@@ -52,16 +56,11 @@ def get_dashboard_data():
 def log_view():
     """Логирование просмотра сущности (task, project, contact)"""
     data = request.json
-    entity_type = data.get('entity_type')
-    entity_id = data.get('entity_id')
+    errors = validate(data, VIEW_LOG_SCHEMA)
+    if errors:
+        return validation_error(errors)
 
-    if not entity_type or not entity_id:
-        return jsonify({'error': 'entity_type and entity_id required'}), 400
-
-    if entity_type not in ('task', 'project', 'contact'):
-        return jsonify({'error': 'Invalid entity_type'}), 400
-
-    view = ViewLog(entity_type=entity_type, entity_id=int(entity_id))
+    view = ViewLog(entity_type=data['entity_type'], entity_id=int(data['entity_id']))
     db.session.add(view)
     db.session.commit()
     return jsonify({'ok': True}), 201
@@ -89,9 +88,10 @@ def search_route():
 @dashboard_bp.route('/quick-links', methods=['POST'])
 def add_quick_link():
     data = request.json
-    if not data.get('title') or not data.get('url'):
-        return jsonify({'error': 'Title and URL required'}), 400
-    
+    errors = validate(data, QUICK_LINK_CREATE_SCHEMA)
+    if errors:
+        return validation_error(errors)
+
     link = QuickLink(
         title=data['title'],
         url=data['url'],
@@ -106,12 +106,16 @@ def update_quick_link(link_id):
     link = QuickLink.query.get(link_id)
     if not link:
         return jsonify({'error': 'Not found'}), 404
-    
+
     data = request.json
+    errors = validate(data, QUICK_LINK_UPDATE_SCHEMA, partial=True)
+    if errors:
+        return validation_error(errors)
+
     link.title = data.get('title', link.title)
     link.url = data.get('url', link.url)
     link.icon = data.get('icon', link.icon)
-    
+
     db.session.commit()
     return jsonify(link.to_dict())
 
@@ -120,7 +124,7 @@ def delete_quick_link(link_id):
     link = QuickLink.query.get(link_id)
     if not link:
         return jsonify({'error': 'Not found'}), 404
-    
+
     db.session.delete(link)
     db.session.commit()
     return jsonify({'message': 'Deleted'}), 200

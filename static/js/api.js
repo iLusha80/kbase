@@ -1,3 +1,29 @@
+/**
+ * Обёртка для POST/PUT запросов с обработкой ошибок валидации.
+ * Возвращает: { ok: true } | { ok: false, details: {...} } | { ok: false }
+ */
+async function apiMutate(url, method, data) {
+    try {
+        const response = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if (response.ok) {
+            return { ok: true, data: await response.json().catch(() => null) };
+        }
+        // Пробуем получить детали ошибки валидации
+        const body = await response.json().catch(() => null);
+        if (body && body.details) {
+            return { ok: false, status: response.status, details: body.details, error: body.error };
+        }
+        return { ok: false, status: response.status, error: body?.error || 'Unknown error' };
+    } catch (err) {
+        console.error(err);
+        return { ok: false, error: err.message };
+    }
+}
+
 const API = {
     // --- DASHBOARD & SEARCH ---
     async getDashboard() {
@@ -87,20 +113,14 @@ const API = {
         } catch (err) { console.error(err); return []; }
     },
     async createContact(data) {
-        try {
-            const response = await fetch('/api/contacts', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
-            });
-            return response.ok;
-        } catch (err) { console.error(err); return false; }
+        const res = await apiMutate('/api/contacts', 'POST', data);
+        if (res.details) return res; // вернём объект с ошибками для формы
+        return res.ok;
     },
     async updateContact(id, data) {
-        try {
-            const response = await fetch(`/api/contacts/${id}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
-            });
-            return response.ok;
-        } catch (err) { console.error(err); return false; }
+        const res = await apiMutate(`/api/contacts/${id}`, 'PUT', data);
+        if (res.details) return res;
+        return res.ok;
     },
     async deleteContact(id) {
         try {
@@ -142,20 +162,14 @@ const API = {
         } catch (err) { console.error(err); return []; }
     },
     async createTask(data) {
-        try {
-            const response = await fetch('/api/tasks', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
-            });
-            return response.ok;
-        } catch (err) { console.error(err); return false; }
+        const res = await apiMutate('/api/tasks', 'POST', data);
+        if (res.details) return res;
+        return res.ok;
     },
     async updateTask(id, data) {
-        try {
-            const response = await fetch(`/api/tasks/${id}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
-            });
-            return response.ok;
-        } catch (err) { console.error(err); return false; }
+        const res = await apiMutate(`/api/tasks/${id}`, 'PUT', data);
+        if (res.details) return res;
+        return res.ok;
     },
     async deleteTask(id) {
         try {
@@ -178,20 +192,14 @@ const API = {
         } catch (err) { console.error(err); return null; }
     },
     async createProject(data) {
-        try {
-            const response = await fetch('/api/projects', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
-            });
-            return response.ok;
-        } catch (err) { console.error(err); return false; }
+        const res = await apiMutate('/api/projects', 'POST', data);
+        if (res.details) return res;
+        return res.ok;
     },
     async updateProject(id, data) {
-        try {
-            const response = await fetch(`/api/projects/${id}`, {
-                method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data)
-            });
-            return response.ok;
-        } catch (err) { console.error(err); return false; }
+        const res = await apiMutate(`/api/projects/${id}`, 'PUT', data);
+        if (res.details) return res;
+        return res.ok;
     },
     async deleteProject(id) {
         try {

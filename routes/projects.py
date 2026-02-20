@@ -2,6 +2,10 @@ from flask import Blueprint, request, jsonify
 from services.project_service import (
     get_all_projects, create_project, get_project_by_id, update_project, delete_project
 )
+from services.validators import (
+    validate, validation_error,
+    PROJECT_CREATE_SCHEMA, PROJECT_UPDATE_SCHEMA
+)
 
 projects_bp = Blueprint('projects', __name__)
 
@@ -15,8 +19,7 @@ def get_project_detail(project_id):
     p = get_project_by_id(project_id)
     if not p:
         return jsonify({'error': 'Project not found'}), 404
-    
-    # Дополнительно вернем задачи этого проекта для детального вида
+
     data = p.to_dict()
     data['tasks_list'] = [t.to_dict() for t in p.tasks]
     return jsonify(data)
@@ -24,6 +27,10 @@ def get_project_detail(project_id):
 @projects_bp.route('/projects', methods=['POST'])
 def add_project():
     data = request.json
+    errors = validate(data, PROJECT_CREATE_SCHEMA)
+    if errors:
+        return validation_error(errors)
+
     try:
         p = create_project(data)
         return jsonify(p.to_dict()), 201
@@ -33,6 +40,10 @@ def add_project():
 @projects_bp.route('/projects/<int:project_id>', methods=['PUT'])
 def update_project_route(project_id):
     data = request.json
+    errors = validate(data, PROJECT_UPDATE_SCHEMA, partial=True)
+    if errors:
+        return validation_error(errors)
+
     p = update_project(project_id, data)
     if not p:
         return jsonify({'error': 'Project not found'}), 404

@@ -3,6 +3,7 @@ import { switchView, navigateBack } from '../utils/router.js';
 import { closeModal } from '../components/Modal.js';
 import ProjectContactManager from '../components/ProjectContactManager.js';
 import Dashboard from '../components/Dashboard.js';
+import { validateForm, showServerErrors, clearFormErrors, PROJECT_RULES } from '../utils/formValidator.js';
 
 let projectsData = [];
 let currentFilter = 'all';
@@ -309,14 +310,25 @@ export const ProjectController = {
 
     async handleFormSubmit(e) {
         e.preventDefault();
-        const formData = new FormData(e.target);
+        const form = e.target;
+
+        if (!validateForm(form, PROJECT_RULES)) return;
+
+        const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
         if(window.projectContactManager) data.team = window.projectContactManager.getTeam();
         const id = data.id;
-        let success = id ? await API.updateProject(id, data) : await API.createProject(data);
-        if (success) {
+        let result = id ? await API.updateProject(id, data) : await API.createProject(data);
+
+        if (result && typeof result === 'object' && result.details) {
+            showServerErrors(form, result.details);
+            return;
+        }
+
+        if (result) {
+            clearFormErrors(form);
             closeModal('project-modal');
-            e.target.reset();
+            form.reset();
             await this.loadAll();
             if (id && !document.getElementById('view-project-detail').classList.contains('hidden')) {
                 this.openProjectDetail(id);

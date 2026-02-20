@@ -4,6 +4,7 @@ import KanbanBoard from '../components/KanbanBoard.js';
 import { closeModal } from '../components/Modal.js';
 import Dashboard from '../components/Dashboard.js';
 import { switchView, navigateBack } from '../utils/router.js';
+import { validateForm, showServerErrors, clearFormErrors, TASK_RULES } from '../utils/formValidator.js';
 
 let tasksData = [];
 let currentTaskId = null;
@@ -403,17 +404,28 @@ export const TaskController = {
 
     async handleFormSubmit(e) {
         e.preventDefault();
-        const formData = new FormData(e.target);
+        const form = e.target;
+
+        if (!validateForm(form, TASK_RULES)) return;
+
+        const formData = new FormData(form);
         const data = Object.fromEntries(formData.entries());
         if (window.taskTagManager) { data.tags = window.taskTagManager.getTags(); }
         const id = data.id;
-        let success = id ? await API.updateTask(id, data) : await API.createTask(data);
-        if (success) {
-            closeModal('task-modal'); e.target.reset(); await this.loadAll();
+        let result = id ? await API.updateTask(id, data) : await API.createTask(data);
+
+        // Обработка ошибок валидации с сервера
+        if (result && typeof result === 'object' && result.details) {
+            showServerErrors(form, result.details);
+            return;
+        }
+
+        if (result) {
+            clearFormErrors(form);
+            closeModal('task-modal'); form.reset(); await this.loadAll();
             if (id && !document.getElementById('view-task-detail').classList.contains('hidden')) { this.openTaskDetail(id); }
             else if (data.project_id && !document.getElementById('view-project-detail').classList.contains('hidden')) { if (window.openProjectDetail) window.openProjectDetail(data.project_id); }
             Dashboard.init();
-            // Обновляем бейдж inbox
             if (window.updateInboxBadge) window.updateInboxBadge();
         } else { alert('Ошибка при сохранении задачи'); }
     }
