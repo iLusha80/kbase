@@ -95,4 +95,10 @@ def page_not_found(e):
 if __name__ == '__main__':
     with app.app_context():
         init_db()
+
+    # Автобэкап БД при запуске
+    from services.backup_service import auto_backup
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'kbase.db')
+    auto_backup(db_path)
+
     app.run(debug=True)

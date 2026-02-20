@@ -13,6 +13,7 @@ __pycache__
 
 # Database
 /instance
+/backups
 
 # Local files (not for repo)
 all_project_code.txt
