@@ -101,4 +101,4 @@ if __name__ == '__main__':
     db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'kbase.db')
     auto_backup(db_path)
 
-    app.run(debug=True)
+    app.run(debug=True, port=5007)

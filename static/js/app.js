@@ -6,6 +6,8 @@ import ThemeManager from './components/ThemeManager.js';
 import Dashboard from './components/Dashboard.js';
 import GlobalSearch from './components/GlobalSearch.js';
 import Inbox from './components/Inbox.js';
+import DailyStandup from './components/DailyStandup.js';
+import DeadlineNotifier from './components/DeadlineNotifier.js';
 
 import { TaskController } from './controllers/TaskController.js';
 import { ContactController } from './controllers/ContactController.js';
@@ -21,6 +23,7 @@ const viewPaths = {
     'projects': '/projects',
     'kb': '/kb',
     'meetings': '/meetings',
+    'daily-standup': '/daily-standup',
     'reports-weekly': '/reports/weekly'
 };
 
@@ -95,6 +98,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // Load Meetings data when switching to meetings view
                 if (viewName === 'meetings') {
                     MeetingController.loadAll();
+                }
+
+                // Load Daily Standup
+                if (viewName === 'daily-standup') {
+                    DailyStandup.init();
+                    if (reportsMenu) reportsMenu.classList.add('hidden');
                 }
 
                 // Load Report Data if switching to report view
@@ -185,6 +194,9 @@ async function loadInitialData() {
 
     // Обновляем счётчик inbox
     await updateInboxBadge();
+
+    // Проверяем дедлайны
+    DeadlineNotifier.check();
 }
 
 async function updateInboxBadge() {
@@ -255,6 +267,8 @@ function updateMeetingProjectSelect(projects) {
 
 // Export MeetingController for cross-controller access
 window.MeetingController = MeetingController;
+window.DailyStandup = DailyStandup;
+window.DeadlineNotifier = DeadlineNotifier;
 
 function handleUrlRouting(addToHistory = false) {
     const path = window.location.pathname;
@@ -271,6 +285,10 @@ function handleUrlRouting(addToHistory = false) {
     else if (path === '/meetings') {
         initialView = 'meetings';
         MeetingController.loadAll();
+    }
+    else if (path === '/daily-standup') {
+        initialView = 'daily-standup';
+        DailyStandup.init();
     }
     else if (path === '/reports/weekly') {
         initialView = 'reports-weekly';

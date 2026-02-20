@@ -56,6 +56,11 @@ def meetings_page():
 def meetings_detail_page(subpath):
     return render_template('index.html')
 
+# Daily Standup
+@main_bp.route('/daily-standup')
+def daily_standup_page():
+    return render_template('index.html')
+
 # Reports routes
 @main_bp.route('/reports/weekly')
 def reports_weekly_page():

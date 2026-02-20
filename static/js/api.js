@@ -6,6 +6,12 @@ const API = {
             return await response.json();
         } catch (err) { console.error(err); return null; }
     },
+    async getDailyStandup() {
+        try {
+            const response = await fetch('/api/daily-standup');
+            return await response.json();
+        } catch (err) { console.error(err); return null; }
+    },
     async search(query) {
         try {
             const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);

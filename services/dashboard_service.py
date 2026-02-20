@@ -1,9 +1,10 @@
 from sqlalchemy import or_, func, desc
-from datetime import date
+from datetime import date, datetime, timedelta
 from core.database import db
 from core.models import (
     Task, Project, Contact, TaskStatus, ContactType,
     FavoriteContact, QuickLink, Tag, ViewLog, ActivityLog,
+    Meeting, MeetingNote,
     task_tags, contact_tags
 )
 
@@ -285,3 +286,72 @@ def get_recent_activity(limit=15):
         result.append(item)
 
     return result
+
+
+def get_daily_standup_data():
+    """
+    Собирает данные для подготовки к дейлику:
+    1. Задачи, закрытые за последние 24 часа (Что сделал)
+    2. Задачи в работе + к выполнению с дедлайном сегодня (Что планирую)
+    3. Блокеры: просроченные и «жду ответа» (Проблемы/блокеры)
+    4. Встречи на сегодня
+    """
+    now = datetime.now()
+    since = now - timedelta(hours=24)
+    today = date.today()
+
+    done_status = TaskStatus.query.filter_by(name='Готово').first()
+    in_progress_status = TaskStatus.query.filter_by(name='В работе').first()
+    todo_status = TaskStatus.query.filter_by(name='К выполнению').first()
+    waiting_status = TaskStatus.query.filter_by(name='Жду ответа').first()
+
+    # 1. Закрытые за 24ч (через ActivityLog — событие смены статуса на «Готово»)
+    completed_tasks = []
+    if done_status:
+        done_logs = ActivityLog.query.filter(
+            ActivityLog.entity_type == 'task',
+            ActivityLog.event_type == 'update',
+            ActivityLog.field_name == 'status',
+            ActivityLog.new_value == 'Готово',
+            ActivityLog.created_at >= since
+        ).all()
+        done_task_ids = [log.entity_id for log in done_logs]
+        if done_task_ids:
+            completed_tasks = Task.query.filter(Task.id.in_(done_task_ids)).all()
+
+    # 2. В работе + к выполнению с дедлайном сегодня
+    in_progress_tasks = []
+    if in_progress_status:
+        in_progress_tasks = Task.query.filter_by(status_id=in_progress_status.id).all()
+
+    due_today_tasks = []
+    if todo_status:
+        due_today_tasks = Task.query.filter(
+            Task.status_id == todo_status.id,
+            Task.due_date == today
+        ).all()
+
+    # 3. Блокеры
+    overdue_tasks = []
+    if in_progress_status and todo_status:
+        overdue_tasks = Task.query.filter(
+            Task.status_id.in_([in_progress_status.id, todo_status.id]),
+            Task.due_date < today
+        ).all()
+
+    waiting_tasks = []
+    if waiting_status:
+        waiting_tasks = Task.query.filter_by(status_id=waiting_status.id).all()
+
+    # 4. Встречи на сегодня
+    today_meetings = Meeting.query.filter(Meeting.date == today).order_by(Meeting.time).all()
+
+    return {
+        'completed': [t.to_dict() for t in completed_tasks],
+        'in_progress': [t.to_dict() for t in in_progress_tasks],
+        'due_today': [t.to_dict() for t in due_today_tasks],
+        'overdue': [t.to_dict() for t in overdue_tasks],
+        'waiting': [t.to_dict() for t in waiting_tasks],
+        'today_meetings': [m.to_dict() for m in today_meetings],
+        'generated_at': now.strftime('%d.%m.%Y %H:%M')
+    }
