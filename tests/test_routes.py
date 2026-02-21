@@ -398,10 +398,11 @@ class TestMeetingsAPI:
         assert data['date'] == '2025-06-15'
 
     def test_create_meeting_without_date(self, client):
-        """Встреча без даты — ошибка валидации."""
+        """Встреча без даты — сервис подставляет today(), создаётся успешно."""
         response = client.post('/api/meetings', json={'title': 'Без даты'})
-        assert response.status_code == 400
-        assert 'details' in response.get_json()
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data['date'] is not None
 
     def test_meeting_lifecycle(self, client):
         """CRUD встречи."""
@@ -602,7 +603,8 @@ class TestValidationErrorFormat:
         assert 'title' in data['details']
 
     def test_meeting_validation_format(self, client):
-        response = client.post('/api/meetings', json={})
+        """Встреча с невалидной датой — ошибка валидации."""
+        response = client.post('/api/meetings', json={'date': 'not-a-date'})
         assert response.status_code == 400
         data = response.get_json()
         assert data['error'] == 'Ошибка валидации'

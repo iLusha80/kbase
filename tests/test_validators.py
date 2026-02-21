@@ -181,9 +181,10 @@ class TestSchemas:
         errors = validate({'date': '2025-06-01', 'time': '10:00'}, MEETING_CREATE_SCHEMA)
         assert errors == {}
 
-    def test_meeting_create_missing_date(self):
+    def test_meeting_create_without_date_ok(self):
+        """date больше не required — сервис подставляет today()."""
         errors = validate({'title': 'Meeting'}, MEETING_CREATE_SCHEMA)
-        assert 'date' in errors
+        assert 'date' not in errors
 
     def test_tag_create_valid(self):
         errors = validate({'name': 'important'}, TAG_CREATE_SCHEMA)

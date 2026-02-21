@@ -229,7 +229,7 @@ VIEW_LOG_SCHEMA = {
 # --- Meetings ---
 MEETING_CREATE_SCHEMA = {
     'title': {'type': 'str', 'max_length': 200},
-    'date': {'required': True, 'type': 'date'},
+    'date': {'type': 'date'},
     'time': {'type': 'time'},
     'duration_minutes': {'type': 'int', 'min': 1, 'max': 1440},
     'type_id': {'type': 'int', 'min': 1},
@@ -238,6 +238,7 @@ MEETING_CREATE_SCHEMA = {
     'project_id': {'type': 'int', 'min': 1},
     'status': {'type': 'str', 'choices': ['planned', 'in_progress', 'completed', 'cancelled']},
     'participants': {'type': 'list'},
+    'participant_ids': {'type': 'list'},
 }
 
 MEETING_UPDATE_SCHEMA = MEETING_CREATE_SCHEMA
