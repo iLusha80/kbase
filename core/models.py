@@ -367,6 +367,7 @@ class MeetingNote(db.Model):
     meeting_id = db.Column(db.Integer, db.ForeignKey('meetings.id'), nullable=False)
     text = db.Column(db.Text, nullable=False)
     source = db.Column(db.String(20), default='manual')  # manual, voice, ai
+    category = db.Column(db.String(20), default='note')  # note, decision, question, task
     task_id = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.now)
 
@@ -378,6 +379,7 @@ class MeetingNote(db.Model):
             'meeting_id': self.meeting_id,
             'text': self.text,
             'source': self.source,
+            'category': self.category or 'note',
             'task_id': self.task_id,
             'task_title': self.task.title if self.task else None,
             'created_at': self.created_at.strftime('%Y-%m-%d %H:%M') if self.created_at else None

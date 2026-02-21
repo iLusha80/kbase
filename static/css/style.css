@@ -56,3 +56,40 @@
 /* Dark mode scrollbar */
 .dark .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
 .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; }
+
+/* Note category chips (input area) */
+.note-cat-chip { background: #f1f5f9; color: #64748b; cursor: pointer; }
+.note-cat-chip:hover { background: #e2e8f0; }
+.note-cat-chip.active[data-cat="note"] { background: #e2e8f0; color: #475569; }
+.note-cat-chip.active[data-cat="decision"] { background: #dcfce7; color: #16a34a; }
+.note-cat-chip.active[data-cat="question"] { background: #fef3c7; color: #d97706; }
+.note-cat-chip.active[data-cat="task"] { background: #dbeafe; color: #2563eb; }
+.dark .note-cat-chip { background: #334155; color: #94a3b8; }
+.dark .note-cat-chip:hover { background: #475569; }
+.dark .note-cat-chip.active[data-cat="note"] { background: #475569; color: #e2e8f0; }
+.dark .note-cat-chip.active[data-cat="decision"] { background: #14532d; color: #4ade80; }
+.dark .note-cat-chip.active[data-cat="question"] { background: #78350f; color: #fbbf24; }
+.dark .note-cat-chip.active[data-cat="task"] { background: #1e3a5f; color: #60a5fa; }
+
+/* Note category filter chips */
+.note-cat-filter { background: #f1f5f9; color: #94a3b8; cursor: pointer; }
+.note-cat-filter:hover { background: #e2e8f0; color: #64748b; }
+.note-cat-filter.active { background: #1e293b; color: white; }
+.dark .note-cat-filter { background: #334155; color: #64748b; }
+.dark .note-cat-filter:hover { background: #475569; color: #94a3b8; }
+.dark .note-cat-filter.active { background: #e2e8f0; color: #1e293b; }
+
+/* Sidebar tabs */
+.sidebar-tab { background: transparent; color: #94a3b8; cursor: pointer; }
+.sidebar-tab:hover { background: #f1f5f9; color: #64748b; }
+.sidebar-tab.active { background: white; color: #1e293b; box-shadow: 0 -1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; border-bottom: 1px solid white; margin-bottom: -1px; }
+.dark .sidebar-tab { color: #64748b; }
+.dark .sidebar-tab:hover { background: #334155; color: #94a3b8; }
+.dark .sidebar-tab.active { background: #1e293b; color: #e2e8f0; border-color: #334155; border-bottom-color: #1e293b; }
+
+/* Mobile sidebar transition */
+@media (max-width: 1023px) {
+    #m-detail-sidebar { transition: transform 0.3s ease; }
+    #m-detail-sidebar.max-lg\:translate-x-full { transform: translateX(100%); }
+    #m-detail-sidebar.max-lg\:translate-x-0 { transform: translateX(0); }
+}

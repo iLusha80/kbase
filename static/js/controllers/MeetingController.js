@@ -16,6 +16,10 @@ let summaryExpanded = false;
 let speechRecognition = null;
 let isRecording = false;
 
+// Note category state
+let selectedNoteCategory = 'note';
+let noteCategoryFilter = 'all';
+
 export const MeetingController = {
     init() {
         const form = document.getElementById('meeting-form');
@@ -87,6 +91,14 @@ export const MeetingController = {
 
         // Type button select in modal
         window.selectMeetingType = this.selectMeetingType.bind(this);
+
+        // Note categories
+        window.setNoteCategory = this.setNoteCategory.bind(this);
+        window.filterNotesByCategory = this.filterNotesByCategory.bind(this);
+
+        // Sidebar tabs + mobile toggle
+        window.switchSidebarTab = this.switchSidebarTab.bind(this);
+        window.toggleMeetingSidebar = this.toggleMeetingSidebar.bind(this);
 
         // Legacy compat
         window.addMeetingActionItem = this.addActionItem.bind(this);
@@ -397,6 +409,9 @@ export const MeetingController = {
         if (window.lucide) lucide.createIcons();
         switchView('meeting-detail', true, `/meetings/${id}`);
 
+        // Keyboard shortcuts for meeting detail
+        this._setupMeetingKeyboard();
+
         // Focus note input
         setTimeout(() => {
             const input = document.getElementById('m-note-input');
@@ -404,7 +419,48 @@ export const MeetingController = {
         }, 100);
     },
 
-    // --- Notes rendering (chat-like, polished) ---
+    _meetingKeyHandler: null,
+
+    _setupMeetingKeyboard() {
+        // Remove previous handler if any
+        if (this._meetingKeyHandler) {
+            document.removeEventListener('keydown', this._meetingKeyHandler);
+        }
+
+        this._meetingKeyHandler = (e) => {
+            // Only when meeting detail is visible
+            const view = document.getElementById('view-meeting-detail');
+            if (!view || view.classList.contains('hidden')) return;
+
+            // Ctrl+M — toggle microphone
+            if (e.ctrlKey && e.key === 'm') {
+                e.preventDefault();
+                window.toggleSpeechRecognition();
+                return;
+            }
+
+            // Escape — cancel edit or close sidebar on mobile
+            if (e.key === 'Escape') {
+                const sidebar = document.getElementById('m-detail-sidebar');
+                if (sidebar && sidebar.classList.contains('max-lg:translate-x-0')) {
+                    window.toggleMeetingSidebar();
+                    return;
+                }
+            }
+
+            // / key — focus note input (when not in input)
+            if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+                const active = document.activeElement;
+                if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
+                e.preventDefault();
+                document.getElementById('m-note-input')?.focus();
+            }
+        };
+
+        document.addEventListener('keydown', this._meetingKeyHandler);
+    },
+
+    // --- Notes rendering (timeline design) ---
     renderNotes(notes) {
         const list = document.getElementById('m-detail-notes-list');
         const empty = document.getElementById('m-notes-empty');
@@ -419,54 +475,131 @@ export const MeetingController = {
 
         empty.classList.add('hidden');
 
-        const sourceConfig = {
-            'voice': { icon: 'mic', color: 'text-red-400', bg: 'bg-red-50 dark:bg-red-900/20', label: 'Голос' },
-            'ai': { icon: 'sparkles', color: 'text-purple-400', bg: 'bg-purple-50 dark:bg-purple-900/20', label: 'AI' },
-            'manual': { icon: 'pencil-line', color: 'text-slate-400', bg: 'bg-slate-50 dark:bg-slate-800', label: '' },
+        // Category → colored left border
+        const catColors = {
+            'note': '#cbd5e1',      // slate
+            'decision': '#22c55e',  // green
+            'question': '#f59e0b',  // amber
+            'task': '#3b82f6',      // blue
         };
+        const catIcons = {
+            'decision': 'check-circle-2',
+            'question': 'help-circle',
+            'task': 'square-check',
+        };
+        const catLabels = {
+            'decision': 'решение',
+            'question': 'вопрос',
+            'task': 'задача',
+        };
+        // Source labels (secondary)
+        const srcLabel = { 'voice': 'голос', 'ai': 'AI' };
+        const srcIcon = { 'voice': 'mic', 'ai': 'sparkles' };
 
-        list.innerHTML = notes.map((note, idx) => {
-            const time = note.created_at ? note.created_at.split(' ')[1] || '' : '';
+        // Apply category filter
+        const filtered = noteCategoryFilter === 'all'
+            ? notes
+            : notes.filter(n => (n.category || 'note') === noteCategoryFilter);
+
+        // Show/hide filter bar (only if >1 note with categories)
+        const filterBar = document.getElementById('m-category-filter');
+        const hasCategories = notes.some(n => n.category && n.category !== 'note');
+        if (filterBar) filterBar.classList.toggle('hidden', !hasCategories && notes.length < 3);
+
+        let html = '';
+        let prevMinutes = null;
+
+        filtered.forEach((note, idx) => {
+            const rawTime = note.created_at ? note.created_at.split(' ')[1] || '' : '';
+            const timeStr = rawTime.slice(0, 5);
             const isConverted = !!note.task_id;
-            const src = sourceConfig[note.source] || sourceConfig['manual'];
+            const cat = note.category || 'note';
+            const borderColor = catColors[cat] || catColors['note'];
+            const catIcon = catIcons[cat] || '';
+            const catLabel = catLabels[cat] || '';
+            const label = srcLabel[note.source] || '';
+            const icon = srcIcon[note.source] || '';
             const isNew = idx === notes.length - 1;
 
-            return `
-            <div class="group flex items-start gap-2.5 py-2 px-3 rounded-xl transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 ${isConverted ? 'opacity-50' : ''} ${isNew ? 'note-slide-in' : ''}" data-note-id="${note.id}">
-                <!-- Source icon -->
-                <div class="w-7 h-7 rounded-lg ${src.bg} flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <i data-lucide="${src.icon}" class="w-3.5 h-3.5 ${src.color}"></i>
-                </div>
+            // Calc minutes for gap detection
+            let curMinutes = null;
+            if (timeStr && timeStr.includes(':')) {
+                const [h, m] = timeStr.split(':').map(Number);
+                curMinutes = h * 60 + m;
+            }
 
-                <!-- Content -->
-                <div class="flex-1 min-w-0">
-                    <span id="note-text-${note.id}" class="text-sm text-slate-800 dark:text-slate-200 leading-relaxed ${isConverted ? 'line-through text-slate-500' : ''}">${this.escapeHtml(note.text)}</span>
-                    <div class="flex items-center gap-2 mt-0.5">
-                        <span class="text-[10px] text-slate-400">${time}</span>
-                        ${isConverted ? `<span class="text-[10px] text-primary-500 cursor-pointer hover:underline flex items-center gap-0.5" onclick="window.openTaskDetail && window.openTaskDetail(${note.task_id})"><i data-lucide="external-link" class="w-2.5 h-2.5"></i>задача</span>` : ''}
+            // Time gap divider (>= 5 min between notes)
+            if (prevMinutes !== null && curMinutes !== null) {
+                const gap = curMinutes - prevMinutes;
+                if (gap >= 5) {
+                    html += `
+                    <div class="flex items-center gap-2 py-2.5 ml-14">
+                        <div class="flex-1 border-t border-dashed border-slate-200 dark:border-slate-700"></div>
+                        <span class="text-[10px] text-slate-400 dark:text-slate-600 whitespace-nowrap flex items-center gap-1">
+                            <i data-lucide="clock" class="w-2.5 h-2.5"></i> ${gap} мин
+                        </span>
+                        <div class="flex-1 border-t border-dashed border-slate-200 dark:border-slate-700"></div>
+                    </div>`;
+                }
+            }
+            if (curMinutes !== null) prevMinutes = curMinutes;
+
+            html += `
+            <div class="group flex items-start gap-0 py-0.5 rounded-lg transition-all hover:bg-slate-50/80 dark:hover:bg-slate-800/30 ${isConverted ? 'opacity-40' : ''} ${isNew ? 'note-slide-in' : ''}" data-note-id="${note.id}">
+                <!-- Timestamp -->
+                <span class="text-[11px] text-slate-400 dark:text-slate-500 font-mono w-12 flex-shrink-0 pt-1.5 text-right tabular-nums select-none">${timeStr}</span>
+
+                <!-- Content with colored left border -->
+                <div class="flex-1 min-w-0 border-l-[3px] ml-2 pl-3 py-1 rounded-r-sm" style="border-color: ${borderColor}">
+                    <div class="flex items-start justify-between gap-2">
+                        <div class="flex-1 min-w-0">
+                            ${catLabel ? `<span class="inline-flex items-center gap-0.5 mr-1 text-[10px] font-medium align-middle px-1.5 py-0.5 rounded" style="color: ${borderColor}; background: ${borderColor}15"><i data-lucide="${catIcon}" class="w-2.5 h-2.5"></i>${catLabel}</span>` : ''}
+                            <span id="note-text-${note.id}" class="text-sm text-slate-800 dark:text-slate-200 leading-relaxed ${isConverted ? 'line-through text-slate-400 dark:text-slate-500' : ''}">${this.escapeHtml(note.text)}</span>
+                            ${label ? `<span class="inline-flex items-center gap-0.5 ml-1.5 text-[10px] text-slate-400 dark:text-slate-500 align-middle"><i data-lucide="${icon}" class="w-2.5 h-2.5"></i>${label}</span>` : ''}
+                            ${isConverted ? `<span class="inline-flex items-center gap-0.5 ml-1.5 text-[10px] text-primary-500 cursor-pointer hover:underline align-middle" onclick="window.openTaskDetail && window.openTaskDetail(${note.task_id})"><i data-lucide="external-link" class="w-2.5 h-2.5"></i>задача</span>` : ''}
+                        </div>
+
+                        <!-- Actions (hover only) -->
+                        <div class="flex items-center gap-0 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 -mr-1">
+                            ${!isConverted ? `
+                                <button onclick="window.convertNoteToTask(${note.id})" class="p-1 text-slate-300 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-md transition-all" title="Создать задачу">
+                                    <i data-lucide="square-check" class="w-3.5 h-3.5"></i>
+                                </button>` : ''}
+                            <button onclick="window.editMeetingNote(${note.id}, '${this.escapeAttr(note.text)}')" class="p-1 text-slate-300 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md transition-all" title="Редактировать">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                            </button>
+                            <button onclick="window.deleteMeetingNote(${note.id})" class="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-md transition-all" title="Удалить">
+                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
-
-                <!-- Actions (hover only) -->
-                <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 mt-0.5">
-                    ${!isConverted ? `
-                        <button onclick="window.convertNoteToTask(${note.id})" class="p-1.5 text-slate-300 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg transition-all" title="Создать задачу">
-                            <i data-lucide="square-check" class="w-3.5 h-3.5"></i>
-                        </button>` : ''}
-                    <button onclick="window.editMeetingNote(${note.id}, '${this.escapeAttr(note.text)}')" class="p-1.5 text-slate-300 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-all" title="Редактировать">
-                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <button onclick="window.deleteMeetingNote(${note.id})" class="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-all" title="Удалить">
-                        <i data-lucide="x" class="w-3.5 h-3.5"></i>
-                    </button>
-                </div>
             </div>`;
-        }).join('');
+        });
 
+        list.innerHTML = html;
         if (window.lucide) lucide.createIcons();
 
-        // Scroll to bottom
-        list.scrollTop = list.scrollHeight;
+        // Update note count badge
+        const countEl = document.getElementById('m-notes-count');
+        if (countEl) {
+            const active = notes.filter(n => !n.task_id).length;
+            const converted = notes.length - active;
+            countEl.textContent = `${notes.length} ${this._pluralNotes(notes.length)}${converted ? ` (${converted} в задачи)` : ''}`;
+        }
+
+        // Smooth scroll to bottom
+        requestAnimationFrame(() => {
+            list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+        });
+    },
+
+    _pluralNotes(n) {
+        const mod10 = n % 10;
+        const mod100 = n % 100;
+        if (mod10 === 1 && mod100 !== 11) return 'заметка';
+        if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'заметки';
+        return 'заметок';
     },
 
     escapeHtml(text) {
@@ -480,13 +613,34 @@ export const MeetingController = {
     },
 
     // --- Note CRUD ---
+    setNoteCategory(cat) {
+        selectedNoteCategory = cat;
+        document.querySelectorAll('.note-cat-chip').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.cat === cat);
+        });
+        // Update input placeholder
+        const input = document.getElementById('m-note-input');
+        const placeholders = { note: 'Напишите заметку...', decision: 'Запишите решение...', question: 'Запишите вопрос...', task: 'Опишите задачу...' };
+        if (input) input.placeholder = placeholders[cat] || placeholders.note;
+    },
+
+    filterNotesByCategory(cat) {
+        noteCategoryFilter = cat;
+        document.querySelectorAll('.note-cat-filter').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.cat === cat);
+        });
+        if (currentMeetingData) {
+            this.renderNotes(currentMeetingData.meeting_notes || []);
+        }
+    },
+
     async addNote() {
         if (!currentMeetingId) return;
         const input = document.getElementById('m-note-input');
         const text = input.value.trim();
         if (!text) return;
 
-        const note = await API.addMeetingNote(currentMeetingId, { text, source: 'manual' });
+        const note = await API.addMeetingNote(currentMeetingId, { text, source: 'manual', category: selectedNoteCategory });
         if (note) {
             input.value = '';
             // Refresh notes only (not entire detail)
@@ -564,6 +718,37 @@ export const MeetingController = {
         }
     },
 
+    // --- Sidebar tabs + mobile toggle ---
+    switchSidebarTab(tab) {
+        document.querySelectorAll('.sidebar-tab').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.tab === tab);
+        });
+        document.querySelectorAll('.sidebar-panel').forEach(panel => {
+            panel.classList.add('hidden');
+        });
+        const panel = document.getElementById(`m-tab-${tab}`);
+        if (panel) panel.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
+    },
+
+    toggleMeetingSidebar() {
+        const sidebar = document.getElementById('m-detail-sidebar');
+        const backdrop = document.getElementById('m-sidebar-backdrop');
+        if (!sidebar) return;
+
+        const isOpen = sidebar.classList.contains('max-lg:translate-x-0');
+        if (isOpen) {
+            sidebar.classList.remove('max-lg:translate-x-0');
+            sidebar.classList.add('max-lg:translate-x-full');
+            backdrop?.classList.add('hidden');
+        } else {
+            sidebar.classList.remove('hidden', 'max-lg:translate-x-full');
+            sidebar.classList.add('max-lg:translate-x-0');
+            backdrop?.classList.remove('hidden');
+            if (window.lucide) lucide.createIcons();
+        }
+    },
+
     // --- Meeting lifecycle ---
     async startMeeting() {
         if (!currentMeetingId) return;
@@ -613,14 +798,23 @@ export const MeetingController = {
         const timerWrap = document.getElementById('m-detail-timer-wrap');
         const timerText = document.getElementById('m-timer-text');
         const timerDot = document.getElementById('m-timer-dot');
+        const floatBar = document.getElementById('m-active-timer-bar');
+        const floatTimer = document.getElementById('m-float-timer');
+        const completedBar = document.getElementById('m-completed-bar');
+
         if (meetingTimerInterval) {
             clearInterval(meetingTimerInterval);
             meetingTimerInterval = null;
         }
 
+        // Hide all bars by default
+        floatBar?.classList.add('hidden');
+        completedBar?.classList.add('hidden');
+
         if (m.status === 'in_progress' && m.started_at) {
             timerWrap.classList.remove('hidden');
             timerDot.classList.remove('hidden');
+            floatBar?.classList.remove('hidden');
             const startTime = new Date(m.started_at).getTime();
 
             const update = () => {
@@ -628,18 +822,26 @@ export const MeetingController = {
                 const hrs = Math.floor(diff / 3600000);
                 const mins = Math.floor((diff % 3600000) / 60000);
                 const secs = Math.floor((diff % 60000) / 1000);
-                timerText.innerText = hrs > 0
+                const text = hrs > 0
                     ? `${hrs}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
                     : `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+                timerText.innerText = text;
+                if (floatTimer) floatTimer.innerText = text;
             };
             update();
             meetingTimerInterval = setInterval(update, 1000);
         } else if (m.status === 'completed' && m.started_at && m.ended_at) {
             timerWrap.classList.remove('hidden');
             timerDot.classList.add('hidden');
+            completedBar?.classList.remove('hidden');
             const diff = new Date(m.ended_at).getTime() - new Date(m.started_at).getTime();
             const mins = Math.floor(diff / 60000);
-            timerText.innerText = `${mins} мин.`;
+            const durText = mins >= 60
+                ? `${Math.floor(mins / 60)} ч ${mins % 60} мин`
+                : `${mins} мин`;
+            timerText.innerText = durText;
+            const completedDur = document.getElementById('m-completed-duration');
+            if (completedDur) completedDur.innerText = durText;
         } else {
             timerWrap.classList.add('hidden');
         }
@@ -705,12 +907,21 @@ export const MeetingController = {
         // Related tasks (with status badges)
         this.renderSidebarTasks(m.related_tasks || []);
 
-        // Agenda
+        // Agenda (checklist-style)
         const agendaBlock = document.getElementById('m-side-agenda-block');
         const agendaEl = document.getElementById('m-side-agenda');
         if (m.agenda) {
             agendaBlock.classList.remove('hidden');
-            agendaEl.innerText = m.agenda;
+            const lines = m.agenda.split('\n').filter(l => l.trim());
+            agendaEl.innerHTML = lines.map(line => {
+                const text = line.replace(/^[-•*\d.)\s]+/, '').trim();
+                if (!text) return '';
+                return `
+                <label class="flex items-start gap-2 py-0.5 cursor-pointer group">
+                    <input type="checkbox" class="mt-0.5 rounded border-slate-300 dark:border-slate-600 text-primary-600 focus:ring-primary-500/20">
+                    <span class="text-xs text-slate-600 dark:text-slate-400 group-has-[:checked]:line-through group-has-[:checked]:text-slate-400">${text}</span>
+                </label>`;
+            }).join('');
         } else {
             agendaBlock.classList.add('hidden');
         }
@@ -755,6 +966,43 @@ export const MeetingController = {
     },
 
     // --- Speech Recognition (Web Speech API) ---
+    _setMicUI(active) {
+        const micBtn = document.getElementById('m-mic-btn');
+        const floatMicBtn = document.getElementById('m-float-mic-btn');
+        const noteInput = document.getElementById('m-note-input');
+        if (active) {
+            micBtn?.classList.remove('text-slate-400');
+            micBtn?.classList.add('text-red-500', 'bg-red-50', 'dark:bg-red-900/20');
+            // Add pulsing ring indicator
+            if (micBtn && !micBtn.querySelector('.mic-pulse-ring')) {
+                micBtn.insertAdjacentHTML('beforeend', '<span class="mic-pulse-ring absolute inset-0 rounded-lg border-2 border-red-400 animate-ping pointer-events-none"></span>');
+                micBtn.classList.add('relative');
+            }
+            if (floatMicBtn) {
+                floatMicBtn.classList.add('text-red-500', 'bg-red-50', 'border-red-300');
+                floatMicBtn.innerHTML = '<i data-lucide="mic-off" class="w-3.5 h-3.5"></i> Стоп';
+            }
+            if (noteInput) {
+                noteInput.classList.add('border-red-300', 'ring-2', 'ring-red-200');
+                noteInput.placeholder = 'Говорите...';
+            }
+        } else {
+            micBtn?.classList.remove('text-red-500', 'bg-red-50', 'dark:bg-red-900/20', 'relative');
+            micBtn?.classList.add('text-slate-400');
+            micBtn?.querySelector('.mic-pulse-ring')?.remove();
+            if (floatMicBtn) {
+                floatMicBtn.classList.remove('text-red-500', 'bg-red-50', 'border-red-300');
+                floatMicBtn.innerHTML = '<i data-lucide="mic" class="w-3.5 h-3.5"></i> Диктовка';
+            }
+            if (noteInput) {
+                noteInput.classList.remove('border-red-300', 'ring-2', 'ring-red-200');
+                noteInput.placeholder = 'Напишите заметку...';
+                noteInput.value = '';
+            }
+        }
+        if (window.lucide) lucide.createIcons();
+    },
+
     toggleSpeech() {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -762,14 +1010,11 @@ export const MeetingController = {
             return;
         }
 
-        const micBtn = document.getElementById('m-mic-btn');
-
         if (isRecording) {
             // Stop
             if (speechRecognition) speechRecognition.stop();
             isRecording = false;
-            micBtn.classList.remove('text-red-500', 'bg-red-50', 'dark:bg-red-900/20', 'animate-pulse');
-            micBtn.classList.add('text-slate-400');
+            this._setMicUI(false);
             return;
         }
 
@@ -784,8 +1029,7 @@ export const MeetingController = {
 
         speechRecognition.onstart = () => {
             isRecording = true;
-            micBtn.classList.remove('text-slate-400');
-            micBtn.classList.add('text-red-500', 'bg-red-50', 'dark:bg-red-900/20', 'animate-pulse');
+            this._setMicUI(true);
         };
 
         speechRecognition.onresult = (event) => {
@@ -799,8 +1043,10 @@ export const MeetingController = {
                 }
             }
 
-            // Show interim in input
-            noteInput.value = finalTranscript + interim;
+            // Show interim in input with visual distinction
+            if (noteInput) {
+                noteInput.value = finalTranscript + (interim ? interim : '');
+            }
 
             // If we got a final result, auto-add as note
             if (finalTranscript) {
@@ -817,8 +1063,7 @@ export const MeetingController = {
                 alert('Доступ к микрофону заблокирован. Разрешите доступ в настройках браузера.');
             }
             isRecording = false;
-            micBtn.classList.remove('text-red-500', 'bg-red-50', 'dark:bg-red-900/20', 'animate-pulse');
-            micBtn.classList.add('text-slate-400');
+            this._setMicUI(false);
         };
 
         speechRecognition.onend = () => {
@@ -826,8 +1071,7 @@ export const MeetingController = {
             if (isRecording) {
                 try { speechRecognition.start(); } catch(e) { /* ignore */ }
             } else {
-                micBtn.classList.remove('text-red-500', 'bg-red-50', 'dark:bg-red-900/20', 'animate-pulse');
-                micBtn.classList.add('text-slate-400');
+                this._setMicUI(false);
             }
         };
 
@@ -840,7 +1084,7 @@ export const MeetingController = {
 
     async addNoteFromSpeech(text) {
         if (!currentMeetingId || !text) return;
-        const note = await API.addMeetingNote(currentMeetingId, { text, source: 'voice' });
+        const note = await API.addMeetingNote(currentMeetingId, { text, source: 'voice', category: selectedNoteCategory });
         if (note) {
             const m = await API.getMeeting(currentMeetingId);
             if (m) {

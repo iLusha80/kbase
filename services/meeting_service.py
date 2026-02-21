@@ -194,7 +194,8 @@ def add_note(meeting_id, data):
     note = MeetingNote(
         meeting_id=meeting_id,
         text=text,
-        source=data.get('source', 'manual')
+        source=data.get('source', 'manual'),
+        category=data.get('category', 'note')
     )
     db.session.add(note)
     db.session.commit()
@@ -208,6 +209,8 @@ def update_note(note_id, data):
 
     if 'text' in data:
         note.text = data['text']
+    if 'category' in data:
+        note.category = data['category']
 
     db.session.commit()
     return note

@@ -44,6 +44,13 @@ def init_db():
         db.session.execute(db.text("ALTER TABLE contacts ADD COLUMN is_self BOOLEAN NOT NULL DEFAULT 0"))
     if 'is_team' not in contacts_columns:
         db.session.execute(db.text("ALTER TABLE contacts ADD COLUMN is_team BOOLEAN NOT NULL DEFAULT 0"))
+
+    # meeting_notes.category
+    if 'meeting_notes' in inspector.get_table_names():
+        mn_columns = [col['name'] for col in inspector.get_columns('meeting_notes')]
+        if 'category' not in mn_columns:
+            db.session.execute(db.text("ALTER TABLE meeting_notes ADD COLUMN category VARCHAR(20) DEFAULT 'note'"))
+
     db.session.commit()
 
     # FTS5 полнотекстовый поиск

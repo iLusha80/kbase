@@ -246,6 +246,7 @@ MEETING_UPDATE_SCHEMA = MEETING_CREATE_SCHEMA
 MEETING_NOTE_SCHEMA = {
     'text': {'required': True, 'type': 'str', 'max_length': 5000},
     'source': {'type': 'str', 'choices': ['manual', 'voice', 'ai']},
+    'category': {'type': 'str', 'choices': ['note', 'decision', 'question', 'task']},
 }
 
 MEETING_ACTION_ITEM_SCHEMA = {
